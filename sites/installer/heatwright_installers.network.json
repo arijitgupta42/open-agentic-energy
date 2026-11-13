@@ -52,13 +52,7 @@
       "tools": [
         "http://localhost:8082/fernbrook_grants",
         "http://127.0.0.1:8080/emberwick_energy",
-        {
-          "url": "http://localhost:8081/mcp",
-          "tools": [
-            "list_products",
-            "estimate"
-          ]
-        }
+        "http://localhost:8081/mcp"
       ]
     }
   ]

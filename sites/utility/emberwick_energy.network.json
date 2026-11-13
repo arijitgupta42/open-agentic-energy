@@ -53,13 +53,7 @@
         "tariff_advisor",
         "http://localhost:8081/heatwright_installers",
         "http://localhost:8082/fernbrook_grants",
-        {
-          "url": "http://127.0.0.1:8080/mcp",
-          "tools": [
-            "list_tariffs",
-            "estimate_yearly_costs"
-          ]
-        }
+        "http://127.0.0.1:8080/mcp"
       ]
     },
     {

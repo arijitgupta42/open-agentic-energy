@@ -131,15 +131,13 @@ How to work:
 {peer_rules}
 """,
             # The internal advisor, the partner networks, then this site's read-only MCP
-            # server (server/tools/utility.mjs), which other sites reach when they run this network.
+            # server (server/tools/utility.mjs, with list_tariffs and estimate_yearly_costs),
+            # which other sites reach when they run this network.
             "tools": [
                 "tariff_advisor",
                 "http://localhost:8081/heatwright_installers",
                 "http://localhost:8082/fernbrook_grants",
-                {
-                    "url": "http://127.0.0.1:8080/mcp",
-                    "tools": ["list_tariffs", "estimate_yearly_costs"]
-                }
+                "http://127.0.0.1:8080/mcp"
             ]
         },
         {

@@ -48,22 +48,26 @@ test("each front agent names its own site's MCP server, and the manifest allows 
   for (const site of Object.keys(NETWORKS)) {
     const {network, manifest} = await load(site);
     const front = network.tools.find((agent) => agent.name === manifest.networks[0].front_man);
-    const mcp = front.tools.filter((ref) => typeof ref === "object");
+    // A plain URL ending in /mcp, which the runtime's UI labels by host.
+    const mcp = front.tools.filter((ref) => typeof ref === "string" && ref.endsWith(MCP_PATH));
     assert.equal(mcp.length, 1, `${site}: the front agent lists one MCP server.`);
-    const url = new URL(mcp[0].url);
+    assert.ok(front.tools.every((ref) => typeof ref === "string"), `${site}: every tool is a plain name or URL.`);
+    const url = new URL(mcp[0]);
     assert.equal(url.pathname, MCP_PATH);
     assert.ok(manifestAllowsPeer(url.href, manifest), `${site}: allowed_peers must list ${url.origin}.`);
     assert.equal(manifest.peer_policy.mode, "closed");
     const listed = (await MCP_SERVERS[site].handle(new Request(url, {method: "POST", body: JSON.stringify({jsonrpc: "2.0", id: 1, method: "tools/list"})})));
     const names = (await listed.json()).result.tools.map((tool) => tool.name);
-    assert.deepEqual(mcp[0].tools, names, `${site}: the network's tool list matches the server's.`);
+    for (const name of names) {
+      assert.ok(front.instructions.includes(`mcp_${name}`), `${site}: the front agent's instructions name mcp_${name}.`);
+    }
   }
 });
 
 test("the runtime's MCP client lists and calls a partner's tools, sending no credentials", async (t) => {
   const {network, manifest} = await load("grants");
   const front = network.tools.find((agent) => agent.name === manifest.networks[0].front_man);
-  const url = front.tools.find((ref) => typeof ref === "object").url;
+  const url = front.tools.find((ref) => typeof ref === "string" && ref.endsWith(MCP_PATH));
   const {fetcher, seen} = fakeFetch({[new URL(url).origin]: "grants"});
   t.mock.method(globalThis, "fetch", fetcher);
   const client = new McpClient({url: url});
