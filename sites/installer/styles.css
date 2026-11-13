@@ -113,6 +113,42 @@ footer { border-top: 1px solid var(--line); padding: 18px 24px; font-size: 0.85e
 #agent-app .ns-consent-actions { flex-wrap: wrap; }
 #agent-app .ns-consent-actions button { white-space: nowrap; }
 
+/* Compact chat (issue #20). The runtime sets no font size on messages, so they took the
+   page's 16px/1.55 body text, and rendered Markdown kept the browser's 1em paragraph and
+   list margins inside each bubble. These rules only touch the chat, never the page. */
+#agent-app .ns-msgs { gap: 8px; padding: 10px 12px; }
+#agent-app .ns-msg { font-size: 14px; line-height: 1.45; padding: 7px 11px; max-width: 88%; }
+#agent-app .ns-msg > :first-child { margin-top: 0; }
+#agent-app .ns-msg > :last-child { margin-bottom: 0; }
+#agent-app .ns-msg p { margin: 0 0 0.45em; }
+#agent-app .ns-msg ul,
+#agent-app .ns-msg ol { margin: 0.2em 0 0.45em; padding-left: 1.25em; }
+#agent-app .ns-msg li { margin: 0.1em 0; }
+#agent-app .ns-msg li > p { margin: 0; }
+#agent-app .ns-msg h1,
+#agent-app .ns-msg h2,
+#agent-app .ns-msg h3,
+#agent-app .ns-msg h4 { font-size: 1em; margin: 0.6em 0 0.2em; }
+#agent-app .ns-msg table { border-collapse: collapse; font-size: 13px; margin: 0.3em 0 0.45em; }
+#agent-app .ns-msg th,
+#agent-app .ns-msg td { padding: 3px 10px 3px 0; border-bottom: 1px solid var(--ns-border); text-align: left; vertical-align: top; }
+#agent-app .ns-input { font-size: 14px; }
+/* Consent cards: tighter lines. Once answered, the result sits beside the title, and the
+   partner's host and the request stay visible. */
+#agent-app .ns-consent { font-size: 13px; }
+#agent-app .ns-consent-sub { margin-bottom: 3px; }
+#agent-app .ns-consent-req { margin-bottom: 6px; }
+#agent-app .ns-consent:has(.ns-consent-done) { display: grid; grid-template-columns: minmax(0, 1fr) auto; column-gap: 10px; }
+#agent-app .ns-consent:has(.ns-consent-done) > * { grid-column: 1 / -1; }
+#agent-app .ns-consent:has(.ns-consent-done) > .ns-consent-title { grid-column: 1; grid-row: 1; }
+#agent-app .ns-consent:has(.ns-consent-done) > .ns-consent-done { grid-column: 2; grid-row: 1; align-self: start; white-space: nowrap; }
+#agent-app .ns-consent:has(.ns-consent-done) > .ns-consent-req { margin-bottom: 0; }
+#agent-app .ns-consent-actions button { padding: 5px 12px; }
+@media (max-width: 760px) {
+  /* A phone's chat column is narrow, so let bubbles use more of it. */
+  #agent-app .ns-msg { max-width: 94%; }
+}
+
 /* site.js and the runtime add their confirmation dialogs to <body>, outside #agent-app.
    Site h2 rules reach the heading, and the two buttons touch. A right margin keeps
    wrapped buttons lined up on the left. */
