@@ -1,0 +1,31 @@
+{
+  "metadata": {
+    "description": "Lab fixture: partner network 2 of 5"
+  },
+  "llm_config": {
+    "model_name": "neuro-san-mock-browser"
+  },
+  "max_steps": 4,
+  "tools": [
+    {
+      "name": "lab_budget_p2_front",
+      "function": {
+        "description": "Answers as partner network 2 of 5.",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "request": {
+              "type": "string",
+              "description": "The request in plain language."
+            }
+          },
+          "required": [
+            "request"
+          ]
+        }
+      },
+      "instructions": "Lab fixture for the Safety checks page. Answers as partner network 2 of 5. Answer in one short sentence.",
+      "tools": []
+    }
+  ]
+}

@@ -26,7 +26,7 @@ Rules = `rules_digest.md`. Spec = `worldwide_agentic_web_mvp_spec.md`.
 | After user approval, load an exact named network from a second origin and run it locally | `emberwick_assistant` → `heatwright_installers`, `fernbrook_grants` | Browser. Sample query: "I'm thinking about a heat pump. What can your installer partner do, and is there a grant?" |
 | With a user key active, the second site never receives it and cannot change the router | Runtime behaviour (spec section 4) | Browser: Network panel while a partner call runs, or serve the partner with `--log` |
 | Private context is absent at the peer unless a named field is allowed | The runtime passes a partner only the request text. No network here allows a private-context field | Browser, as above |
-| Stop an invalid network, a cycle, an over-budget request and a denied origin with visible errors | Runtime behaviour; `peer_policy.mode` is `closed` | Auto (closed policy, validation). Browser (visible errors) |
+| Stop an invalid network, a cycle, an over-budget request and a denied origin with visible errors | Runtime behaviour; `peer_policy.mode` is `closed`. The utility site's Safety checks page (`/lab/`) runs one test network per case on the in-page mock model | Auto (closed policy, validation, `sites/utility/tests/lab.test.mjs`). Browser: open `/lab/` and run each check; no key needed |
 
 ## Specification requirements this repository must keep meeting
 

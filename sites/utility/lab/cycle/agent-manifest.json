@@ -1,0 +1,41 @@
+{
+  "brand": "Safety check: composition cycle",
+  "networks": [
+    {
+      "name": "lab_cycle_a",
+      "front_man": "lab_cycle_a_front",
+      "hocon": "./lab_cycle_a.network.json",
+      "description": "Lab fixture: calls lab_cycle_b",
+      "tags": [
+        "lab-fixture"
+      ]
+    },
+    {
+      "name": "lab_cycle_b",
+      "front_man": "lab_cycle_b_front",
+      "hocon": "./lab_cycle_b.network.json",
+      "description": "Lab fixture: calls lab_cycle_a back",
+      "tags": [
+        "lab-fixture"
+      ]
+    }
+  ],
+  "llm_router": {
+    "base_url": "browser://mock",
+    "mock": true
+  },
+  "allowed_peers": [
+    "http://127.0.0.1:8080"
+  ],
+  "peer_policy": {
+    "mode": "closed",
+    "deny_origins": [],
+    "note": "Lab fixture. Two networks on one origin that call each other."
+  },
+  "deployment": {
+    "mode": "static",
+    "self_contained_runtime": true,
+    "browser_mock": true,
+    "direct_byok": false
+  }
+}

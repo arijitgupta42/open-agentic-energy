@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="Safety checks: see the browser runtime stop an invalid network, a composition cycle, an over-budget request and a denied origin. No API key needed.">
+    <title>Emberwick Energy · Safety checks</title>
+    <link rel="icon" href="../favicon.svg" type="image/svg+xml">
+    <link rel="stylesheet" href="../styles.css">
+    <link rel="stylesheet" href="lab.css">
+    <script type="module" src="lab.js"></script>
+  </head>
+  <body>
+    <header>
+      <a class="brand" href="../index.html">Emberwick <span>Energy</span></a>
+      <nav aria-label="Main navigation">
+        <a href="../index.html">Your account</a>
+        <a href="#checks">Safety checks</a>
+      </nav>
+    </header>
+    <main>
+      <p class="eyebrow">Safety checks</p>
+      <h1>See the runtime refuse four things it must never do.</h1>
+      <p class="notice">These checks run small test networks in this page on the runtime's built-in mock model. They need no API key, send nothing to any AI provider, and change nothing on the account page.</p>
+      <p>Section 6 of the open agentic web specification asks a runtime to stop an invalid network, a composition cycle, an over-budget request and a denied origin, each with a visible error. Pick a check, run it, and read what the runtime did. Select <strong>⚙ Developer</strong> in the chat header to see every step in the runtime's own log.</p>
+
+      <section id="checks" aria-label="Choose a check">
+        <div class="lab-tabs" role="tablist" aria-label="Safety checks">
+          <button type="button" role="tab" data-case="invalid" aria-selected="true">Invalid network</button>
+          <button type="button" role="tab" data-case="cycle" aria-selected="false">Composition cycle</button>
+          <button type="button" role="tab" data-case="budget" aria-selected="false">Over budget</button>
+          <button type="button" role="tab" data-case="denied" aria-selected="false">Denied origin</button>
+        </div>
+        <div class="lab-case" role="tabpanel">
+          <h2 id="lab-title">Invalid network</h2>
+          <p id="lab-setup"></p>
+          <p id="lab-expect"></p>
+          <p><button type="button" id="lab-run">Run the check</button></p>
+          <div class="lab-result" id="lab-result" role="status" aria-live="polite" hidden>
+            <h3>What the runtime did</h3>
+            <ul id="lab-events"></ul>
+          </div>
+        </div>
+      </section>
+
+      <section class="assistant" aria-label="The check's chat">
+        <div id="agent-app">
+          <div data-ns-slot="header"></div>
+          <div class="assistant-panels">
+            <div data-ns-slot="chat"></div>
+            <div data-ns-slot="agents"></div>
+          </div>
+        </div>
+      </section>
+    </main>
+    <footer>
+      <p>Emberwick Energy is a fictional supplier, made for the Open Agentic Web Challenge. Open source under Apache 2.0. The test networks are in <code>sites/utility/lab/</code>.</p>
+    </footer>
+  </body>
+</html>

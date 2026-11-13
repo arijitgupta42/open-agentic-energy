@@ -1,0 +1,32 @@
+{
+  "brand": "Safety check: invalid network",
+  "networks": [
+    {
+      "name": "lab_invalid",
+      "front_man": "lab_invalid_front",
+      "hocon": "./lab_invalid.network.json",
+      "description": "Lab fixture: a network that names a missing agent",
+      "tags": [
+        "lab-fixture"
+      ]
+    }
+  ],
+  "llm_router": {
+    "base_url": "browser://mock",
+    "mock": true
+  },
+  "allowed_peers": [
+    "http://127.0.0.1:8080"
+  ],
+  "peer_policy": {
+    "mode": "closed",
+    "deny_origins": [],
+    "note": "Lab fixture. The network is invalid on purpose."
+  },
+  "deployment": {
+    "mode": "static",
+    "self_contained_runtime": true,
+    "browser_mock": true,
+    "direct_byok": false
+  }
+}

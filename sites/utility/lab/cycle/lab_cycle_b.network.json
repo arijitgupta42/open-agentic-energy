@@ -1,0 +1,33 @@
+{
+  "metadata": {
+    "description": "Lab fixture: calls lab_cycle_a back"
+  },
+  "llm_config": {
+    "model_name": "neuro-san-mock-browser"
+  },
+  "max_steps": 4,
+  "tools": [
+    {
+      "name": "lab_cycle_b_front",
+      "function": {
+        "description": "Asks the lab_cycle_a network, which started this request.",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "request": {
+              "type": "string",
+              "description": "The request in plain language."
+            }
+          },
+          "required": [
+            "request"
+          ]
+        }
+      },
+      "instructions": "Lab fixture for the Safety checks page. Asks the lab_cycle_a network, which started this request. Answer in one short sentence.",
+      "tools": [
+        "http://127.0.0.1:8080/lab/cycle/lab_cycle_a"
+      ]
+    }
+  ]
+}

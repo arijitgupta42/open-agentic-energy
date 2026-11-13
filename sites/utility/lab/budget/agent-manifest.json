@@ -1,0 +1,77 @@
+{
+  "brand": "Safety check: over-budget request",
+  "networks": [
+    {
+      "name": "lab_budget",
+      "front_man": "lab_budget_front",
+      "hocon": "./lab_budget.network.json",
+      "description": "Lab fixture: asks five partner networks",
+      "tags": [
+        "lab-fixture"
+      ]
+    },
+    {
+      "name": "lab_budget_p1",
+      "front_man": "lab_budget_p1_front",
+      "hocon": "./lab_budget_p1.network.json",
+      "description": "Lab fixture: partner network 1 of 5",
+      "tags": [
+        "lab-fixture"
+      ]
+    },
+    {
+      "name": "lab_budget_p2",
+      "front_man": "lab_budget_p2_front",
+      "hocon": "./lab_budget_p2.network.json",
+      "description": "Lab fixture: partner network 2 of 5",
+      "tags": [
+        "lab-fixture"
+      ]
+    },
+    {
+      "name": "lab_budget_p3",
+      "front_man": "lab_budget_p3_front",
+      "hocon": "./lab_budget_p3.network.json",
+      "description": "Lab fixture: partner network 3 of 5",
+      "tags": [
+        "lab-fixture"
+      ]
+    },
+    {
+      "name": "lab_budget_p4",
+      "front_man": "lab_budget_p4_front",
+      "hocon": "./lab_budget_p4.network.json",
+      "description": "Lab fixture: partner network 4 of 5",
+      "tags": [
+        "lab-fixture"
+      ]
+    },
+    {
+      "name": "lab_budget_p5",
+      "front_man": "lab_budget_p5_front",
+      "hocon": "./lab_budget_p5.network.json",
+      "description": "Lab fixture: partner network 5 of 5",
+      "tags": [
+        "lab-fixture"
+      ]
+    }
+  ],
+  "llm_router": {
+    "base_url": "browser://mock",
+    "mock": true
+  },
+  "allowed_peers": [
+    "http://127.0.0.1:8080"
+  ],
+  "peer_policy": {
+    "mode": "closed",
+    "deny_origins": [],
+    "note": "Lab fixture. One request that needs five partner calls."
+  },
+  "deployment": {
+    "mode": "static",
+    "self_contained_runtime": true,
+    "browser_mock": true,
+    "direct_byok": false
+  }
+}

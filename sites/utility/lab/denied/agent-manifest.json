@@ -1,0 +1,32 @@
+{
+  "brand": "Safety check: denied origin",
+  "networks": [
+    {
+      "name": "lab_denied",
+      "front_man": "lab_denied_front",
+      "hocon": "./lab_denied.network.json",
+      "description": "Lab fixture: asks a site that is not allowed",
+      "tags": [
+        "lab-fixture"
+      ]
+    }
+  ],
+  "llm_router": {
+    "base_url": "browser://mock",
+    "mock": true
+  },
+  "allowed_peers": [
+    "http://127.0.0.1:8080"
+  ],
+  "peer_policy": {
+    "mode": "closed",
+    "deny_origins": [],
+    "note": "Lab fixture. allowed_peers lists only this site."
+  },
+  "deployment": {
+    "mode": "static",
+    "self_contained_runtime": true,
+    "browser_mock": true,
+    "direct_byok": false
+  }
+}
