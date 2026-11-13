@@ -21,7 +21,7 @@ Rules = `rules_digest.md`. Spec = `worldwide_agentic_web_mvp_spec.md`.
 | Spec 6 check | Where | Check |
 | --- | --- | --- |
 | Publish a two-agent HOCON network and a manifest from an ordinary HTTPS host | `sites/utility`: `emberwick_assistant` and `tariff_advisor` | Auto (two agents). Hosting: `docs/deployment.md` |
-| Load and run it in a browser with the site's default router and model; show the BYOK path if offered | Manifest `llm_router` (hosted Otari) and the settings panel | Browser |
+| Load and run it in a browser with the site's default router and model; show the BYOK path if offered | Manifest `llm_router` (OpenRouter, `openai/gpt-6-luna`; the visitor supplies the key) and the settings panel | Browser |
 | Call an internal agent and one grounded capability (MCP or a local site action) | `emberwick_assistant` → `tariff_advisor` → `website_get_account_state` | Browser. Sample query: "Which tariff would be cheapest for me?" |
 | After user approval, load an exact named network from a second origin and run it locally | `emberwick_assistant` → `heatwright_installers`, `fernbrook_grants` | Browser. Sample query: "I'm thinking about a heat pump. What can your installer partner do, and is there a grant?" |
 | With a user key active, the second site never receives it and cannot change the router | Runtime behaviour (spec section 4) | Browser: Network panel while a partner call runs, or serve the partner with `--log` |

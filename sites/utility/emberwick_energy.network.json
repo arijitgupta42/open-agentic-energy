@@ -11,7 +11,7 @@
     ]
   },
   "llm_config": {
-    "model_name": "alibaba/qwen-3.5-35b-a3b"
+    "model_name": "openai/gpt-6-luna"
   },
   "max_steps": 12,
   "cruse": {

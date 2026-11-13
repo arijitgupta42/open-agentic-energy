@@ -29,9 +29,11 @@ node tools/agentify-website/scripts/check_partner.mjs http://localhost:8081/heat
 
 ## Try it with a key
 
-1. Use a key with a low spending limit. The default router is hosted
-   [Otari](https://otari.ai) with `alibaba/qwen-3.5-35b-a3b`; the settings panel also
-   offers OpenAI, OpenRouter and others. The provider must allow browser calls. See
+1. Use a key with a low spending limit. The default router is
+   [OpenRouter](https://openrouter.ai) with `openai/gpt-6-luna`. That is only what the
+   settings panel fills in: a visitor can choose any router, model and key there, such as
+   OpenAI, Anthropic or a local server. The provider must allow browser calls (CORS), and
+   the model must make tool calls. See
    `tools/agentify-website/references/bundle_and_hosting.md`.
 2. On a site, open **AI model settings** under the assistant, paste the key and select
    **Save and start**. Never paste a key into a chat, a file or a terminal.
