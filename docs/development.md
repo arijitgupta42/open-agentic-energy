@@ -17,6 +17,20 @@ npm run serve
 | Heatwright Home Energy | http://localhost:8081/ | `http://localhost:8081/heatwright_installers` |
 | Fernbrook Retrofit Grants | http://localhost:8082/ | `http://localhost:8082/fernbrook_grants` |
 
+Each site also answers `/mcp` with its read-only MCP server (`server/`), as the
+Cloudflare Worker does in production. `npm run serve` puts a small front server on each
+site's port: `/mcp` goes to `server/`, and everything else to the skill's
+`serve_site.mjs` on the same port plus 10000. Try one from a terminal:
+
+```shell
+curl -s -X POST -H "Content-Type: application/json" -d "{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"tools/list\"}" http://localhost:8082/mcp
+```
+
+To add or change a tool, edit `server/tools/<site>.mjs`, call only that site's
+`js/*-data.js` and `js/*-rules.js`, keep it read-only with no personal fields, list it in
+the front agent's MCP entry in the `.hocon`, and add hand-worked amounts to
+`server/tests/mcp.test.mjs`.
+
 Open each site at exactly the address above. `127.0.0.1` and `localhost` are different
 origins to a browser, and the partner URLs in the networks use these host names.
 

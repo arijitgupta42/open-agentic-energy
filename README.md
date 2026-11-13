@@ -16,19 +16,22 @@ All three companies, and every tariff, price and grant, are fictional.
 | [Fernbrook Retrofit Grants](sites/grants) | Checks eligibility, starts an application | `fernbrook_grants` |
 
 The story the three tell together: a customer asks their energy supplier "should I get a
-heat pump?". The supplier's assistant knows their usage and tariffs, asks the installer's
-network what it offers and the grants network what help exists, and sends the customer
-on with links. On each of those sites, that site's own assistant does the real work.
+heat pump?". The supplier's assistant knows their usage and tariffs. After the customer
+agrees, it runs the installer's and the grants body's agents in the customer's own
+browser, and those agents answer with real figures from their own sites' read-only MCP
+servers: an estimate for the home, and which grants the household could get. The
+installer's assistant can ask the supplier about heat pump tariffs the same way.
 
 ## Quick start
 
-Node.js 22 or newer. No install step: there are no dependencies.
+Node.js 22 or newer. No install step: there are no dependencies. Each site also serves a
+read-only MCP server at `/mcp` (`server/`).
 
 ```shell
 npm run build      # write the published network files
-npm test           # 48 tests: real runtime and page code, scripted model, no LLM
+npm test           # 62 tests: real runtime and page code, scripted model, no LLM, plus the MCP servers
 npm run check      # generated files, runtime copies and conformance checks
-npm run serve      # serve the three sites
+npm run serve      # serve the three sites, each with its /mcp
 ```
 
 Then open http://127.0.0.1:8080/ (supplier), http://localhost:8081/ (installer) and

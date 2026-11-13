@@ -50,9 +50,12 @@ repository's own code. Do not hide them.
   showing the visitor first. Spec 3.1 asks the runtime to show a write before it runs.
   Only `irreversible` actions open a dialog. Every `write` here can be undone on the page.
 - A partner's network runs in the caller's browser with none of the partner's
-  `website_*` tools, so it can say what the partner offers and link to its page, but not
-  give live results or act there. Live partner data needs an MCP server on the partner's
-  origin (spec 2.1 "External capabilities"), which this static bundle does not have.
+  `website_*` tools. It reads live, public figures from the partner's own read-only
+  `/mcp` server instead (spec 2.1 "External capabilities"), but it cannot act on the
+  partner's page or see a visitor's records there: writes stay on each site's own page.
+- After the visitor allows a partner, that partner's agents call the partner's own
+  `/mcp` without a second card, because the runtime treats a network's own origin as
+  the same site. The call carries only details from the request the card showed.
 - The consent card shows the first 140 characters of a request; the partner's network
   reads all of it.
 - A partner that accepts the connection but never answers leaves the chat waiting until

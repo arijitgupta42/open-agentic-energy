@@ -3,7 +3,9 @@
 ## What the sites need from a host
 
 Each site is a static folder: `sites/utility`, `sites/installer`, `sites/grants`. There
-is no build step on the host. A host must give each site:
+is no build step on the host. Each site also answers `/mcp` with its read-only MCP
+server (`server/`), so the host must run a little code: the Cloudflare Worker in
+`server/worker.mjs` does. A host must give each site:
 
 1. **Its own origin, at the root.** Three origins, such as three subdomains. Not three
    folders of one domain: sites on one origin are not "another origin" to a browser, so
@@ -39,6 +41,8 @@ Pages read. For Apache, `tools/agentify-website/references/bundle_and_hosting.md
   npx wrangler@4 deploy --config deploy/cloudflare/grants.jsonc
   ```
 
+  Each Worker runs `server/worker.mjs`: requests that match a file get the static
+  file, and `/mcp` gets the site's MCP server (the config's `SITE` variable picks which).
   Workers redirects a `.html` path to the same path without `.html`, on the same
   origin. Do not run `wrangler pages project create` inside a site folder: it writes a
   `wrangler.jsonc` and an `.assetsignore` there, which would then be published.
