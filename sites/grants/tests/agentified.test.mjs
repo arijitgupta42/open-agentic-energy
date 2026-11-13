@@ -239,6 +239,8 @@ class AgentifiedSiteTest {
     const title = new StubElement("div");
     title.textContent = text;
     card.provide(".ns-consent-title", [title]);
+    // The runtime's card quotes the request here. A test that checks it provides one.
+    card.provide(".ns-consent-req", []);
     return {
       card: card,
       title: title,
@@ -779,6 +781,33 @@ class AgentifiedSiteTest {
   }
 
   /**
+   * The card shows the whole request, not the runtime's first 140 characters, because the
+   * partner reads all of it. It goes in as text, so markup in a request stays text.
+   */
+  static async testConsentShowsTheWholeRequest() {
+    const newest = AgentifiedSiteTest.consentCard("Contact Partner Site on your behalf?");
+    const quote = new StubElement("div");
+    const request = "Check grant eligibility for an owner-occupied semi-detached home of 95 m2 with a gas boiler, EPC band D and income over 31,000 a year. Is a heat pump grant available? <b>bold</b>";
+    assert.ok(request.length > 140);
+    quote.textContent = `“${request.slice(0, 140)}”`;
+    newest.card.provide(".ns-consent-req", [quote]);
+    document.provide("#ns-msgs .ns-consent", []);
+    AgentifiedSiteTest.shownCards = [newest.card];
+    document.provide("#ns-input", [new StubElement("textarea")]);
+    AssistantMount.defaultConsent = AgentifiedSiteTest.pendingCard;
+    const answer = AssistantMount.consent({
+      kind: "network",
+      peerLabel: "Partner Site",
+      peerOrigin: "partner.example",
+      requestText: request,
+    });
+    assert.equal(quote.textContent, `“${request}”`, "consent() left the runtime's cut-off request on the card.");
+    assert.ok(quote.textContent.includes("<b>bold</b>"), "The request must be set as text, so its markup shows literally.");
+    AgentifiedSiteTest.answerCard("allow");
+    assert.equal(await answer, "allow", "consent() changed the visitor's answer.");
+  }
+
+  /**
    * A visitor typing in the page's own form keeps focus when a consent card appears.
    * The card still gets its name.
    */
@@ -844,5 +873,6 @@ test("a chat form that bundles the irreversible action runs nothing", Agentified
 test("other chat forms with several actions get the runtime's dialog", AgentifiedSiteTest.testOtherBundlesGetRuntimeDialog);
 test("the consent card gets focus, and focus then returns to the chat", AgentifiedSiteTest.testConsentFocusesTheCardThenTheChat);
 test("a visitor typing in the page's form keeps focus when a consent card appears", AgentifiedSiteTest.testConsentLeavesFocusInThePage);
+test("the consent card shows the whole request, as text", AgentifiedSiteTest.testConsentShowsTheWholeRequest);
 // This one changes the page for good, so it runs last.
 test("an approved irreversible call stores the record", AgentifiedSiteTest.testApprovedIrreversibleCall);
