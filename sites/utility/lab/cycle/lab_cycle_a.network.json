@@ -26,7 +26,7 @@
       },
       "instructions": "Lab fixture for the Safety checks page. Asks the lab_cycle_b network. Answer in one short sentence.",
       "tools": [
-        "http://127.0.0.1:8080/lab/cycle/lab_cycle_b"
+        "https://emberwick-energy.open-agentic-energy.workers.dev/lab/cycle/lab_cycle_b"
       ]
     }
   ]

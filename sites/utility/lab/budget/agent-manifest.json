@@ -61,7 +61,7 @@
     "mock": true
   },
   "allowed_peers": [
-    "http://127.0.0.1:8080"
+    "https://emberwick-energy.open-agentic-energy.workers.dev"
   ],
   "peer_policy": {
     "mode": "closed",

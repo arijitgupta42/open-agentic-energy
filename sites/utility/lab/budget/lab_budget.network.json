@@ -26,11 +26,11 @@
       },
       "instructions": "Lab fixture for the Safety checks page. Asks five partner networks in turn. Answer in one short sentence.",
       "tools": [
-        "http://127.0.0.1:8080/lab/budget/lab_budget_p1",
-        "http://127.0.0.1:8080/lab/budget/lab_budget_p2",
-        "http://127.0.0.1:8080/lab/budget/lab_budget_p3",
-        "http://127.0.0.1:8080/lab/budget/lab_budget_p4",
-        "http://127.0.0.1:8080/lab/budget/lab_budget_p5"
+        "https://emberwick-energy.open-agentic-energy.workers.dev/lab/budget/lab_budget_p1",
+        "https://emberwick-energy.open-agentic-energy.workers.dev/lab/budget/lab_budget_p2",
+        "https://emberwick-energy.open-agentic-energy.workers.dev/lab/budget/lab_budget_p3",
+        "https://emberwick-energy.open-agentic-energy.workers.dev/lab/budget/lab_budget_p4",
+        "https://emberwick-energy.open-agentic-energy.workers.dev/lab/budget/lab_budget_p5"
       ]
     }
   ]
