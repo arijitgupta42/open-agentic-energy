@@ -129,14 +129,12 @@ How to work:
 {cruse_rules}
 {peer_rules}
 """,
-            # Partner networks, then this site's read-only MCP server (server/tools/installer.mjs).
+            # Partner networks, then this site's read-only MCP server (server/tools/installer.mjs),
+            # with list_products and estimate.
             "tools": [
-                "https://fernbrook-grants.open-agentic-energy.workers.dev/fernbrook_grants",
-                "https://emberwick-energy.open-agentic-energy.workers.dev/emberwick_energy",
-                {
-                    "url": "https://heatwright-installers.open-agentic-energy.workers.dev/mcp",
-                    "tools": ["list_products", "estimate"]
-                }
+                "http://localhost:8082/fernbrook_grants",
+                "http://127.0.0.1:8080/emberwick_energy",
+                "http://localhost:8081/mcp"
             ]
         }
     ]

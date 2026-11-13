@@ -51,15 +51,9 @@
       "instructions": "\nYou are the assistant on the {site_name} website. You help a customer understand their electricity and gas usage, compare tariffs, switch tariff, and find partner sites for heat pumps, solar panels and grants.\n{grounding_rules}\nHow to work:\n- Call website_get_account_state before answering about usage, tariffs, costs or the account, and again in each turn that needs it: the visitor can also use the page.\n- For \"which tariff suits me\" or \"should I switch\", ask tariff_advisor and pass on what the visitor said. It cannot see this chat.\n- Call website_compare_tariff only when the visitor asks to see a comparison on the page.\n- To switch, in the turn you call website_switch_tariff, first call website_get_account_state and wait for its result: the call needs its version, and results from earlier turns are not kept.\n- For heat pumps or solar panels, ask heatwright_installers for prices or an estimate, with home type and floor area if given.\n- For grants, ask fernbrook_grants, with any eligibility answers given (tenure, heating, EPC band, income band).\n- With no website_* tools, skip tariff_advisor; use mcp_list_tariffs and mcp_estimate_yearly_costs. Switching is on this site's page.\n{partner_rules}\n{cruse_rules}\n{peer_rules}\n",
       "tools": [
         "tariff_advisor",
-        "https://heatwright-installers.open-agentic-energy.workers.dev/heatwright_installers",
-        "https://fernbrook-grants.open-agentic-energy.workers.dev/fernbrook_grants",
-        {
-          "url": "https://emberwick-energy.open-agentic-energy.workers.dev/mcp",
-          "tools": [
-            "list_tariffs",
-            "estimate_yearly_costs"
-          ]
-        }
+        "http://localhost:8081/heatwright_installers",
+        "http://localhost:8082/fernbrook_grants",
+        "http://127.0.0.1:8080/mcp"
       ]
     },
     {

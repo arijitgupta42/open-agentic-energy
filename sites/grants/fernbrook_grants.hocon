@@ -109,14 +109,11 @@ How to work:
 {cruse_rules}
 {peer_rules}
 """,
-            # This site's read-only MCP server (server/tools/grants.mjs), on its own origin.
-            # Another site that runs this network reaches it without a second consent card.
-            "tools": [
-                {
-                    "url": "https://fernbrook-grants.open-agentic-energy.workers.dev/mcp",
-                    "tools": ["list_grants", "check_eligibility"]
-                }
-            ]
+            # This site's read-only MCP server (server/tools/grants.mjs) on its own origin,
+            # with list_grants and check_eligibility. Another site that runs this network
+            # reaches it without a second consent card. A plain URL, so the runtime's agent
+            # graph labels it by host.
+            "tools": ["http://localhost:8082/mcp"]
         }
     ]
 }

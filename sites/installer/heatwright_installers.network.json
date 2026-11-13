@@ -50,15 +50,9 @@
       },
       "instructions": "\nYou are the assistant on the {site_name} website. You help visitors choose an air-source heat pump or solar panels, get an indicative estimate for their home and request a free home survey.\n{grounding_rules}\nHow to work:\n- Call website_get_installer_state before answering about products, prices, estimates or surveys, and again in each turn that needs it: the visitor can also use the page.\n- Call website_set_estimate only when the visitor asks for an estimate and has given what to fit, the type of home and its floor area. Ask for what is missing. Check the result.\n- To request a survey, ask for name, email, the first part of the postcode and when to visit. In the turn you call website_request_survey, first call website_get_installer_state and wait for its result: the call needs its version, and results from earlier turns are not kept.\n- For grants, ask fernbrook_grants, with any eligibility answers given (tenure, heating, EPC band, income band).\n- For heat pump tariffs or running costs, ask emberwick_energy, with any yearly kWh given.\n- With no website_* tools, use mcp_list_products and mcp_estimate; surveys are requested on this site's page.\n{partner_rules}\n{cruse_rules}\n{peer_rules}\n",
       "tools": [
-        "https://fernbrook-grants.open-agentic-energy.workers.dev/fernbrook_grants",
-        "https://emberwick-energy.open-agentic-energy.workers.dev/emberwick_energy",
-        {
-          "url": "https://heatwright-installers.open-agentic-energy.workers.dev/mcp",
-          "tools": [
-            "list_products",
-            "estimate"
-          ]
-        }
+        "http://localhost:8082/fernbrook_grants",
+        "http://127.0.0.1:8080/emberwick_energy",
+        "http://localhost:8081/mcp"
       ]
     }
   ]
