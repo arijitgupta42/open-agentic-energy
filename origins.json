@@ -10,8 +10,8 @@
     "grants": "http://[::1]:8082"
   },
   "production": {
-    "utility": "https://REPLACE-ME-utility.example",
-    "installer": "https://REPLACE-ME-installer.example",
-    "grants": "https://REPLACE-ME-grants.example"
+    "utility": "https://emberwick-energy.open-agentic-energy.workers.dev",
+    "installer": "https://heatwright-installers.open-agentic-energy.workers.dev",
+    "grants": "https://fernbrook-grants.open-agentic-energy.workers.dev"
   }
 }
