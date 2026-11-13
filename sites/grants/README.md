@@ -1,17 +1,21 @@
 # Fernbrook Retrofit Grants
 
-An open agentic website: a fictional grants body: schemes, an eligibility check and applications. Everything on it is fictional, and nothing leaves the
-page except what the visitor sends to the LLM provider they choose.
+The site of a fictional grants body, with an assistant. A visitor reads the schemes,
+checks eligibility and starts an application. Everything on it is fictional, and nothing
+leaves the page except what the visitor sends to the LLM provider they choose.
 
+- **Live:** https://fernbrook-grants.open-agentic-energy.workers.dev/
 - **Local address:** http://localhost:8082/ (run `npm run serve` from the repository root)
 - **Network URL:** `http://localhost:8082/fernbrook_grants`
 - **Agents:** fernbrook_assistant
 - **Actions:** get_grants_state (read), set_eligibility_answers (write), start_application (irreversible)
 - **Calls:** no other site
+- **MCP tools at `/mcp`:** list_grants, check_eligibility
 
 Other agent sites can run this network at its network URL. It then runs in their
-visitor's browser, on that visitor's key, with none of this site's `website_*` tools,
-so it says what this site offers and points to this page.
+visitor's browser, on that visitor's key. It has none of this site's `website_*` tools
+there, so it reads this site's public figures from its read-only MCP server at `/mcp`
+(`server/`) and points to this page for anything personal or anything that changes state.
 
 The assistant sends the visitor's messages, and the page data it reads, to the LLM
 provider the visitor picks. State lives in page memory: refreshing the page resets it.
