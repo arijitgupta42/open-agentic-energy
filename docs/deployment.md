@@ -26,9 +26,25 @@ Pages read. For Apache, `tools/agentify-website/references/bundle_and_hosting.md
 
 ## Hosts
 
-- **Netlify or Cloudflare Pages.** Create three projects from this repository, one per
-  site, each with its base or output directory set to `sites/<site>` and no build
-  command. Both read `_headers`. This is the route the upstream skill documents.
+- **Cloudflare (what this repository uses).** Cloudflare Pages is now part of Workers:
+  each site is a Worker that serves only static assets, at
+  `https://<worker>.open-agentic-energy.workers.dev`. The configs are in
+  `deploy/cloudflare/`, outside the site folders, so nothing Cloudflare-specific is
+  published with a site. Workers reads each site's `_headers`. Deploy from the
+  repository root after `npx wrangler@4 login` (on Windows PowerShell, `npx.cmd`):
+
+  ```shell
+  npx wrangler@4 deploy --config deploy/cloudflare/utility.jsonc
+  npx wrangler@4 deploy --config deploy/cloudflare/installer.jsonc
+  npx wrangler@4 deploy --config deploy/cloudflare/grants.jsonc
+  ```
+
+  Workers redirects a `.html` path to the same path without `.html`, on the same
+  origin. Do not run `wrangler pages project create` inside a site folder: it writes a
+  `wrangler.jsonc` and an `.assetsignore` there, which would then be published.
+- **Netlify.** Create three projects from this repository, one per site, each with its
+  base or output directory set to `sites/<site>` and no build command. Netlify reads
+  `_headers`. This is the route the upstream skill documents.
 - **GitHub Pages.** It cannot set custom headers, so it cannot send the worker's
   Content-Security-Policy, and all project sites of one account share one origin. To use
   it you would need a custom subdomain per site, and you would have to confirm with

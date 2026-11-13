@@ -1,0 +1,12 @@
+// Cloudflare Workers static assets: serves sites/utility at https://emberwick-energy.open-agentic-energy.workers.dev
+// Deploy from the repository root: npx wrangler@4 deploy --config deploy/cloudflare/utility.jsonc
+// The site's own _headers file sets the CORS and worker headers (docs/deployment.md).
+{
+  "name": "emberwick-energy",
+  "compatibility_date": "2026-11-13",
+  "workers_dev": true,
+  "preview_urls": false,
+  "assets": {
+    "directory": "../../sites/utility"
+  }
+}

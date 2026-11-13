@@ -1,0 +1,12 @@
+// Cloudflare Workers static assets: serves sites/installer at https://heatwright-installers.open-agentic-energy.workers.dev
+// Deploy from the repository root: npx wrangler@4 deploy --config deploy/cloudflare/installer.jsonc
+// The site's own _headers file sets the CORS and worker headers (docs/deployment.md).
+{
+  "name": "heatwright-installers",
+  "compatibility_date": "2026-11-13",
+  "workers_dev": true,
+  "preview_urls": false,
+  "assets": {
+    "directory": "../../sites/installer"
+  }
+}
