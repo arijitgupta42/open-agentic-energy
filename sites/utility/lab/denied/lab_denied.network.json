@@ -1,0 +1,33 @@
+{
+  "metadata": {
+    "description": "Lab fixture: asks a site that is not allowed"
+  },
+  "llm_config": {
+    "model_name": "neuro-san-mock-browser"
+  },
+  "max_steps": 4,
+  "tools": [
+    {
+      "name": "lab_denied_front",
+      "function": {
+        "description": "Asks a partner network on not-allowed.example.",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "request": {
+              "type": "string",
+              "description": "The request in plain language."
+            }
+          },
+          "required": [
+            "request"
+          ]
+        }
+      },
+      "instructions": "Lab fixture for the Safety checks page. Asks a partner network on not-allowed.example. Answer in one short sentence.",
+      "tools": [
+        "https://not-allowed.example/lab_outsider"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,33 @@
+{
+  "metadata": {
+    "description": "Lab fixture: a network that names a missing agent"
+  },
+  "llm_config": {
+    "model_name": "neuro-san-mock-browser"
+  },
+  "max_steps": 4,
+  "tools": [
+    {
+      "name": "lab_invalid_front",
+      "function": {
+        "description": "Asks ghost_agent, which this network never defines.",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "request": {
+              "type": "string",
+              "description": "The request in plain language."
+            }
+          },
+          "required": [
+            "request"
+          ]
+        }
+      },
+      "instructions": "Lab fixture for the Safety checks page. Asks ghost_agent, which this network never defines. Answer in one short sentence.",
+      "tools": [
+        "ghost_agent"
+      ]
+    }
+  ]
+}

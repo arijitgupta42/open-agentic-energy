@@ -21,7 +21,14 @@ export class Sites {
     {
       id: "utility",
       network: "emberwick_energy",
-      originFiles: ["emberwick_energy.hocon", "agent-manifest.json", "js/partner-links.js"],
+      originFiles: [
+        "emberwick_energy.hocon", "agent-manifest.json", "js/partner-links.js",
+        // The Safety checks page's test networks (lab/) name this site's own origin.
+        "lab/invalid/agent-manifest.json",
+        "lab/cycle/agent-manifest.json", "lab/cycle/lab_cycle_a.network.json", "lab/cycle/lab_cycle_b.network.json",
+        "lab/budget/agent-manifest.json", "lab/budget/lab_budget.network.json",
+        "lab/denied/agent-manifest.json",
+      ],
     },
     {
       id: "installer",

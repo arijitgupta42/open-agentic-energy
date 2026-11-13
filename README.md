@@ -13,6 +13,10 @@ Live: [Emberwick Energy](https://emberwick-energy.open-agentic-energy.workers.de
 [Heatwright Home Energy](https://heatwright-installers.open-agentic-energy.workers.dev/) ·
 [Fernbrook Retrofit Grants](https://fernbrook-grants.open-agentic-energy.workers.dev/)
 
+[Safety checks](https://emberwick-energy.open-agentic-energy.workers.dev/lab/), no key needed: the runtime
+refusing an invalid network, a composition cycle, an over-budget request and a denied
+origin (spec section 6), each on a small test network in `sites/utility/lab/`.
+
 | Site | What a visitor does | Network |
 | --- | --- | --- |
 | [Emberwick Energy](sites/utility) | Sees usage, compares tariffs, switches tariff | `emberwick_energy` (two agents) |
