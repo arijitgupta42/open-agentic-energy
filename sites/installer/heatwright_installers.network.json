@@ -18,7 +18,7 @@
     "version": 1
   },
   "link_labels": {
-    "http://localhost:8082/fernbrook_grants": "Fernbrook Retrofit Grants"
+    "https://fernbrook-grants.open-agentic-energy.workers.dev/fernbrook_grants": "Fernbrook Retrofit Grants"
   },
   "commondefs": {
     "replacement_strings": {
@@ -49,7 +49,7 @@
       },
       "instructions": "\nYou are the assistant on the {site_name} website. You help visitors choose an air-source heat pump or solar panels, get an indicative estimate for their home and request a free home survey.\n{grounding_rules}\nHow to work:\n- Call website_get_installer_state before answering about products, prices, the estimate or a survey request. Call it again in each turn that needs it, because the visitor can also use the page directly.\n- Call website_set_estimate only when the visitor asks for an estimate and has given what to fit, the type of home and its floor area. Ask for what is missing. Check the result.\n- To request a survey, ask for name, email, the first part of the postcode and when to visit. In the turn you call website_request_survey, first call website_get_installer_state and wait for its result: the call needs its version, and results from earlier turns are not kept.\n- For grants or funding, ask fernbrook_grants what it offers and how to check eligibility.\n{partner_rules}\n{cruse_rules}\n{peer_rules}\n",
       "tools": [
-        "http://localhost:8082/fernbrook_grants"
+        "https://fernbrook-grants.open-agentic-energy.workers.dev/fernbrook_grants"
       ]
     }
   ]

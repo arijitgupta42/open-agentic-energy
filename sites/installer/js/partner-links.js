@@ -10,7 +10,7 @@ export class PartnerLinks {
     {
       name: "Fernbrook Retrofit Grants",
       what: "Grants towards heat pumps, solar panels and insulation, with an eligibility check.",
-      url: "http://localhost:8082/",
+      url: "https://fernbrook-grants.open-agentic-energy.workers.dev/",
     },
   ];
 }

@@ -25,8 +25,8 @@
     "byok_router": "https://openrouter.ai/api/v1"
   },
   "allowed_peers": [
-    "http://localhost:8081",
-    "http://localhost:8082"
+    "https://heatwright-installers.open-agentic-energy.workers.dev",
+    "https://fernbrook-grants.open-agentic-energy.workers.dev"
   ],
   "peer_policy": {
     "mode": "closed",

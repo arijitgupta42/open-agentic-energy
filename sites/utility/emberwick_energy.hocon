@@ -41,8 +41,8 @@
     # in the calling agent's "tools". These are the local hosts. Run
     # `npm run origins -- production` before hosting (see docs/deployment.md).
     "link_labels": {
-        "http://localhost:8081/heatwright_installers": "Heatwright Home Energy",
-        "http://localhost:8082/fernbrook_grants": "Fernbrook Retrofit Grants"
+        "https://heatwright-installers.open-agentic-energy.workers.dev/heatwright_installers": "Heatwright Home Energy",
+        "https://fernbrook-grants.open-agentic-energy.workers.dev/fernbrook_grants": "Fernbrook Retrofit Grants"
     },
 
     "commondefs": {
@@ -126,7 +126,7 @@ How to work:
 {cruse_rules}
 {peer_rules}
 """,
-            "tools": ["tariff_advisor", "http://localhost:8081/heatwright_installers", "http://localhost:8082/fernbrook_grants"]
+            "tools": ["tariff_advisor", "https://heatwright-installers.open-agentic-energy.workers.dev/heatwright_installers", "https://fernbrook-grants.open-agentic-energy.workers.dev/fernbrook_grants"]
         },
         {
             "name": "tariff_advisor",

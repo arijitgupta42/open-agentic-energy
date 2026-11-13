@@ -41,7 +41,7 @@
     # in the calling agent's "tools". These are the local hosts. Run
     # `npm run origins -- production` before hosting (see docs/deployment.md).
     "link_labels": {
-        "http://localhost:8082/fernbrook_grants": "Fernbrook Retrofit Grants"
+        "https://fernbrook-grants.open-agentic-energy.workers.dev/fernbrook_grants": "Fernbrook Retrofit Grants"
     },
 
     "commondefs": {
@@ -123,7 +123,7 @@ How to work:
 {cruse_rules}
 {peer_rules}
 """,
-            "tools": ["http://localhost:8082/fernbrook_grants"]
+            "tools": ["https://fernbrook-grants.open-agentic-energy.workers.dev/fernbrook_grants"]
         }
     ]
 }
