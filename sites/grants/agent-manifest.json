@@ -24,7 +24,7 @@
     "byok_router": "https://openrouter.ai/api/v1"
   },
   "allowed_peers": [
-    "http://localhost:8082"
+    "https://fernbrook-grants.open-agentic-energy.workers.dev"
   ],
   "peer_policy": {
     "mode": "closed",

@@ -15,7 +15,7 @@ export class PartnerLinks {
     {
       name: "Emberwick Energy",
       what: "Energy tariffs, including one with a lower electricity rate for homes heated by a heat pump.",
-      url: "http://127.0.0.1:8080/",
+      url: "https://emberwick-energy.open-agentic-energy.workers.dev/",
     },
   ];
 }

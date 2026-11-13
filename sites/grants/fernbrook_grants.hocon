@@ -113,7 +113,7 @@ How to work:
             # Another site that runs this network reaches it without a second consent card.
             "tools": [
                 {
-                    "url": "http://localhost:8082/mcp",
+                    "url": "https://fernbrook-grants.open-agentic-energy.workers.dev/mcp",
                     "tools": ["list_grants", "check_eligibility"]
                 }
             ]
