@@ -56,8 +56,9 @@ repository's own code. Do not hide them.
 - After the visitor allows a partner, that partner's agents call the partner's own
   `/mcp` without a second card, because the runtime treats a network's own origin as
   the same site. The call carries only details from the request the card showed.
-- The consent card shows the first 140 characters of a request; the partner's network
-  reads all of it.
+- The runtime's consent card quotes only the first 140 characters of a request. Each
+  site's `site.js` replaces that quote with the whole request, as text, before the
+  visitor answers, so they see everything the partner's network will read.
 - A partner that accepts the connection but never answers leaves the chat waiting until
   the page is reloaded.
 - The LLM provider must allow browser calls (CORS).

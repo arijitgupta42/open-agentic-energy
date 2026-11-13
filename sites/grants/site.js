@@ -135,11 +135,31 @@ export class AssistantMount {
     // defaultConsent() adds the card at once. The card has no role, and the stylesheet
     // hides the status line while it waits, so name the card and focus its title.
     const answer = AssistantMount.defaultConsent(info);
+    AssistantMount.showWholeRequest(info);
     AssistantMount.focusConsentCard();
     const decision = await answer;
     // Answering the card removes its buttons, so focus may fall to the page body.
     AssistantMount.keepFocusInChat();
     return decision;
+  }
+
+  /**
+   * Show the whole request on the newest consent card. The runtime's card quotes only its
+   * first 140 characters, but the partner's network reads all of it, so the visitor would
+   * agree to text they cannot see (spec 3.2 and 5: the card names the nature of the
+   * request). Set as text, never as HTML, so a request cannot add markup to the page.
+   *
+   * :param info: What the card shows, with requestText.
+   */
+  static showWholeRequest(info) {
+    const text = info && typeof info.requestText === "string" ? info.requestText : "";
+    const cards = document.querySelectorAll("#ns-msgs .ns-consent");
+    const card = cards[cards.length - 1];
+    const quote = card ? card.querySelector(".ns-consent-req") : null;
+    if (!quote || !text) {
+      return;
+    }
+    quote.textContent = `“${text}”`;
   }
 
   /**
