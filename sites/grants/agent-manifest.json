@@ -23,7 +23,9 @@
     "mock": false,
     "byok_router": "https://openrouter.ai/api/v1"
   },
-  "allowed_peers": [],
+  "allowed_peers": [
+    "http://localhost:8082"
+  ],
   "peer_policy": {
     "mode": "closed",
     "deny_origins": [],

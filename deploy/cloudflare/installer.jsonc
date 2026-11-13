@@ -1,12 +1,19 @@
-// Cloudflare Workers static assets: serves sites/installer at https://heatwright-installers.open-agentic-energy.workers.dev
+// Cloudflare Worker for sites/installer at https://heatwright-installers.open-agentic-energy.workers.dev
 // Deploy from the repository root: npx wrangler@4 deploy --config deploy/cloudflare/installer.jsonc
-// The site's own _headers file sets the CORS and worker headers (docs/deployment.md).
+// Static files come from the site folder, with its own _headers file (docs/deployment.md).
+// Requests that match no file, such as /mcp, run server/worker.mjs: /mcp is the site's
+// read-only MCP server (server/tools/installer.mjs).
 {
   "name": "heatwright-installers",
+  "main": "../../server/worker.mjs",
   "compatibility_date": "2026-11-13",
   "workers_dev": true,
   "preview_urls": false,
+  "vars": {
+    "SITE": "installer"
+  },
   "assets": {
-    "directory": "../../sites/installer"
+    "directory": "../../sites/installer",
+    "binding": "ASSETS"
   }
 }

@@ -12,5 +12,10 @@ export class PartnerLinks {
       what: "Grants towards heat pumps, solar panels and insulation, with an eligibility check.",
       url: "https://fernbrook-grants.open-agentic-energy.workers.dev/",
     },
+    {
+      name: "Emberwick Energy",
+      what: "Energy tariffs, including one with a lower electricity rate for homes heated by a heat pump.",
+      url: "http://127.0.0.1:8080/",
+    },
   ];
 }

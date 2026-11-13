@@ -11,7 +11,7 @@
   "scripts": {
     "build": "node scripts/build-all.mjs",
     "check": "node scripts/build-all.mjs --check && node scripts/sync-runtime.mjs --check && node scripts/check-conformance.mjs",
-    "test": "node --test \"sites/*/tests/*.test.mjs\"",
+    "test": "node --test \"sites/*/tests/*.test.mjs\" \"server/tests/*.test.mjs\"",
     "serve": "node scripts/serve-all.mjs",
     "conformance": "node scripts/check-conformance.mjs",
     "conformance:live": "node scripts/check-conformance.mjs --live",

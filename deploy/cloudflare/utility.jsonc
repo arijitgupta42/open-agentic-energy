@@ -1,12 +1,19 @@
-// Cloudflare Workers static assets: serves sites/utility at https://emberwick-energy.open-agentic-energy.workers.dev
+// Cloudflare Worker for sites/utility at https://emberwick-energy.open-agentic-energy.workers.dev
 // Deploy from the repository root: npx wrangler@4 deploy --config deploy/cloudflare/utility.jsonc
-// The site's own _headers file sets the CORS and worker headers (docs/deployment.md).
+// Static files come from the site folder, with its own _headers file (docs/deployment.md).
+// Requests that match no file, such as /mcp, run server/worker.mjs: /mcp is the site's
+// read-only MCP server (server/tools/utility.mjs).
 {
   "name": "emberwick-energy",
+  "main": "../../server/worker.mjs",
   "compatibility_date": "2026-11-13",
   "workers_dev": true,
   "preview_urls": false,
+  "vars": {
+    "SITE": "utility"
+  },
   "assets": {
-    "directory": "../../sites/utility"
+    "directory": "../../sites/utility",
+    "binding": "ASSETS"
   }
 }

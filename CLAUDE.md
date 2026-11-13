@@ -14,11 +14,14 @@ against them before you write code, and say which rule or spec section applies.
 | Folder | Site (fictional) | Network URL path | Agents | Calls |
 | --- | --- | --- | --- | --- |
 | `sites/utility` | Emberwick Energy: account, usage, tariffs, switching. **The site to submit.** | `/emberwick_energy` | `emberwick_assistant` (front), `tariff_advisor` | installer, grants |
-| `sites/installer` | Heatwright Home Energy: heat pump and solar estimates, survey requests | `/heatwright_installers` | `heatwright_assistant` | grants |
+| `sites/installer` | Heatwright Home Energy: heat pump and solar estimates, survey requests | `/heatwright_installers` | `heatwright_assistant` | grants, utility |
 | `sites/grants` | Fernbrook Retrofit Grants: eligibility check, applications | `/fernbrook_grants` | `fernbrook_assistant` | none |
 
 Each site is a self-contained static folder: plain HTML, CSS and JavaScript modules, no
-dependencies and no bundler. All data is fictional and lives in page memory.
+dependencies and no bundler. All data is fictional and lives in page memory. Each site
+also answers `/mcp` on its own origin: a read-only MCP server in `server/` over the same
+`js/*-data.js` and `js/*-rules.js`, run by the site's Cloudflare Worker and, locally, by
+`npm run serve`. Its tools are public data only and never a visitor's own records.
 
 ## Commands
 
@@ -27,9 +30,9 @@ Run from the repository root. Node.js 22 or newer.
 | Command | What it does |
 | --- | --- |
 | `npm run build` | Writes each site's `<network>.network.json`, discovery files and `bridge/` from its `.hocon` and manifest |
-| `npm test` | Runs every site's tests: real runtime, real page code, scripted model, no LLM |
+| `npm test` | Runs every site's tests (real runtime, real page code, scripted model, no LLM) and the MCP servers' tests |
 | `npm run check` | Fails when generated files are stale, a runtime copy differs, or a conformance check fails |
-| `npm run serve` | Serves the three sites locally with the headers a host must send |
+| `npm run serve` | Serves the three sites locally with the headers a host must send, and each site's `/mcp` |
 | `npm run conformance:live` | Fetches the served sites and checks CORS and the bridge |
 | `npm run origins -- <local\|local-ipv6\|production>` | Rewrites partner origins everywhere from `origins.json`, then builds |
 | `npm run sync-runtime` | Copies `tools/agentify-website/runtime` into each site |
@@ -69,8 +72,15 @@ commit.
    `link_labels` entry, and its origin in `allowed_peers`. Keep `peer_policy.mode`
    `"closed"`. Change origins only through `origins.json` and `npm run origins`. A
    request to a partner never holds a name, email, phone number or reference code, and
-   stays under 140 characters. A partner's network gets none of its own site's tools
-   here, so promise only "what it offers and how to start".
+   stays under 140 characters. A partner's network gets none of its own site's
+   `website_*` tools here; it answers from its own site's read-only `/mcp` tools instead.
+   Two sentences of `partner_rules` differ from the template on purpose (non-personal
+   details in the request; a decline is the visitor's choice), so the build warns.
+13. **MCP tools.** A site's MCP tools live in `server/tools/<site>.mjs`, are read-only,
+   take no name, email, phone number or reference, return no visitor's records, and call
+   the site's own data and rules modules. Each front agent lists its own `<origin>/mcp`
+   in `tools` and each manifest its own origin in `allowed_peers`. Put hand-worked
+   amounts in `server/tests/`.
 8. **Keys and privacy.** Never put a key, token or personal data in any file, URL,
    prompt, action argument or log. Never ask the user to paste a key into a chat. The
    visitor's key belongs in the runtime's settings panel only. Load no third-party
@@ -92,6 +102,8 @@ commit.
 CLAUDE.md                     this file
 origins.json                  each site's origin per environment
 scripts/                      build-all, serve-all, set-origins, sync-runtime, check-conformance
+server/                       each site's read-only MCP server (/mcp) and the Cloudflare Worker entry
+deploy/cloudflare/            one Worker config per site: static assets plus /mcp
 docs/hackathon/               the rules digest, the specification and the checklist (loaded below)
 docs/architecture.md          sites, agents, actions and cross-site calls
 docs/development.md           local setup, trying with a key, adding a site or an action

@@ -41,7 +41,7 @@
             "site_name": "Fernbrook Retrofit Grants",
 
             "grounding_rules": """
-Facts come only from website_* tool results and from this conversation.
+Facts come only from website_* and mcp_* tool results and from this conversation.
 If a result does not contain a fact, say you do not know. Do not guess.
 Never invent prices, availability, times, IDs, order numbers or statuses.
 Reading tool results:
@@ -105,10 +105,18 @@ How to work:
 - Call website_get_grants_state before answering about schemes, amounts, conditions, results or applications. Call it again in each turn that needs it, because the visitor can also use the page directly.
 - To check eligibility, you need four answers: who owns or rents the home, how it is heated now, its EPC band and the income band. Ask for the missing ones, offering the allowed answers from website_get_grants_state. Call website_set_eligibility_answers only when the visitor asks for a check and has given all four. Report each scheme's result and reasons from the tool result, never from your own reading of the conditions.
 - To apply, ask for the applicant's full name and email. In the turn you call website_start_application, first call website_get_grants_state and wait for its result: the call needs its version, and results from earlier turns are not kept.
+- With no website_* tools, use mcp_list_grants, and mcp_check_eligibility when given all four answers. Say applications are made on this site's page.
 {cruse_rules}
 {peer_rules}
 """,
-            "tools": []
+            # This site's read-only MCP server (server/tools/grants.mjs), on its own origin.
+            # Another site that runs this network reaches it without a second consent card.
+            "tools": [
+                {
+                    "url": "http://localhost:8082/mcp",
+                    "tools": ["list_grants", "check_eligibility"]
+                }
+            ]
         }
     ]
 }
