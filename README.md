@@ -9,18 +9,22 @@ sites, after the visitor agrees.
 
 All three companies, and every tariff, price and grant, are fictional.
 
+Live: [Emberwick Energy](https://emberwick-energy.open-agentic-energy.workers.dev/) (the site entered) ·
+[Heatwright Home Energy](https://heatwright-installers.open-agentic-energy.workers.dev/) ·
+[Fernbrook Retrofit Grants](https://fernbrook-grants.open-agentic-energy.workers.dev/)
+
 | Site | What a visitor does | Network |
 | --- | --- | --- |
 | [Emberwick Energy](sites/utility) | Sees usage, compares tariffs, switches tariff | `emberwick_energy` (two agents) |
 | [Heatwright Home Energy](sites/installer) | Gets a heat pump or solar estimate, requests a survey | `heatwright_installers` |
 | [Fernbrook Retrofit Grants](sites/grants) | Checks eligibility, starts an application | `fernbrook_grants` |
 
-The story the three tell together: a customer asks their energy supplier "should I get a
-heat pump?". The supplier's assistant knows their usage and tariffs. After the customer
-agrees, it runs the installer's and the grants body's agents in the customer's own
-browser, and those agents answer with real figures from their own sites' read-only MCP
-servers: an estimate for the home, and which grants the household could get. The
-installer's assistant can ask the supplier about heat pump tariffs the same way.
+A customer asks their energy supplier "should I get a heat pump?". The supplier's
+assistant knows their usage and tariffs. After the customer agrees, it runs the
+installer's and the grants body's agents in the customer's own browser, and those agents
+answer with figures from their own sites' read-only MCP servers: an estimate for the
+home, and which grants the household could get. The installer's assistant can ask the
+supplier about heat pump tariffs the same way.
 
 ## Quick start
 
@@ -50,10 +54,11 @@ and add your own key. See [docs/development.md](docs/development.md) before you 
 
 ## Status
 
-This is a starting point, not a finished entry. It builds, passes its tests and runs in
-a browser. It has not been tried with a live LLM key, and it is not hosted yet. The
-checklist in [docs/hackathon/conformance_checklist.md](docs/hackathon/conformance_checklist.md)
-lists what is left, including the checks only a browser with a key can make.
+The three sites are hosted on Cloudflare Workers and pass the live conformance and
+partner checks. Browser checks with a live key (OpenRouter, `openai/gpt-6-luna`) are
+recorded on the repository's issues. Work left before the submission is tracked in the
+"Devpost submission" milestone, and the known gaps are listed in
+[docs/hackathon/conformance_checklist.md](docs/hackathon/conformance_checklist.md).
 
 ## Licence
 

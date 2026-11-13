@@ -1,18 +1,22 @@
 # Emberwick Energy
 
-An open agentic website: a fictional energy supplier's account page: usage, tariffs, comparing and switching. Everything on it is fictional, and nothing leaves the
-page except what the visitor sends to the LLM provider they choose.
+The account page of a fictional energy supplier, with an assistant. A visitor sees their
+usage, compares tariffs and switches. Everything on it is fictional, and nothing leaves
+the page except what the visitor sends to the LLM provider they choose.
 
+- **Live:** https://emberwick-energy.open-agentic-energy.workers.dev/
 - **Local address:** http://127.0.0.1:8080/ (run `npm run serve` from the repository root)
 - **Network URL:** `http://127.0.0.1:8080/emberwick_energy`
 - **Agents:** emberwick_assistant (front agent) and tariff_advisor
 - **Actions:** get_account_state (read), compare_tariff (write), switch_tariff (irreversible)
 - **Calls:** Heatwright Home Energy and Fernbrook Retrofit Grants, after the visitor agrees on a consent card
+- **MCP tools at `/mcp`:** list_tariffs, estimate_yearly_costs (public tariffs only)
 
 Other agent sites can run this network at its network URL. It then runs in their
-visitor's browser, on that visitor's key, with none of this site's `website_*` tools,
-so it says what this site offers and points to this page. A calling site's visitor also
-gets a card for each partner this network asks.
+visitor's browser, on that visitor's key. It has none of this site's `website_*` tools
+there, so it reads this site's public figures from its read-only MCP server at `/mcp`
+(`server/`) and points to this page for anything personal or anything that changes state.
+A calling site's visitor also gets a card for each partner this network asks.
 
 The assistant sends the visitor's messages, and the page data it reads, to the LLM
 provider the visitor picks. State lives in page memory: refreshing the page resets it.
