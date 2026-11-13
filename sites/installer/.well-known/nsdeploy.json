@@ -1,0 +1,18 @@
+{
+  "protocol": "nsdeploy-link/v1",
+  "exports": [
+    {
+      "network": "heatwright_installers",
+      "front_man": "heatwright_assistant",
+      "aliases": [
+        "heatwright_installers",
+        "heatwright_assistant"
+      ],
+      "url": "heatwright_installers"
+    }
+  ],
+  "imports": [],
+  "link_updates": {
+    "mode": "browser-local"
+  }
+}

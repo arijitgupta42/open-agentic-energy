@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="Heatwright Home Energy demo: estimate a heat pump or solar panels for your home and request a survey. A fictional site for the Open Agentic Web Challenge.">
+    <title>Heatwright Home Energy · Heat pumps and solar</title>
+    <link rel="icon" href="favicon.svg" type="image/svg+xml">
+    <link rel="stylesheet" href="styles.css">
+    <script type="module" src="js/app.js"></script>
+    <script type="module" src="site.js"></script>
+  </head>
+  <body>
+    <header>
+      <a class="brand" href="index.html">Heatwright <span>Home Energy</span></a>
+      <nav aria-label="Main navigation">
+        <a href="#products">What we fit</a>
+        <a href="#estimate">Estimate</a>
+        <a href="#survey">Survey</a>
+        <a href="#grants">Grants</a>
+        <a href="#assistant">Ask us</a>
+      </nav>
+    </header>
+    <main>
+      <section class="intro" aria-labelledby="welcome">
+        <p class="eyebrow">Heat pumps · Solar panels</p>
+        <h1 id="welcome">A warmer home that costs less to run.</h1>
+        <p id="demo-note" class="note">Demo site: Heatwright Home Energy, its products and its prices are fictional.
+          A survey request is kept in this page until you refresh it. Nobody will visit.</p>
+      </section>
+
+      <section id="products" aria-labelledby="products-heading">
+        <h2 id="products-heading">What we fit</h2>
+        <div id="product-list" class="card-list"></div>
+        <ul id="product-notes"></ul>
+        <noscript><p>Please turn on JavaScript to get an estimate and request a survey.</p></noscript>
+      </section>
+
+      <section id="estimate" aria-labelledby="estimate-heading">
+        <h2 id="estimate-heading">Get an estimate</h2>
+        <form id="estimate-form">
+          <label for="estimate-measure">What would you like?</label>
+          <select id="estimate-measure" name="measure"></select>
+          <label for="estimate-home-type">Type of home</label>
+          <select id="estimate-home-type" name="homeType"></select>
+          <label for="estimate-floor-area">Floor area in square metres</label>
+          <input id="estimate-floor-area" name="floorAreaM2" type="number" min="20" max="400" step="1" inputmode="numeric">
+          <button type="submit">Show my estimate</button>
+          <p id="estimate-message" class="error" role="alert"></p>
+        </form>
+        <p id="estimate-result" class="result" role="status" hidden></p>
+        <button id="estimate-clear" type="button" hidden>Clear estimate</button>
+      </section>
+
+      <section id="survey" aria-labelledby="survey-heading">
+        <h2 id="survey-heading">Request a free home survey</h2>
+        <p>Make an estimate first, then tell us who to ask for and when to visit.</p>
+        <form id="survey-form">
+          <label for="survey-name">Your name</label>
+          <input id="survey-name" name="fullName" maxlength="80" autocomplete="name">
+          <label for="survey-email">Email</label>
+          <input id="survey-email" name="email" maxlength="120" autocomplete="email">
+          <label for="survey-postcode">First part of your postcode</label>
+          <input id="survey-postcode" name="postcodeArea" maxlength="8" autocomplete="off">
+          <label for="survey-window">When can we visit?</label>
+          <select id="survey-window" name="window"></select>
+          <button type="submit">Request the survey</button>
+          <p id="survey-message" class="error" role="alert"></p>
+        </form>
+        <p id="survey-result" class="result" role="status" hidden></p>
+      </section>
+
+      <section id="grants" aria-labelledby="grants-heading">
+        <h2 id="grants-heading">Grants</h2>
+        <p>We do not award grants or check eligibility. This partner site does:</p>
+        <ul id="partner-list"></ul>
+      </section>
+
+      <section id="assistant" class="assistant" aria-labelledby="assistant-heading">
+        <h2 id="assistant-heading">Ask Heatwright Home Energy</h2>
+        <p>The assistant can explain what we fit, work out an estimate for your home, request a survey, and ask our grants partner what it offers.</p>
+        <p class="assistant-note">Your messages and this page's data go to the LLM provider you choose in the settings below. You confirm anything that cannot be undone before it happens, and you agree before a partner site is contacted.</p>
+        <p id="assistant-status" role="status">Connecting the assistant… If this message stays, the assistant could not load. You can still use the page directly.</p>
+        <div id="agent-app">
+          <div data-ns-slot="header"></div>
+          <div class="assistant-panels">
+            <div data-ns-slot="chat"></div>
+            <div data-ns-slot="agents"></div>
+          </div>
+          <div data-ns-slot="settings"></div>
+        </div>
+      </section>
+    </main>
+    <footer>
+      <p>Heatwright Home Energy is a fictional installer, made for the Open Agentic Web Challenge. Open source under Apache 2.0.</p>
+    </footer>
+  </body>
+</html>

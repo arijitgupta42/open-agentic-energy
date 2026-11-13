@@ -1,0 +1,21 @@
+{
+  "name": "open-agentic-energy",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Three linked open agentic websites (an energy supplier, an installer and a grants body) for the Open Agentic Web Challenge.",
+  "license": "Apache-2.0",
+  "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "build": "node scripts/build-all.mjs",
+    "check": "node scripts/build-all.mjs --check && node scripts/sync-runtime.mjs --check && node scripts/check-conformance.mjs",
+    "test": "node --test \"sites/*/tests/*.test.mjs\"",
+    "serve": "node scripts/serve-all.mjs",
+    "conformance": "node scripts/check-conformance.mjs",
+    "conformance:live": "node scripts/check-conformance.mjs --live",
+    "origins": "node scripts/set-origins.mjs",
+    "sync-runtime": "node scripts/sync-runtime.mjs"
+  }
+}

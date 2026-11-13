@@ -1,0 +1,18 @@
+{
+  "protocol": "nsdeploy-link/v1",
+  "exports": [
+    {
+      "network": "emberwick_energy",
+      "front_man": "emberwick_assistant",
+      "aliases": [
+        "emberwick_energy",
+        "emberwick_assistant"
+      ],
+      "url": "emberwick_energy"
+    }
+  ],
+  "imports": [],
+  "link_updates": {
+    "mode": "browser-local"
+  }
+}

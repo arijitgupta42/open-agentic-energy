@@ -1,0 +1,17 @@
+{
+  "local": {
+    "utility": "http://127.0.0.1:8080",
+    "installer": "http://localhost:8081",
+    "grants": "http://localhost:8082"
+  },
+  "local-ipv6": {
+    "utility": "http://127.0.0.1:8080",
+    "installer": "http://localhost:8081",
+    "grants": "http://[::1]:8082"
+  },
+  "production": {
+    "utility": "https://REPLACE-ME-utility.example",
+    "installer": "https://REPLACE-ME-installer.example",
+    "grants": "https://REPLACE-ME-grants.example"
+  }
+}

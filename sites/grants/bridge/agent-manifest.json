@@ -1,0 +1,10 @@
+{
+  "networks": [
+    {
+      "name": "fernbrook_grants"
+    }
+  ],
+  "actions": {
+    "version": 1
+  }
+}

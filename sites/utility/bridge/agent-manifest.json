@@ -1,0 +1,10 @@
+{
+  "networks": [
+    {
+      "name": "emberwick_energy"
+    }
+  ],
+  "actions": {
+    "version": 1
+  }
+}

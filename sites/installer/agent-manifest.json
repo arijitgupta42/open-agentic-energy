@@ -1,0 +1,81 @@
+{
+  "brand": "Heatwright Home Energy Assistant",
+  "networks": [
+    {
+      "name": "heatwright_installers",
+      "front_man": "heatwright_assistant",
+      "hocon": "./heatwright_installers.network.json",
+      "description": "Ask what we fit, get an indicative estimate for a heat pump or solar panels for your home, request a free survey, and find out what our grants partner offers.",
+      "tags": [
+        "agentified-website"
+      ],
+      "sample_queries": [
+        "What do you fit, and roughly what does each cost?",
+        "What heat pump would suit a 95 square metre semi-detached house, and what would it cost?",
+        "Show an estimate for solar panels on a 120 square metre detached house.",
+        "Request a survey on a Saturday morning for my estimate. I'm Ana Silva, ana.silva@example.com, postcode area LS6.",
+        "Is there a grant that would help pay for a heat pump?",
+        "Can you service my gas boiler or fit a battery?"
+      ]
+    }
+  ],
+  "llm_router": {
+    "base_url": "https://api.otari.ai/api/v1",
+    "mock": false,
+    "byok_router": "https://api.otari.ai/api/v1"
+  },
+  "allowed_peers": [
+    "http://localhost:8082"
+  ],
+  "peer_policy": {
+    "mode": "closed",
+    "deny_origins": [],
+    "note": "Calls only the partner sites in allowed_peers, after the visitor agrees."
+  },
+  "agent_mcp": {
+    "protocol": "nsdeploy-agent-mcp/v1",
+    "network": "heatwright_installers",
+    "front_man": "heatwright_assistant",
+    "available": false,
+    "reason": "This is a static bundle; a public MCP facade requires an application host."
+  },
+  "theme": {
+    "primary": "#0f5132"
+  },
+  "linking": {
+    "protocol": "nsdeploy-link/v1",
+    "exports": [
+      {
+        "network": "heatwright_installers",
+        "front_man": "heatwright_assistant",
+        "aliases": [
+          "heatwright_installers",
+          "heatwright_assistant"
+        ],
+        "url": "heatwright_installers"
+      }
+    ],
+    "imports": [],
+    "link_updates": {
+      "mode": "browser-local"
+    }
+  },
+  "deployment": {
+    "mode": "static",
+    "self_contained_runtime": true,
+    "browser_mock": false,
+    "direct_byok": true,
+    "direct_mcp_requires_cors": true,
+    "public_mcp_facade": false
+  },
+  "actions": {
+    "version": 1,
+    "module": "./site-actions.js",
+    "bridge": "./bridge/action-bridge.html",
+    "agentTools": [
+      "get_installer_state",
+      "set_estimate",
+      "request_survey"
+    ]
+  }
+}

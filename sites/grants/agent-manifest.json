@@ -1,0 +1,78 @@
+{
+  "brand": "Fernbrook Retrofit Grants Assistant",
+  "networks": [
+    {
+      "name": "fernbrook_grants",
+      "front_man": "fernbrook_assistant",
+      "hocon": "./fernbrook_grants.network.json",
+      "description": "Ask about our home energy grants, check which ones you could apply for, and start an application.",
+      "tags": [
+        "agentified-website"
+      ],
+      "sample_queries": [
+        "Which grants do you offer, and how much is each one?",
+        "Who can apply for the heat pump grant?",
+        "I own my home, heat it with a gas boiler, the EPC band is D and our income is over \u00a331,000. What can I apply for?",
+        "I own my home with an oil boiler, EPC band C, income under \u00a331,000. Start a heat pump grant application for Ana Silva, ana.silva@example.com.",
+        "Can you tell me if my application was approved, or pay the grant to my installer?"
+      ]
+    }
+  ],
+  "llm_router": {
+    "base_url": "https://api.otari.ai/api/v1",
+    "mock": false,
+    "byok_router": "https://api.otari.ai/api/v1"
+  },
+  "allowed_peers": [],
+  "peer_policy": {
+    "mode": "closed",
+    "deny_origins": [],
+    "note": "Local agents and page-local actions only."
+  },
+  "agent_mcp": {
+    "protocol": "nsdeploy-agent-mcp/v1",
+    "network": "fernbrook_grants",
+    "front_man": "fernbrook_assistant",
+    "available": false,
+    "reason": "This is a static bundle; a public MCP facade requires an application host."
+  },
+  "theme": {
+    "primary": "#3730a3"
+  },
+  "linking": {
+    "protocol": "nsdeploy-link/v1",
+    "exports": [
+      {
+        "network": "fernbrook_grants",
+        "front_man": "fernbrook_assistant",
+        "aliases": [
+          "fernbrook_grants",
+          "fernbrook_assistant"
+        ],
+        "url": "fernbrook_grants"
+      }
+    ],
+    "imports": [],
+    "link_updates": {
+      "mode": "browser-local"
+    }
+  },
+  "deployment": {
+    "mode": "static",
+    "self_contained_runtime": true,
+    "browser_mock": false,
+    "direct_byok": true,
+    "direct_mcp_requires_cors": true,
+    "public_mcp_facade": false
+  },
+  "actions": {
+    "version": 1,
+    "module": "./site-actions.js",
+    "bridge": "./bridge/action-bridge.html",
+    "agentTools": [
+      "get_grants_state",
+      "set_eligibility_answers",
+      "start_application"
+    ]
+  }
+}

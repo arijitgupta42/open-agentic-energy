@@ -1,0 +1,18 @@
+{
+  "protocol": "nsdeploy-link/v1",
+  "exports": [
+    {
+      "network": "fernbrook_grants",
+      "front_man": "fernbrook_assistant",
+      "aliases": [
+        "fernbrook_grants",
+        "fernbrook_assistant"
+      ],
+      "url": "fernbrook_grants"
+    }
+  ],
+  "imports": [],
+  "link_updates": {
+    "mode": "browser-local"
+  }
+}

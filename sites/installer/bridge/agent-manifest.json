@@ -1,0 +1,10 @@
+{
+  "networks": [
+    {
+      "name": "heatwright_installers"
+    }
+  ],
+  "actions": {
+    "version": 1
+  }
+}

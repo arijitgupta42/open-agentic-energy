@@ -1,0 +1,82 @@
+{
+  "brand": "Emberwick Energy Assistant",
+  "networks": [
+    {
+      "name": "emberwick_energy",
+      "front_man": "emberwick_assistant",
+      "hocon": "./emberwick_energy.network.json",
+      "description": "Ask about your energy usage and tariffs, compare and switch tariff, and find out what our partner sites offer for heat pumps, solar panels and grants.",
+      "tags": [
+        "agentified-website"
+      ],
+      "sample_queries": [
+        "How much gas and electricity did I use over the last 12 months, and which months were highest?",
+        "Which tariff would be cheapest for me, and is there any reason I can't have it?",
+        "Show the Fixed 12 Month tariff next to mine in the comparison panel.",
+        "Switch my account to the Green Flex tariff.",
+        "I'm thinking about a heat pump. What can your installer partner do, and is there a grant?",
+        "Can you submit a meter reading or change my direct debit?"
+      ]
+    }
+  ],
+  "llm_router": {
+    "base_url": "https://api.otari.ai/api/v1",
+    "mock": false,
+    "byok_router": "https://api.otari.ai/api/v1"
+  },
+  "allowed_peers": [
+    "http://localhost:8081",
+    "http://localhost:8082"
+  ],
+  "peer_policy": {
+    "mode": "closed",
+    "deny_origins": [],
+    "note": "Calls only the partner sites in allowed_peers, after the visitor agrees."
+  },
+  "agent_mcp": {
+    "protocol": "nsdeploy-agent-mcp/v1",
+    "network": "emberwick_energy",
+    "front_man": "emberwick_assistant",
+    "available": false,
+    "reason": "This is a static bundle; a public MCP facade requires an application host."
+  },
+  "theme": {
+    "primary": "#9a3412"
+  },
+  "linking": {
+    "protocol": "nsdeploy-link/v1",
+    "exports": [
+      {
+        "network": "emberwick_energy",
+        "front_man": "emberwick_assistant",
+        "aliases": [
+          "emberwick_energy",
+          "emberwick_assistant"
+        ],
+        "url": "emberwick_energy"
+      }
+    ],
+    "imports": [],
+    "link_updates": {
+      "mode": "browser-local"
+    }
+  },
+  "deployment": {
+    "mode": "static",
+    "self_contained_runtime": true,
+    "browser_mock": false,
+    "direct_byok": true,
+    "direct_mcp_requires_cors": true,
+    "public_mcp_facade": false
+  },
+  "actions": {
+    "version": 1,
+    "module": "./site-actions.js",
+    "bridge": "./bridge/action-bridge.html",
+    "agentTools": [
+      "get_account_state",
+      "compare_tariff",
+      "switch_tariff"
+    ]
+  }
+}

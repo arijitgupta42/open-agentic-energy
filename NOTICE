@@ -1,0 +1,22 @@
+Open Agentic Energy
+Copyright 2026 Arijit Gupta
+
+This product includes software developed by others:
+
+1. tools/agentify-website/ and docs/hackathon/worldwide_agentic_web_mvp_spec.md
+   From https://github.com/cognizant-ai-labs/agentic-web at commit
+   512d948355660626594b246c4c264041cd8fe2d4 (12 November 2026).
+   Copyright Cognizant AI Lab. Licensed under the Apache License, Version 2.0.
+   Copied without changes.
+
+2. tools/agentify-website/runtime/ and each sites/*/runtime/
+   A copy of the nsdeploy browser runtime, https://github.com/cognizant-ai-lab/nsdeploy,
+   with the edits listed in tools/agentify-website/runtime/README.md, as distributed in
+   the agentic-web repository above. Licensed under the Apache License, Version 2.0
+   (see runtime/LICENSE.txt). runtime/generated/agent-runner.bundle.js bundles
+   third-party packages under their own licences.
+
+3. Each sites/*/site.js, sites/*/tests/*.mjs, sites/*/bridge/ and the assistant styles
+   at the end of each sites/*/styles.css
+   Derived from the templates in tools/agentify-website/templates/, with this project's
+   values filled in. Licensed under the Apache License, Version 2.0.
