@@ -113,7 +113,7 @@ How to work:
             # with list_grants and check_eligibility. Another site that runs this network
             # reaches it without a second consent card. A plain URL, so the runtime's agent
             # graph labels it by host.
-            "tools": ["http://localhost:8082/mcp"]
+            "tools": ["https://fernbrook-grants.open-agentic-energy.workers.dev/mcp"]
         }
     ]
 }
