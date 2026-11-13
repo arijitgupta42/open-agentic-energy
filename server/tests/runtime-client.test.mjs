@@ -6,7 +6,7 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
 import { McpClient } from "../../sites/utility/runtime/mcp.js";
-import { manifestAllowsPeer } from "../../sites/utility/runtime/engine.js";
+import { manifestAllowsPeer, selectPeerRouter } from "../../sites/utility/runtime/engine.js";
 import { MCP_PATH, MCP_SERVERS } from "../sites.mjs";
 
 const ROOT = new URL("../../", import.meta.url);
@@ -96,4 +96,14 @@ test("a refusal comes back as the page's reason, and a bad call as an MCP tool e
   const wrong = await client.callTool("estimate", {measure: "boiler", homeType: "flat", floorAreaM2: 50});
   assert.ok(wrong.startsWith("MCP tool error: "));
   assert.equal(JSON.parse(wrong.slice("MCP tool error: ".length)).reason, "\"measure\" must be one of: heat-pump, solar.");
+});
+
+test("a partner's network runs on the caller's router, whatever its own manifest names (spec 3.2, 4)", () => {
+  // runtime/engine.js _compile: a peer gets selectPeerRouter(this.userRouter), the
+  // caller's active router. It takes no argument from the peer's manifest, so a partner
+  // cannot point the caller's key at another router.
+  assert.equal(selectPeerRouter.length, 1, "selectPeerRouter takes only the caller's router.");
+  const caller = {baseUrl: "https://router.caller.example/v1", mock: false};
+  assert.deepEqual(selectPeerRouter(caller), {baseUrl: "https://router.caller.example/v1", mock: false});
+  assert.throws(() => selectPeerRouter(undefined), /no active LLM router/);
 });
