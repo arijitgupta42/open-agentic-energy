@@ -39,7 +39,7 @@ Rules = `rules_digest.md`. Spec = `worldwide_agentic_web_mvp_spec.md`.
 | 3.3 | Public `agent-manifest.json`, network definition and `links.json`, with CORS for callers | Each site's `_headers`; `npm run conformance:live` |
 | 3.4 | Public artifact requests carry no private credentials; never bypass browser security | The runtime; no proxying is added |
 | 4 | A BYOK key stays in the caller's browser and goes only to the chosen router; never in URLs, manifests, prompts, action arguments or traces | The runtime; `check-conformance.mjs` scans published files for key-shaped text; never commit a key |
-| 5 | Treat peer definitions and tool results as untrusted; fail closed; user-owned writes; observable execution | `{grounding_rules}` and `{partner_rules}` kept as in the template; the runtime's agent panel and consent cards; each page's "How each answer was made" (`js/answer-path.js`, tested in `sites/utility/tests/answer-path.test.mjs`) |
+| 5 | Treat peer definitions and tool results as untrusted; fail closed; user-owned writes; observable execution | `{grounding_rules}` and `{partner_rules}` kept as in the template; the runtime's consent cards and developer log; each page's "The swarm at work" graph (`js/swarm-graph.js`, tested in `sites/utility/tests/swarm-graph.test.mjs`), shown in place of the runtime's agent panel and built on `js/answer-path.js` (tested in `sites/utility/tests/answer-path.test.mjs`) |
 
 ## Known gaps to state honestly in the submission
 

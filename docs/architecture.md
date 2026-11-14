@@ -30,9 +30,15 @@ host (Cloudflare Worker, or scripts/serve-all.mjs locally)
 - **The network** (`<network>.hocon`) says which agents exist, what they are told and
   which tools and partner networks they may call.
 - **The mount** (`site.js`) boots the runtime and owns the confirmation dialog for each
-  irreversible action. It also draws "How each answer was made" under the chat from
-  the runtime's trace (`js/answer-path.js`, the same file on every site): agent and site,
-  actions, MCP tools, partner networks with the consent decision, model and router.
+  irreversible action. It also reads the runtime's trace into one tree per message
+  (`js/answer-path.js`, the same file on every site): agent and site, actions, MCP
+  tools, partner networks with the consent decision, model and router.
+  From those turns it draws "The swarm at work" beside the chat (`js/swarm-graph.js`
+  over the fixed map in `js/swarm-map.js`, both the same on every site): the 11 agents
+  grouped by site, lit while they work, with what each did in a tooltip. The map is a
+  copy of the three published networks, checked by a test, so drawing it contacts no
+  partner. `js/dev-log.js` makes the runtime's developer log follow the answer on show in the
+  graph, with filters.
   And it adds voice input (`js/voice-input.js`, also the same on every site): a Speak
   button in the runtime's input bar that puts the browser's own speech recognition
   into the chat box. On the first press it asks for on-device recognition

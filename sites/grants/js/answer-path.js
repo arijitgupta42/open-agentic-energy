@@ -1,19 +1,21 @@
-// Builds "How this answer was made" from the runtime's execution trace (spec 5,
-// "Observable execution"): for each visitor message, which agent ran on which site,
-// which site actions, MCP tools and partner networks it used, the consent decisions,
-// the model and router, any refusal or error, and the answer. For a swarm it also shows
-// which calls ran at the same time, each AAOSA question (Determine) and job (Fulfill),
-// and how many agents on how many sites took part.
+// Reads the runtime's execution trace into one tree per visitor message (spec 5,
+// "Observable execution"): which agent ran on which site, which site actions, MCP tools
+// and partner networks it used, the consent decisions, the model and router, any
+// refusal or error, and the answer. For a swarm it also finds which calls ran at the
+// same time and each AAOSA question (Determine) and job (Fulfill).
+//
+// js/swarm-graph.js draws these turns as the graph beside the chat. This file draws
+// nothing itself.
 //
 // It reads the trace that runtime/index.js boot() returns and never edits the runtime.
-// It shows the key only as the runtime describes it ("local BYOK (not shown)"). What it
+// It holds the key only as the runtime describes it ("local BYOK (not shown)"). What it
 // builds stays on this page: nothing here sends or logs it.
 //
 // This file is the same on all three sites. sites/utility/tests/answer-path.test.mjs
 // checks that the copies match.
 
 /**
- * Turns trace events into a tree per visitor message, and the tree into page markup.
+ * Turns trace events into a tree per visitor message.
  */
 export class AnswerPath {
   /**
@@ -29,7 +31,7 @@ export class AnswerPath {
    * :param pageHost: This page's host, such as "emberwick.example". Agents on another
    *   host belong to a partner's network, which ran in this browser.
    * :return: {turns, setup}. Each turn has question, answer, status, error, durationMs,
-   *   counts and nodes. setup lists failures before any message, such as a network
+   *   counts, nodes, and seq and endSeq: the trace sequence numbers it spans. setup lists failures before any message, such as a network
    *   that did not load.
    */
   static build(events, pageHost) {
@@ -98,6 +100,8 @@ export class AnswerPath {
       status: run.status === "error" ? "error" : (run.endSeq === null ? "running" : "ok"),
       error: run.error || "",
       durationMs: run.durationMs ?? null,
+      seq: run.seq,
+      endSeq: run.endSeq,
       counts,
       nodes,
     };
@@ -219,6 +223,7 @@ export class AnswerPath {
     const calls = models.length === 1 ? "1 call" : `${models.length} calls`;
     return {
       kind: "model",
+      calls: models.length,
       title: `Model: ${lines.join("; ")}`,
       detail: calls,
       status: failed ? "error" : "ok",
@@ -247,6 +252,10 @@ export class AnswerPath {
       const partner = ctx.pageHost && item.origin && item.origin !== ctx.pageHost;
       return {
         kind: "agent",
+        agent: item.agent,
+        network: item.network || "",
+        origin: item.origin || "",
+        durationMs: item.durationMs ?? null,
         title: `Agent ${item.agent} on ${item.origin}`,
         detail: partner ? "A partner's agent, run in this browser on your model and router." : "",
         status: AnswerPath.status(item),
@@ -365,6 +374,9 @@ export class AnswerPath {
       return {
         ...base,
         kind: "aaosa",
+        agent: name,
+        mode: span.args.mode,
+        asked: AnswerPath.cut(AnswerPath.requestText(span.args)),
         title: `AAOSA ${span.args.mode}: ${name}`,
         detail: determine ? "Asked whether its job fits this request." : "Asked to do its part.",
         reply: AnswerPath.cut(AnswerPath.plain(AnswerPath.replyText(span.resultPreview))),
@@ -373,10 +385,19 @@ export class AnswerPath {
     }
     if (span.toolKind === "agent") {
       const children = AnswerPath.nodes(span.children, ctx);
+      // What the caller asked this agent and what it replied, for the swarm graph.
+      const asked = AnswerPath.cut(AnswerPath.requestText(span.args));
+      const reply = AnswerPath.cut(AnswerPath.plain(AnswerPath.replyText(span.resultPreview)));
+      for (const child of children) {
+        if (child.kind === "agent" && child.agent === name) {
+          child.asked = asked;
+          child.replied = reply;
+        }
+      }
       if (children.length && !refusal && status !== "error") {
         return children;
       }
-      return {...base, kind: "agent", title: `Agent ${name}`, children};
+      return {...base, kind: "agent", agent: name, network: "", origin: span.origin || "", title: `Agent ${name}`, children};
     }
     if (span.toolKind === "remote network" || span.toolKind === "linked network") {
       ctx.counts.partners += 1;
@@ -388,6 +409,9 @@ export class AnswerPath {
       return {
         ...base,
         kind: "partner",
+        network: call?.network || name,
+        host: host,
+        ran: ran,
         title: `Partner network ${call?.network || name}${host ? ` at ${host}` : ""}`,
         detail: ran ? "Loaded and run in this browser, not on the partner's server." : "",
         quote: AnswerPath.cut(AnswerPath.requestText(span.args)),
@@ -402,6 +426,7 @@ export class AnswerPath {
       return {
         ...base,
         kind: "mcp",
+        name: name.replace(/^mcp_/, ""),
         title: `MCP tool ${name.replace(/^mcp_/, "")}${call ? ` at ${call.peerOrigin}` : ""}`,
         detail: AnswerPath.cut(AnswerPath.argsText(span.args)),
       };
@@ -411,6 +436,7 @@ export class AnswerPath {
       return {
         ...base,
         kind: "action",
+        name: name.slice("website_".length),
         title: `Site action ${name.slice("website_".length)} on ${span.origin}`,
         detail: AnswerPath.cut(AnswerPath.argsText(span.args)),
       };
@@ -521,7 +547,7 @@ export class AnswerPath {
     if (!args || typeof args !== "object") {
       return String(args ?? "");
     }
-    for (const key of ["request", "input", "query", "text", "message"]) {
+    for (const key of ["request", "input", "inquiry", "query", "text", "message"]) {
       if (typeof args[key] === "string") {
         return args[key];
       }
@@ -617,97 +643,5 @@ export class AnswerPath {
     }
     lines.push(`Answer: ${turn.answer}`);
     return lines.join("\n");
-  }
-
-  /**
-   * Show every turn in a list, newest first, each as a <details> the visitor can open
-   * with the keyboard. Only the newest is open. All text goes in as text, never HTML.
-   *
-   * :param list: The <ol> to fill.
-   * :param built: The result of build().
-   */
-  static render(list, built) {
-    const doc = list.ownerDocument;
-    const open = new Set();
-    for (const old of list.querySelectorAll("details")) {
-      if (old.open) {
-        open.add(old.dataset.turn);
-      }
-    }
-    list.replaceChildren();
-    for (const node of built.setup) {
-      const item = doc.createElement("li");
-      item.append(AnswerPath.tree(doc, [node]));
-      list.append(item);
-    }
-    const turns = built.turns.map((turn, index) => ({turn, index})).reverse();
-    for (const {turn, index} of turns) {
-      const item = doc.createElement("li");
-      const details = doc.createElement("details");
-      details.dataset.turn = String(index);
-      details.open = index === built.turns.length - 1 || open.has(String(index));
-      const summary = doc.createElement("summary");
-      const question = doc.createElement("span");
-      question.className = "answer-path-question";
-      question.textContent = `“${AnswerPath.cut(turn.question)}”`;
-      const counts = doc.createElement("span");
-      counts.className = "answer-path-counts";
-      counts.textContent = AnswerPath.summary(turn);
-      summary.append(question, " ", counts);
-      details.append(summary, AnswerPath.tree(doc, turn.nodes));
-      if (turn.error) {
-        const error = doc.createElement("p");
-        error.className = "answer-path-error";
-        error.textContent = `Error: ${turn.error}`;
-        details.append(error);
-      }
-      if (turn.answer) {
-        const answer = doc.createElement("p");
-        answer.className = "answer-path-answer";
-        answer.textContent = `Answer: ${AnswerPath.cut(turn.answer)}`;
-        details.append(answer);
-      }
-      item.append(details);
-      list.append(item);
-    }
-  }
-
-  /**
-   * Build the nested list for some nodes.
-   *
-   * :param doc: The document.
-   * :param nodes: The nodes.
-   * :return: A <ul>.
-   */
-  static tree(doc, nodes) {
-    const list = doc.createElement("ul");
-    list.className = "answer-path-tree";
-    for (const node of nodes) {
-      const item = doc.createElement("li");
-      item.className = `answer-path-${node.kind} answer-path-${node.status}`;
-      const title = doc.createElement("span");
-      title.className = "answer-path-title";
-      title.textContent = node.title;
-      item.append(title);
-      if (node.status === "refused" || node.status === "error" || node.status === "running") {
-        const badge = doc.createElement("span");
-        badge.className = "answer-path-badge";
-        badge.textContent = {refused: "stopped", error: "error", running: "running"}[node.status];
-        item.append(" ", badge);
-      }
-      for (const [text, name] of [[node.detail, "detail"], [node.quote ? `Request sent: “${node.quote}”` : "", "quote"], [node.reply ? `Replied: ${node.reply}` : "", "reply"], [node.consent, "consent"], [node.refusal, "detail"], [node.error, "error"]]) {
-        if (text) {
-          const line = doc.createElement("span");
-          line.className = `answer-path-${name}`;
-          line.textContent = text;
-          item.append(line);
-        }
-      }
-      if (node.children.length) {
-        item.append(AnswerPath.tree(doc, node.children));
-      }
-      list.append(item);
-    }
-    return list;
   }
 }

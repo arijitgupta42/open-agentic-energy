@@ -1,5 +1,5 @@
-// Checks js/answer-path.js, which builds "How each answer was made" from the runtime's
-// trace (issue #17, spec 5 "Observable execution"). One test runs the real runner with a
+// Checks js/answer-path.js, which reads the runtime's trace into one tree per visitor
+// message, for the swarm graph (issue #17, spec 5 "Observable execution"). One test runs the real runner with a
 // scripted model. The others replay a trace written with the runtime's own TraceBus and
 // the same fields its engine, runner, LLM and MCP clients record.
 // The module is the same on all three sites, so its tests live here once.
