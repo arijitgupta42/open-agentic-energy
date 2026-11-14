@@ -73,8 +73,18 @@ function page() {
   const bar = new FakeElement("", "div");
   const input = new FakeElement("ns-input", "input");
   const send = new FakeElement("ns-send", "button");
-  send.addEventListener("click", () => {
-    throw new Error("Voice input must never press Send.");
+  // The runtime's own Send: it reads the box, then clears it. Voice input never presses
+  // it (the source check in the first test); the visitor does.
+  send.sentRequests = [];
+  const runtimeSend = () => {
+    send.sentRequests.push(input.value);
+    input.value = "";
+  };
+  send.addEventListener("click", runtimeSend);
+  input.addEventListener("keydown", (event) => {
+    if (event.key === "Enter") {
+      runtimeSend();
+    }
   });
   bar.children.push(input, send);
   const status = new FakeElement("voice-status", "p");
@@ -339,4 +349,49 @@ test("in Brave, on-device recognition is still used when it is there", async () 
   Recognition.instances[0].onend();
   Recognition.instances[1].onend();
   assert.equal(status.textContent, VoiceInput.BRAVE);
+});
+
+test("pressing Send stops the microphone, and late words do not refill the cleared box", async () => {
+  const {doc, input, send, status} = page();
+  const Recognition = recognitionClass({"en-GB": "available"});
+  const voice = await VoiceInput.attach(doc, {SpeechRecognition: Recognition});
+  await voice.button.click();
+  const recognition = Recognition.instances[0];
+  recognition.aborted = false;
+  recognition.abort = () => {
+    recognition.aborted = true;
+  };
+  recognition.hear("Which tariff is cheapest?");
+  const onresult = recognition.onresult;
+
+  await send.click();
+  assert.deepEqual(send.sentRequests, ["Which tariff is cheapest?"], "The runtime sent the dictated words.");
+  assert.equal(recognition.aborted, true, "The microphone stops.");
+  assert.equal(voice.button.getAttribute("aria-pressed"), "false");
+  assert.equal(status.textContent, "");
+  assert.equal(recognition.onresult, null, "Words still on their way are dropped.");
+  onresult?.({results: [[{transcript: "Which tariff is cheapest? Thanks"}]]});
+  assert.equal(input.value, "", "The box the runtime cleared stays clear.");
+  assert.equal(Recognition.instances.length, 1, "No new session starts.");
+
+  // The next press starts afresh, without the sent words.
+  await voice.button.click();
+  Recognition.instances[1].hear("And for gas?");
+  assert.equal(input.value, "And for gas?");
+});
+
+test("pressing Enter in the chat box stops the microphone too", async () => {
+  const {doc, input, send} = page();
+  const Recognition = recognitionClass(null);
+  const voice = await VoiceInput.attach(doc, {SpeechRecognition: Recognition});
+  await voice.button.click();
+  await voice.button.click();
+  Recognition.instances[0].hear("Is there a grant?");
+  input.dispatchEvent({type: "keydown", key: "Enter"});
+  assert.deepEqual(send.sentRequests, ["Is there a grant?"]);
+  assert.equal(Recognition.instances[0].stopped, true, "Without abort(), stop() ends it.");
+  assert.equal(voice.button.getAttribute("aria-pressed"), "false");
+  assert.equal(input.value, "");
+  input.dispatchEvent({type: "keydown", key: "Enter"});
+  assert.equal(voice.button.getAttribute("aria-pressed"), "false", "Enter when not listening changes nothing.");
 });
