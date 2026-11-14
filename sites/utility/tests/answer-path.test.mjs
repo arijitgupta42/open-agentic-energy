@@ -156,6 +156,22 @@ test("refusals and errors appear in the view: denied origin, cycle, budget, inva
   assert.match(AnswerPath.summary(turn), /failed$/);
 });
 
+test("a partner's link back to the caller, left out by the runtime, is not shown as stopped", () => {
+  // Seen live: Heatwright's network lists emberwick_energy, which is already in the chain.
+  const trace = new TraceBus();
+  const run = trace.start("run", {origin: PAGE, input: "Heat pump?"});
+  const peer = trace.start("agent", {parent: run, origin: PARTNER, agent: "heatwright_assistant"});
+  trace.note("composition_skip", {parent: peer, origin: PARTNER, target: `https://${PAGE}/emberwick_energy`, reason: "already visited in this request"});
+  trace.end(peer, {});
+  trace.end(run, {answerPreview: "**Fixed 12 Month** is cheapest.\n\n## Why\n`£1,763.71`"});
+  const [turn] = AnswerPath.build(trace.events, PAGE).turns;
+  const [skip] = turn.nodes[0].children;
+  assert.equal(skip.title, `Not offered emberwick_energy at ${PAGE}`);
+  assert.equal(skip.status, "ok");
+  assert.equal(skip.detail, "The runtime left it out: already visited in this request.");
+  assert.equal(turn.answer, "Fixed 12 Month is cheapest. Why £1,763.71", "The preview drops Markdown marks.");
+});
+
 test("the view never holds a key: only the runtime's key source", () => {
   const trace = new TraceBus();
   recordTurn(trace, "allow");
