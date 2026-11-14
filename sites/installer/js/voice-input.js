@@ -113,6 +113,14 @@ export class VoiceInput {
     this.button.title = "Speak your request";
     this.button.addEventListener("click", () => this.toggle());
     parts.bar.insertBefore(this.button, parts.send);
+    // Sending the request ends dictation. The runtime's own listeners run first, read the
+    // box and clear it; this only stops the microphone and never refills the box.
+    parts.send.addEventListener("click", () => this.sent());
+    this.input.addEventListener("keydown", (event) => {
+      if (event.key === "Enter") {
+        this.sent();
+      }
+    });
   }
 
   /** The note before the first press, when the page does not yet know where audio goes. */
@@ -242,7 +250,11 @@ export class VoiceInput {
     let words = "";
     let error = null;
     recognition.onresult = (event) => {
-      words = VoiceInput.join(...Array.from(event.results).map((result) => result[0].transcript));
+      if (this.recognition !== recognition) {
+        // A late result from a session that Send already ended.
+        return;
+      }
+      words =VoiceInput.join(...Array.from(event.results).map((result) => result[0].transcript));
       if (words) {
         this.lastHeard = Date.now();
       }
@@ -299,6 +311,34 @@ export class VoiceInput {
     } else {
       this.done();
     }
+  }
+
+  /**
+   * The visitor sent the request: stop the microphone at once and drop any words still
+   * on their way, so the cleared chat box stays clear.
+   */
+  sent() {
+    if (!this.listening && !this.recognition) {
+      return;
+    }
+    this.listening = false;
+    this.before = "";
+    this.committed = "";
+    const recognition = this.recognition;
+    this.recognition = null;
+    if (recognition) {
+      recognition.onresult = null;
+      recognition.onerror = null;
+      recognition.onend = null;
+      try {
+        (recognition.abort || recognition.stop).call(recognition);
+      } catch {
+        // Already ended.
+      }
+    }
+    this.button.setAttribute("aria-pressed", "false");
+    this.button.textContent = "🎤 Speak";
+    this.say("");
   }
 
   /**
