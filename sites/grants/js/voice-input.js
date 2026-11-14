@@ -11,6 +11,9 @@
 // recognition starts, after a one-time language download when needed, and the audio
 // stays on the device. If not, the page says the audio would go to the browser maker's
 // speech service, as Chrome's goes to Google's, and listens only after a second press.
+//
+// Like dictation in a desktop app, it keeps listening through pauses and shows the words
+// in the chat box as they are spoken, until the visitor presses Stop.
 
 /**
  * A mic button next to the runtime's chat box, with a status line and a note on where the
@@ -26,7 +29,7 @@ export class VoiceInput {
     "service-not-allowed": "This browser does not allow speech recognition here. Type your request instead.",
     "audio-capture": "No microphone was found. Type your request instead.",
     "no-speech": "Nothing was heard. Press the mic and try again.",
-    "network": "The browser's speech service could not be reached. Type your request instead.",
+    "network": "The browser's speech service could not be reached. Some browsers, such as Brave, do not offer one: use Chrome or Edge, or type your request.",
     "language-not-supported": "This browser cannot recognise English speech. Type your request instead.",
   };
 
@@ -57,8 +60,26 @@ export class VoiceInput {
       return null;
     }
     const voice = new VoiceInput(doc, Recognition, {bar, input, send, panel});
+    voice.brave = await VoiceInput.isBrave(win);
     await voice.prepare();
     return voice;
+  }
+
+  /** What to say in Brave, which has the speech API but no online speech service. */
+  static BRAVE = "Brave does not include the online speech service that voice input needs here. Use Chrome or Edge to speak your request, or type it.";
+
+  /**
+   * Whether this is Brave, which says so through navigator.brave.
+   *
+   * :param win: The window.
+   * :return: true in Brave.
+   */
+  static async isBrave(win) {
+    try {
+      return typeof win.navigator?.brave?.isBrave === "function" && (await win.navigator.brave.isBrave()) === true;
+    } catch {
+      return false;
+    }
   }
 
   /**
@@ -75,7 +96,13 @@ export class VoiceInput {
     this.status = parts.panel.querySelector("#voice-status");
     this.note = parts.panel.querySelector("#voice-note");
     this.recognition = null;
+    this.listening = false;
+    this.before = "";
+    this.committed = "";
     this.mode = null;
+    this.brave = false;
+    // The status goes just under the chat box, where the visitor is looking.
+    parts.bar.insertAdjacentElement?.("afterend", this.status);
     this.button = doc.createElement("button");
     this.button.type = "button";
     this.button.id = "voice-button";
@@ -89,7 +116,7 @@ export class VoiceInput {
   }
 
   /** The note before the first press, when the page does not yet know where audio goes. */
-  static NOTE_FIRST = "Voice input: press Speak and say your request. If this browser can turn speech into text on this device, the audio stays here. If not, the page tells you first that the audio would go to the browser maker's online speech service (Chrome uses Google's), and waits for a second press. The text goes into the chat box, and nothing is sent until you press Send.";
+  static NOTE_FIRST = "Voice input: press Speak, say your request, then press Stop. If this browser can turn speech into text on this device, the audio stays here. If not, the page tells you first that the audio would go to the browser maker's online speech service (Chrome uses Google's), and waits for a second press. The text goes into the chat box, and nothing is sent until you press Send.";
 
   /** The note once the page knows recognition stays on the device. */
   static NOTE_LOCAL = "Voice input: your speech is turned into text on this device and does not leave it. The text goes into the chat box, and nothing is sent until you press Send.";
@@ -132,17 +159,33 @@ export class VoiceInput {
     return {local: false, lang: VoiceInput.LANGS[0], download: false};
   }
 
+  /** Errors after which listening again would fail the same way. */
+  static FATAL = new Set(["not-allowed", "service-not-allowed", "audio-capture", "network", "language-not-supported"]);
+
+  /** Stop on our own after this long with no new words, in case the visitor walked away. */
+  static SILENCE_MS = 60000;
+
+  /** A session that ends this soon with no words counts as one that never got going. */
+  static QUICK_MS = 1500;
+
   /**
    * Start listening, or stop when already listening.
    */
   async toggle() {
-    if (this.recognition) {
-      this.recognition.stop();
+    if (this.listening) {
+      this.finish();
       return;
     }
     if (this.mode === null) {
       this.mode = await this.findMode();
       this.note.textContent = this.mode.local ? VoiceInput.NOTE_LOCAL : VoiceInput.NOTE_ONLINE;
+      if (!this.mode.local && this.brave) {
+        // Brave's online path fails at once with "network": say so instead of trying.
+        this.mode = null;
+        this.note.textContent = VoiceInput.NOTE_FIRST;
+        this.say(VoiceInput.BRAVE);
+        return;
+      }
       if (!this.mode.local) {
         // Audio would leave the device: the visitor agrees with a second press.
         this.say("This browser would send your speech to its maker's online service. Press Speak again to go ahead, or type your request.");
@@ -163,60 +206,156 @@ export class VoiceInput {
       }
       this.mode.download = false;
     }
-    this.listen();
+    this.begin();
   }
 
   /**
-   * Listen for one request and put the words in the chat box as they come. The browser
-   * asks for the microphone the first time.
+   * Dictate until the visitor presses Stop, putting the words in the chat box as they
+   * come. Browsers end a recognition session at a pause or after a while, so a new one
+   * starts each time, and the words so far are kept.
    */
-  listen() {
+  begin() {
+    this.listening = true;
+    this.before = this.input.value.trim();
+    this.committed = "";
+    this.quickEnds = 0;
+    this.lastHeard = Date.now();
+    this.button.setAttribute("aria-pressed", "true");
+    this.button.textContent = "■ Stop";
+    this.say("Listening… press Stop when you have finished.");
+    this.session();
+  }
+
+  /**
+   * Start one recognition session. The browser asks for the microphone the first time.
+   */
+  session() {
     const recognition = new this.Recognition();
     recognition.lang = this.mode.lang;
     recognition.interimResults = true;
-    recognition.continuous = false;
+    recognition.continuous = true;
     recognition.maxAlternatives = 1;
     if (this.mode.local) {
       recognition.processLocally = true;
     }
-    const before = this.input.value.trim();
-    let heard = "";
+    const started = Date.now();
+    let words = "";
+    let error = null;
     recognition.onresult = (event) => {
-      heard = Array.from(event.results).map((result) => result[0].transcript).join("").trim();
-      this.fill(before ? `${before} ${heard}` : heard);
+      words = VoiceInput.join(...Array.from(event.results).map((result) => result[0].transcript));
+      if (words) {
+        this.lastHeard = Date.now();
+      }
+      this.fill(VoiceInput.join(this.before, this.committed, words));
     };
     recognition.onerror = (event) => {
-      if (event.error !== "aborted") {
-        this.say(VoiceInput.ERRORS[event.error] || "Voice input stopped. Type your request instead.");
-      }
-      if (event.error === "not-allowed" || event.error === "service-not-allowed") {
-        this.button.disabled = true;
-      }
+      error = event.error;
     };
     recognition.onend = () => {
       this.recognition = null;
-      this.button.setAttribute("aria-pressed", "false");
-      this.button.textContent = "🎤 Speak";
-      if (heard) {
-        this.say("Check the request in the chat box, then press Send.");
-        this.input.focus();
-      } else if (this.status.textContent === "Listening…") {
-        this.say(VoiceInput.ERRORS["no-speech"]);
+      this.committed = VoiceInput.join(this.committed, words);
+      if (!this.listening) {
+        this.done();
+        return;
       }
+      const quick = !words && Date.now() - started < VoiceInput.QUICK_MS;
+      this.quickEnds = quick ? this.quickEnds + 1 : 0;
+      if (this.mode.local && !this.committed && (this.quickEnds >= 2 || error === "language-not-supported")) {
+        this.offerOnline();
+        return;
+      }
+      if (VoiceInput.FATAL.has(error)) {
+        if (error === "not-allowed" || error === "service-not-allowed") {
+          this.button.disabled = true;
+        }
+        this.stopListening(VoiceInput.ERRORS[error]);
+        return;
+      }
+      if (this.quickEnds >= 3) {
+        this.stopListening("Voice input stopped. Type your request instead.");
+        return;
+      }
+      if (Date.now() - this.lastHeard > VoiceInput.SILENCE_MS) {
+        this.stopListening(null);
+        return;
+      }
+      this.session();
     };
     this.recognition = recognition;
-    this.button.setAttribute("aria-pressed", "true");
-    this.button.textContent = "■ Stop";
-    this.say("Listening…");
     try {
       recognition.start();
-    } catch (error) {
+    } catch (failure) {
       this.recognition = null;
-      this.button.setAttribute("aria-pressed", "false");
-      this.button.textContent = "🎤 Speak";
-      this.say("Voice input could not start. Type your request instead.");
-      console.error("Voice input could not start", error);
+      this.stopListening("Voice input could not start. Type your request instead.");
+      console.error("Voice input could not start", failure);
     }
+  }
+
+  /** The visitor pressed Stop: the browser gives its last words, then onend calls done(). */
+  finish() {
+    this.listening = false;
+    if (this.recognition) {
+      this.recognition.stop();
+    } else {
+      this.done();
+    }
+  }
+
+  /**
+   * Stop listening on the page's own account.
+   *
+   * :param message: What to tell the visitor, or null for the usual end.
+   */
+  stopListening(message) {
+    this.listening = false;
+    this.done(message);
+  }
+
+  /**
+   * On-device recognition ended at once with nothing heard: offer the online service,
+   * which the visitor agrees to with another press.
+   */
+  offerOnline() {
+    this.listening = false;
+    if (this.brave) {
+      this.mode = null;
+      this.done(VoiceInput.BRAVE);
+      return;
+    }
+    this.mode = {local: false, lang: VoiceInput.LANGS[0], download: false};
+    this.note.textContent = VoiceInput.NOTE_ONLINE;
+    this.done("Speech recognition on this device stopped straight away. This browser can use its maker's online service instead, which sends your speech there. Press Speak again to go ahead, or type your request.");
+  }
+
+  /**
+   * Put the button back and say what happened.
+   *
+   * :param message: What to tell the visitor, or null for the usual end.
+   */
+  done(message = null) {
+    this.button.setAttribute("aria-pressed", "false");
+    this.button.textContent = "🎤 Speak";
+    if (this.committed) {
+      this.fill(VoiceInput.join(this.before, this.committed));
+      this.input.focus();
+    }
+    if (message) {
+      this.say(message);
+    } else if (this.committed) {
+      this.say("Check the request in the chat box, then press Send.");
+    } else {
+      this.say(VoiceInput.ERRORS["no-speech"]);
+    }
+  }
+
+  /**
+   * Join pieces of text with single spaces.
+   *
+   * :param parts: The pieces; empty ones are skipped.
+   * :return: The text.
+   */
+  static join(...parts) {
+    return parts.map((part) => (part || "").trim()).filter(Boolean).join(" ");
   }
 
   /**
@@ -228,6 +367,8 @@ export class VoiceInput {
     this.input.value = text;
     const EventClass = this.doc.defaultView?.Event || Event;
     this.input.dispatchEvent(new EventClass("input", {bubbles: true}));
+    // Keep the newest words in view while the box fills.
+    this.input.scrollLeft = this.input.scrollWidth;
   }
 
   /**

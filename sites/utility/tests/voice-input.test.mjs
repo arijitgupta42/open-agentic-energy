@@ -53,6 +53,10 @@ class FakeElement {
     this.focused = true;
   }
 
+  insertAdjacentElement(where, element) {
+    this.placed = [where, element];
+  }
+
   async click() {
     for (const listener of this.listeners.click || []) {
       await listener({type: "click"});
@@ -170,6 +174,7 @@ test("on-device recognition is used when the browser has it, and the note says t
   const Recognition = recognitionClass({"en-GB": "available"});
   const voice = await VoiceInput.attach(doc, {SpeechRecognition: Recognition});
   assert.equal(panel.hidden, false);
+  assert.deepEqual(bar.placed, ["afterend", status], "The status line sits just under the chat box.");
   // Before the first press the page has asked the browser nothing.
   assert.equal(note.textContent, VoiceInput.NOTE_FIRST);
   assert.equal(bar.children[1], voice.button, "The mic sits before Send.");
@@ -184,8 +189,9 @@ test("on-device recognition is used when the browser has it, and the note says t
   assert.equal(recognition.processLocally, true);
   assert.equal(recognition.lang, "en-GB");
   assert.equal(recognition.interimResults, true);
+  assert.equal(recognition.continuous, true, "It keeps listening through pauses.");
   assert.equal(voice.button.getAttribute("aria-pressed"), "true");
-  assert.equal(status.textContent, "Listening…");
+  assert.match(status.textContent, /^Listening…/);
 
   // Interim, then final: the box follows, and Send is never pressed.
   recognition.hear("Which tariff");
@@ -193,7 +199,22 @@ test("on-device recognition is used when the browser has it, and the note says t
   recognition.hear("Which tariff", " is cheapest for me?");
   assert.equal(input.value, "Which tariff is cheapest for me?");
   assert.ok(input.events.includes("input"), "The runtime sees the text as typed.");
+
+  // The browser ends its session at a pause: a new one starts, and the words stay.
   recognition.onend();
+  assert.equal(voice.button.getAttribute("aria-pressed"), "true", "Still listening after a pause.");
+  const next = Recognition.instances[1];
+  assert.equal(next.started, true);
+  next.hear("And when");
+  assert.equal(input.value, "Which tariff is cheapest for me? And when", "Live text follows the earlier words.");
+  next.hear("And when does it start?");
+  assert.equal(input.value, "Which tariff is cheapest for me? And when does it start?");
+
+  // Only Stop ends it.
+  await voice.button.click();
+  assert.equal(next.stopped, true);
+  assert.equal(Recognition.instances.length, 2, "No new session after Stop.");
+  assert.equal(input.value, "Which tariff is cheapest for me? And when does it start?");
   assert.equal(voice.button.getAttribute("aria-pressed"), "false");
   assert.equal(status.textContent, "Check the request in the chat box, then press Send.");
   assert.equal(input.focused, true);
@@ -207,7 +228,7 @@ test("a one-time language download comes first when the browser offers it", asyn
   assert.equal(note.textContent, VoiceInput.NOTE_LOCAL);
   assert.deepEqual(Recognition.installs, [{langs: ["en-US"], processLocally: true}]);
   assert.equal(Recognition.instances[0].lang, "en-US");
-  assert.equal(status.textContent, "Listening…");
+  assert.match(status.textContent, /^Listening…/);
 });
 
 test("a browser without on-device recognition says the audio would leave, and listens only on a second press", async () => {
@@ -246,14 +267,76 @@ test("a blocked microphone, silence and a second press each end cleanly", async 
   Recognition.instances[0].onend();
   assert.match(status.textContent, /microphone is blocked/);
   assert.equal(voice.button.disabled, true);
+  assert.equal(Recognition.instances.length, 1, "A blocked microphone is not tried again.");
 
+  // Silence: the browser's no-speech ends a session, and listening goes on.
   voice.button.disabled = false;
   await voice.button.click();
+  Recognition.instances[1].onerror({error: "no-speech"});
   Recognition.instances[1].onend();
-  assert.equal(status.textContent, VoiceInput.ERRORS["no-speech"]);
-
-  await voice.button.click();
+  assert.equal(Recognition.instances.length, 3, "Listening goes on after a quiet moment.");
+  assert.equal(voice.button.getAttribute("aria-pressed"), "true");
   await voice.button.click();
   assert.equal(Recognition.instances[2].stopped, true, "A second press stops listening.");
   assert.equal(voice.button.getAttribute("aria-pressed"), "false");
+  assert.equal(status.textContent, VoiceInput.ERRORS["no-speech"]);
+});
+
+test("sessions that end at once with nothing heard stop instead of looping", async () => {
+  const {doc, status} = page();
+  const Recognition = recognitionClass(null);
+  const voice = await VoiceInput.attach(doc, {SpeechRecognition: Recognition});
+  await voice.button.click();
+  await voice.button.click();
+  for (let i = 0; i < 3; i += 1) {
+    Recognition.instances[i].onend();
+  }
+  assert.equal(Recognition.instances.length, 3);
+  assert.equal(voice.button.getAttribute("aria-pressed"), "false");
+  assert.match(status.textContent, /Voice input stopped/);
+});
+
+test("on-device recognition that stops at once offers the online service, after another press", async () => {
+  const {doc, note, status, input} = page();
+  const Recognition = recognitionClass({"en-GB": "available"});
+  const voice = await VoiceInput.attach(doc, {SpeechRecognition: Recognition});
+  await voice.button.click();
+  Recognition.instances[0].onend();
+  Recognition.instances[1].onend();
+  assert.equal(Recognition.instances.length, 2);
+  assert.equal(note.textContent, VoiceInput.NOTE_ONLINE);
+  assert.match(status.textContent, /Press Speak again to go ahead/);
+  assert.equal(voice.button.getAttribute("aria-pressed"), "false");
+
+  await voice.button.click();
+  const online = Recognition.instances[2];
+  assert.equal(online.processLocally, undefined, "The online service only after the visitor agrees.");
+  online.hear("Is there a grant?");
+  assert.equal(input.value, "Is there a grant?");
+});
+
+test("in Brave, which has no online speech service, it says to use Chrome or Edge", async () => {
+  const {doc, status} = page();
+  const Recognition = recognitionClass({"en-GB": "unavailable"});
+  const win = {SpeechRecognition: Recognition, navigator: {brave: {isBrave: async () => true}}};
+  const voice = await VoiceInput.attach(doc, win);
+  await voice.button.click();
+  assert.equal(status.textContent, VoiceInput.BRAVE);
+  await voice.button.click();
+  assert.equal(Recognition.instances.length, 0, "Nothing is started that would fail at once.");
+  assert.equal(voice.button.getAttribute("aria-pressed"), "false");
+});
+
+test("in Brave, on-device recognition is still used when it is there", async () => {
+  const {doc, status} = page();
+  const Recognition = recognitionClass({"en-GB": "available"});
+  const win = {SpeechRecognition: Recognition, navigator: {brave: {isBrave: async () => true}}};
+  const voice = await VoiceInput.attach(doc, win);
+  await voice.button.click();
+  assert.equal(Recognition.instances.length, 1);
+  assert.match(status.textContent, /^Listening…/);
+  // If it then stops at once, Brave has nothing to fall back on.
+  Recognition.instances[0].onend();
+  Recognition.instances[1].onend();
+  assert.equal(status.textContent, VoiceInput.BRAVE);
 });
