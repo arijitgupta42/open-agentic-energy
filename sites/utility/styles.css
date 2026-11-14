@@ -195,6 +195,7 @@ body > dialog button { margin-right: 8px; }
 /* Voice input (js/voice-input.js): a mic button in the chat's input bar. */
 .voice-button { white-space: nowrap; }
 .voice-button[aria-pressed="true"] { outline: 2px solid currentColor; outline-offset: 1px; }
+.voice-status { margin: 0; padding: 6px 10px; font-size: 0.9em; font-weight: 600; }
 .voice-status:empty { display: none; }
 /* A swarm: calls that ran together, and AAOSA questions and jobs. */
 .answer-path-tree .answer-path-parallel > .answer-path-tree { border-left-style: double; border-left-width: 4px; }

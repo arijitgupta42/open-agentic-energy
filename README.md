@@ -58,14 +58,15 @@ nothing happens unless the visitor confirms. Writes that can be undone, such as 
 comparison or an estimate, run straight away.
 
 Every assistant also takes spoken requests. Press the Speak button beside Send and say
-the request: the words appear in the chat box for the visitor to check, and nothing is
-sent until they press Send. Speech never answers a confirmation dialog or a partner's
+the request: the words appear in the chat box as they are spoken, listening goes on
+through pauses until the visitor presses Stop, and nothing is sent until they press Send. Speech never answers a confirmation dialog or a partner's
 consent card. The page uses only the browser's own speech recognition, so it loads no
 other script and needs no extra key. On the first press the page asks the browser
 whether it can recognise speech on the device. If it can, the audio stays there, after a
 one-time language download. If not, the page says the audio would go to the browser
 maker's speech service, as Chrome's goes to Google's, and listens only after a second
-press. Firefox has no speech recognition, so the button does not appear there.
+press. Firefox has no speech recognition, so the button does not appear there. Brave has
+the interface but no speech service, so the page says to use Chrome or Edge there.
 
 ## The 11 agents
 
