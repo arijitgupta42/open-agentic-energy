@@ -16,106 +16,209 @@ repository on 14 November 2026: change them here when the sites change.
 
 ## Description
 
+Paste everything from "Open Agentic Energy" down to the end of "Known limits". It
+follows the README's order. Devpost renders Markdown headings, lists and links, but not
+always tables, so the README's tables are lists here.
+
 ### Open Agentic Energy
 
-Three small, linked energy websites, each with an assistant that runs in the visitor's
-own browser on the visitor's own LLM key. The companies, tariffs, prices and grants are
-all fictional.
+Deciding on a heat pump means asking an installer what it costs to fit, a grants body
+what help there is, and your energy supplier what it would cost to run on your tariff.
+Each answer sits on a different website, and each website's assistant knows only its own
+site.
 
-- **Emberwick Energy** (the site entered) is an energy supplier. A customer sees their
-  usage, compares tariffs and switches tariff.
-- **Heatwright Home Energy** is a heat pump and solar installer. A visitor gets an
-  estimate for their home and requests a survey.
-- **Fernbrook Retrofit Grants** is a grants body. A visitor checks which grants they
-  could get and starts an application.
+Open Agentic Energy is three linked open agentic websites: an energy supplier, a heat
+pump and solar installer, and a retrofit grants body. Each publishes a Neuro SAN agent
+network. When a customer asks their supplier "should I get a heat pump?", the supplier's
+assistant loads the installer's and the grants body's networks into the customer's own
+browser, after the customer agrees, and answers with figures from all three sites. The
+companies, tariffs, prices and grants are fictional.
 
-### The problem
+- [Emberwick Energy](https://emberwick-energy.open-agentic-energy.workers.dev/), the
+  supplier and the site entered: 4 agents, shown as ⚡ in the chat.
+- [Heatwright Home Energy](https://heatwright-installers.open-agentic-energy.workers.dev/),
+  the installer: 3 agents, shown as 🔧.
+- [Fernbrook Retrofit Grants](https://fernbrook-grants.open-agentic-energy.workers.dev/),
+  the grants body: 4 agents, shown as 🌱.
 
-Deciding on a heat pump means asking three organisations three questions: what it would
-cost to run on my tariff, what it would cost to fit, and what help I could get. Each
-answer sits on a different website, and each assistant only knows its own site.
-Here, a customer asks their supplier "should I get a heat pump?". The supplier's assistant
-already knows their usage and tariffs. After the customer agrees on a card, it loads the
-installer's and the grants body's published agent networks into the customer's browser.
-Those agents answer with figures from their own sites' read-only MCP servers, and the
-supplier's assistant puts the answers together. Nothing about the customer leaves the
-page except the short request the card showed them.
+### Try it
 
-### How it works
+1. Open Emberwick Energy. Scroll to "Ask Emberwick Energy" and open AI model settings.
+   Paste an OpenRouter key, preferably one with a low spending limit, and choose Save and
+   start. The key stays in your browser and goes only to OpenRouter.
+2. Ask: "I'm thinking about a heat pump for my 95 square metre semi-detached house. What
+   would it cost to fit and to run, and is there a grant?"
+3. Two cards ask before Heatwright and Fernbrook are contacted. Each shows the whole
+   request the partner will read. Choose Allow on both.
+4. In about a minute you get the price to fit (£9,200 to £11,200 for an 8 kW pump), the
+   £5,000 heat pump grant and what Fernbrook still needs to know, and the running cost:
+   Heat Pump Saver at £1,617.79 a year, £145.92 less than the cheapest tariff now.
+5. Open "How each answer was made" under the chat. It lists every agent that ran and the
+   site it came from, the calls that ran at the same time, Fernbrook's AAOSA round, each
+   MCP tool and site action, your consent decisions, and the model and router. The key is
+   listed only as "not shown".
 
-- **Published networks.** Each site publishes its agent network as a resolved Neuro SAN
-  network file, with `agent-manifest.json` and `links.json`, from static hosting with
-  CORS. Emberwick's network has four agents: `emberwick_assistant`, `tariff_advisor`
-  (ranks the tariffs), `usage_analyst` (usage and heat pump running costs) and
-  `retrofit_planner` (asks both partners and the analyst at once).
-- **A swarm across three sites.** Eleven Neuro SAN agents on three origins, all in the
-  visitor's browser. When a step needs several specialists or partners, the agent asks
-  for them together and the runtime runs them in parallel. Fernbrook routes between its
-  scheme agents with AAOSA, Neuro SAN's Determine and Fulfill protocol: every scheme
-  agent says whether it fits, then only those that do check the visitor's answers.
-- **Browser runtime.** The hackathon's reference runtime runs each network in the page.
-  The agents read the page through `website_*` actions that call the same methods as the
-  page's own buttons, so the page and the assistant follow one set of rules.
-- **Confirmation.** An action that cannot be undone, such as switching tariff or sending a
-  survey request, opens the site's own dialog with the real figures and exit fees, and
-  runs only if the visitor confirms.
-- **Cross-site calls.** Partner networks are named by exact URL and allowed by a closed
-  peer policy. The runtime asks before each new partner, and the card shows the whole
-  request. Partner agents run on the caller's router and key; the partner site never
-  receives the key and cannot change the router.
-- **Read-only MCP servers.** Each site answers `/mcp` with public tools (tariffs and yearly
-  costs, products and estimates, grants and eligibility) built on the same data and rules
-  as its page. Any MCP client can use them.
-- **How each answer was made.** Under the chat, each reply has a tree built from the
-  runtime's trace: which agent ran on which site, the site actions and MCP tools it used,
-  which calls ran at the same time, each AAOSA Determine and Fulfill with its reply,
-  each partner network with the visitor's consent decision, and the model and router,
-  with the key shown only as "not shown".
-- **Safety checks page.** `/lab/` shows the runtime stopping an invalid network, a
-  composition cycle, an over-budget request and a denied origin, on the in-page mock
-  model. No key is needed.
-- **Bring your own key.** The default router is OpenRouter with `openai/gpt-6-luna`; any
-  OpenAI-compatible provider that allows browser calls works. The key stays in the
-  visitor's browser.
+Without a key, the [Safety checks page](https://emberwick-energy.open-agentic-energy.workers.dev/lab/)
+runs on an in-page mock model and shows the runtime stopping an invalid network, a
+composition cycle, an over-budget request and a denied origin.
+
+### What a visitor can do
+
+Every page works on its own, with no assistant and no key. The assistant uses the same
+functions as the page's buttons, so the page and the assistant follow one set of rules.
+
+- Emberwick: see 12 months of usage, compare tariffs and switch tariff. Ask "Which tariff
+  would be cheapest for me?", "Which months did I use the most gas?" or "What would a
+  heat pump cost to run?"
+- Heatwright: get an estimate for a heat pump or solar panels and request a free survey.
+  Ask "What heat pump would suit a 95 m² semi?" or "Could I have solar panels on a flat?"
+- Fernbrook: check eligibility for three schemes and start an application. Ask "Is there
+  a grant for a heat pump?" or "Could I get help with insulation?"
+
+A switch, a survey request or an application cannot be undone. The assistant cannot do
+any of them by itself: the site's own dialog shows the real figures and fees first, and
+nothing happens unless the visitor confirms. Writes that can be undone, such as showing a
+comparison or an estimate, run straight away.
+
+### The 11 agents
+
+All 11 run in the visitor's browser. The front agent of each site talks to the visitor.
+Specialists never see the chat: whoever calls them passes what they need. Only front
+agents change anything on a page; specialists read.
+
+Emberwick:
+
+- `emberwick_assistant` talks to the customer. It reads the account, shows comparisons,
+  switches tariff after the dialog, and hands work to the three specialists.
+- `tariff_advisor` ranks the tariffs this account can have by the site's own yearly cost
+  estimates, with exit fees, and names the tariff a heat pump would open up.
+- `usage_analyst` finds the highest and lowest months, and works out what a heat pump
+  would cost to run on each tariff, from Emberwick's MCP tool
+  `estimate_heat_pump_running_cost`.
+- `retrofit_planner` asks Heatwright, Fernbrook and `usage_analyst` in one step, so all
+  three run at once, then sets their figures side by side with each source named. It
+  never adds figures from different sites together, and it is the only Emberwick agent
+  that contacts another site.
+
+Heatwright:
+
+- `heatwright_assistant` talks to the visitor. It shows estimates on the page, sends
+  survey requests after the dialog, and asks Fernbrook about grants and Emberwick about
+  running costs.
+- `heat_pump_engineer` works out the home's heat loss and the pump size and price that
+  cover it.
+- `solar_designer` picks a solar system and price, or says why the home does not suit
+  panels, such as a flat's shared roof.
+
+Fernbrook:
+
+- `fernbrook_assistant` talks to the visitor. It records eligibility answers on the page,
+  starts applications after the dialog, and routes grant questions to the scheme agents
+  with AAOSA.
+- `heat_pump_grant_agent`, `solar_starter_agent` and `warm_walls_agent` each answer for
+  one scheme: the £5,000 Heat Pump Grant, the £1,200 Solar Starter grant and the Warm
+  Walls insulation voucher of up to £2,000.
+
+Fernbrook's schemes overlap: a heat pump question can touch both the heat pump grant and
+the insulation voucher. So the front agent uses AAOSA, Neuro SAN's Determine and Fulfill
+protocol. It asks every scheme agent at once whether its scheme fits the request, then
+asks only those that said yes to check the visitor's answers. The MCP tool `check_scheme`
+decides one scheme from only the answers it needs, and says which are missing, so a
+visitor who has given one answer still gets a useful reply.
+
+On a live run of the heat pump question, the view counted 11 agent runs on 3 sites,
+4 parallel steps, 3 AAOSA Determines and 1 Fulfill, 10 MCP calls and 27 model calls, in
+68 seconds.
+
+### Why Neuro SAN suits this
+
+A heat pump decision needs knowledge held by three organisations, and none of them
+should hand its data or logic to the others. Neuro SAN lets each one publish what it
+knows as a network of agents, and lets another site run that network on request.
+
+- Each network is declarative data: agents, their instructions, the tools each may call,
+  and JSON Schemas for their inputs. Each site writes it in HOCON and publishes it as
+  resolved JSON. A partner network is fetched, validated and run in the caller's browser
+  with the caller's model and step limits, so a partner never receives the visitor's key
+  and cannot choose what the visitor pays for.
+- Agents call agents the same way they call tools, so a swarm needs no code of its own.
+  `retrofit_planner` calls two partner networks and an internal agent as one step's tool
+  calls, and the runtime runs them in parallel, up to four at once.
+- The same graph format holds plain delegation (Emberwick, Heatwright) and AAOSA routing
+  (Fernbrook), so each site uses the pattern its problem needs.
+- Agents read facts only through registered site actions or MCP tools, which call the
+  same rules as the page. Prices, amounts and statuses never appear in an agent's
+  instructions.
+- The runtime records every agent, tool call, consent decision and model call in a trace.
+  "How each answer was made" is built from that trace, with no change to the runtime.
+
+### How it meets the specification
+
+- A two-agent network and manifest on an HTTPS host: Emberwick publishes four agents,
+  `agent-manifest.json` and `links.json` on Cloudflare Workers.
+- Runs in a browser on the site's router, with BYOK: OpenRouter with `openai/gpt-6-luna`
+  by default, or any OpenAI-compatible provider that allows browser calls.
+- An internal agent and a grounded capability: `emberwick_assistant` asks
+  `usage_analyst`, which calls the MCP tool `estimate_heat_pump_running_cost`.
+- An exact named network from a second origin, after approval: `retrofit_planner` loads
+  `heatwright_installers` and `fernbrook_grants`, each after its own card.
+- The second site never gets the key or changes the router: checked live in the browser's
+  network log, and by browser workflow test 5.
+- Private context stays away from the peer: no network declares a private-context allow
+  rule, and partners receive only the request text the card showed.
+- Visible errors for an invalid network, a cycle, an over-budget request and a denied
+  origin: the Safety checks page, and browser workflow test 8.
+
+Peer policy is closed on every site: each manifest lists the partner origins it may
+contact, and the runtime refuses any other.
+
+### Shared with the community
+
+- Three read-only MCP servers, one on each site's own origin at `/mcp`. They use the same
+  data and rules modules as the pages, so a page, its assistant and any MCP client give
+  the same figures. They take no name, email or reference and never return a customer's
+  account.
+- Three published agent networks that any conforming runtime can load as partners.
+- `js/answer-path.js`, which turns the reference runtime's trace into a readable tree of
+  how an answer was made.
+- The Safety checks page and its test networks (`sites/utility/lab/`).
+- `e2e/scripted-router.mjs`, a way to run a whole multi-site agent swarm in a real browser
+  with no model and no key, by answering the runtime's model calls from a script.
 
 ### Built with
 
-Plain HTML, CSS and JavaScript modules, with no dependencies and no bundler; the
+Plain HTML, CSS and JavaScript modules, with no runtime dependencies and no bundler; the
 agentic-web reference runtime and agentify-website skill (Apache 2.0); Cloudflare Workers
-for static hosting and `/mcp`; Node's test runner. 88 tests run the real runtime and page
-code against a scripted model, and the MCP servers against hand-worked amounts.
+for static hosting and `/mcp`; Node's test runner; and [e2e](https://github.com/e2e-inc/e2e)
+for browser tests.
 
-### Known gaps
+89 tests run the real runtime and page code against a scripted model, and the MCP
+servers against hand-worked amounts. Eight browser workflow tests run in Chromium on a
+scripted router, so the real runtime, networks, consent cards, partner sites and MCP
+servers all run with no key. They cover the three pages on their own, the no-key state,
+the heat pump question with both partners allowed, a declined partner, a switch that
+waits for the page's dialog, and the four Safety checks.
+
+### Known limits
 
 These come from the reference runtime, which this project does not edit.
 
-- `write` actions (compare a tariff, show an estimate, record eligibility answers) run
-  without a preview. Each can be undone on the page. Only irreversible actions open a
-  dialog.
-- A partner's network runs without the partner's `website_*` tools. It answers from the
-  partner's public MCP tools, so it cannot act on the partner's page or see a visitor's
-  records there.
+- Writes that can be undone (compare a tariff, show an estimate, record eligibility
+  answers) run without a preview; only irreversible actions open a dialog.
+- A partner network runs without the partner's site actions, so it answers from the
+  partner's public MCP tools and cannot see a visitor's records there.
 - After the visitor allows a partner, that partner's agents call the partner's own `/mcp`
   without a second card, because the runtime treats a network's own origin as the same
   site.
 - A partner that accepts the connection but never answers leaves the chat waiting until
   the page is reloaded.
-- The LLM provider must allow browser calls (CORS).
+- The model provider must allow calls from a browser.
 - Everything in each published network file, including the instructions, is public.
 - There is no publisher-funded model: every visitor brings their own key.
-- A swarm costs more: a full heat pump question took 27 to 28 model calls and about
-  70 seconds in live runs.
-- Neuro SAN's coded tools and `sly_data` allow rules are not used: the static build
+- A swarm answer costs more than a single assistant: the heat pump question took 27 model
+  calls.
+- Neuro SAN's coded tools and private-context allow rules are not used. The static build
   refuses coded tools, and the runtime gives a page no way to set private context.
-
-### Shared with the community
-
-- Three read-only MCP servers, one per site, usable by any MCP client.
-- Three published agent networks that any conforming runtime can load as partners.
-- The Safety checks page and its four test networks (`sites/utility/lab/`), a quick way to
-  see a runtime meet the spec's failure cases.
-- `js/answer-path.js`: builds a readable "How this answer was made" tree from the
-  reference runtime's trace, with no runtime changes.
 
 ## Screenshots
 
@@ -125,5 +228,6 @@ At least one is required. In `docs/screenshots/` now:
 - `06-partner-consent-card.jpg`: the consent card before a partner is contacted.
 - `18-composed-answer-with-mcp.jpg`: an answer composed from both partners' MCP figures.
 
-Still to take: "How each answer was made" after a partner call, a confirmation dialog,
-and the Safety checks page.
+Still to take, to match the description: the agent map with its three icons after a
+partner call, "How each answer was made" showing the parallel calls and the AAOSA round,
+a confirmation dialog, and the Safety checks page.
