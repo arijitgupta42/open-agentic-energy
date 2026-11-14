@@ -100,6 +100,20 @@ class SafetyLab {
   }
 
   /**
+   * Turn a runtime tool name back into the lab network it stands for. The runtime
+   * names a remote network's tool from its URL path, so lab/cycle/lab_cycle_a
+   * becomes lab_cycle_lab_cycle_a. Match against the names this page defines.
+   *
+   * :param tool: The tool name from the trace event.
+   * :returns: The lab network name, or the tool name when none matches.
+   */
+  static networkName(tool) {
+    const known = ["lab_cycle_a", "lab_cycle_b", "lab_budget", "lab_denied", "lab_invalid"];
+    const hit = known.filter((name) => tool === name || tool.endsWith(`_${name}`) || tool === `lab_${name}`);
+    return hit.length ? hit.reduce((a, b) => (a.length >= b.length ? a : b)) : tool;
+  }
+
+  /**
    * Turn one runtime trace event into a sentence, when it is one this page explains.
    *
    * :param event: The trace's "event" event; its detail is the trace record.
@@ -111,7 +125,7 @@ class SafetyLab {
     } else if (ev.kind === "tool" && ev.phase === "end" && /^Skipped .*call chain/.test(String(ev.resultPreview || ""))) {
       // A cycle found when the call starts comes back as the tool's result
       // (runtime/runner.js, COMPOSITION_CYCLE), not as a composition_skip note.
-      SafetyLab.say(`Stopped a cycle: ${ev.tool} is already in this request's call chain, so the runtime did not run it again.`, true);
+      SafetyLab.say(`Stopped a cycle: ${SafetyLab.networkName(ev.tool)} is already in this request's call chain, so the runtime did not run it again.`, true);
     } else if (ev.kind === "composition_skip") {
       SafetyLab.say(`Stopped a cycle: ${ev.target} is already in this request's call chain (${ev.reason}), so it was not run again.`, true);
     } else if (ev.kind === "composition_limit") {
