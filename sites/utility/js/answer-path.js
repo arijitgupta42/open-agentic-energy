@@ -90,7 +90,7 @@ export class AnswerPath {
     const nodes = AnswerPath.nodes(run.children, {...state, counts, consents});
     return {
       question: run.input || "",
-      answer: run.answerPreview || "",
+      answer: AnswerPath.plain(run.answerPreview),
       status: run.status === "error" ? "error" : (run.endSeq === null ? "running" : "ok"),
       error: run.error || "",
       durationMs: run.durationMs ?? null,
@@ -217,10 +217,48 @@ export class AnswerPath {
     if (note.kind === "consent" && note.decision === "declined") {
       return {kind: "consent", title: `You declined contact with ${note.peerOrigin}`, detail: "Nothing was sent there.", status: "refused", children: []};
     }
-    if (note.kind === "composition_limit" || note.kind === "composition_skip") {
+    if (note.kind === "composition_skip") {
+      // Noted while the agent's tools are listed: the runtime does not offer a network
+      // already in this request's chain, such as a partner's link back to the caller.
+      // Nothing was attempted, so it is not shown as stopped.
+      return {kind: "skip", title: `Not offered ${AnswerPath.networkName(note.target)}`, detail: `The runtime left it out: ${note.reason || "already in this request"}.`, status: "ok", children: []};
+    }
+    if (note.kind === "composition_limit") {
       return {kind: "limit", title: "Stopped by the runtime", detail: note.reason || "", status: "refused", children: []};
     }
     return null;
+  }
+
+  /**
+   * Name a network URL by its last path part and host, such as
+   * "emberwick_energy at emberwick.example".
+   *
+   * :param target: The network URL, or anything else the runtime noted.
+   * :return: The name.
+   */
+  static networkName(target) {
+    try {
+      const url = new URL(String(target));
+      const name = url.pathname.split("/").filter(Boolean).pop();
+      return name ? `${name} at ${url.host}` : url.host;
+    } catch {
+      return String(target || "a network");
+    }
+  }
+
+  /**
+   * Turn a reply's Markdown into plain text for a one-line preview: drop emphasis,
+   * code marks and heading marks.
+   *
+   * :param text: The reply.
+   * :return: The plain text.
+   */
+  static plain(text) {
+    return String(text || "")
+      .replace(/(\*\*|__|`)/g, "")
+      .replace(/^#{1,6}\s+/gm, "")
+      .replace(/\s+/g, " ")
+      .trim();
   }
 
   /**

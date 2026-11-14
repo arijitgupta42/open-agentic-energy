@@ -75,7 +75,7 @@ page except the short request the card showed them.
 
 Plain HTML, CSS and JavaScript modules, with no dependencies and no bundler; the
 agentic-web reference runtime and agentify-website skill (Apache 2.0); Cloudflare Workers
-for static hosting and `/mcp`; Node's test runner. 79 tests run the real runtime and page
+for static hosting and `/mcp`; Node's test runner. 80 tests run the real runtime and page
 code against a scripted model, and the MCP servers against hand-worked amounts.
 
 ### Known gaps
