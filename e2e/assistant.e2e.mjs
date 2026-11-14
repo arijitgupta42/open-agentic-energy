@@ -48,7 +48,9 @@ async function answerCard(screen, partner, choice) {
 test("4. Without a key the page says how to set one up, and shows Emberwick's own icon", async ({ app, screen, browser }) => {
   await app.open("/");
   await expect(screen.getByText("Assistant needs your AI provider key. Add it in AI model settings below.")).toBeVisible();
-  await expect(browser.locator(".ns-anode").first()).toContainText("⚡ Emberwick Energy Assistant");
+  // The swarm graph is drawn before any key is set, with this site first.
+  expect((await browser.locator(".swarm-site-name").allTextContents())[0]).toBe("⚡ Emberwick Energy");
+  await expect(browser.locator(".swarm-node")).toHaveCount(11);
   // The page itself still works.
   await screen.getByRole("button", "Compare Green Flex").tap();
   await expect(screen.getByRole("status").filter({hasText: "Green Flex"})).toBeVisible();
@@ -66,17 +68,24 @@ test("5. The swarm answers a heat pump question from all three sites, after the 
   await expect(answer).toContainText("8 kW air-source heat pump, £9,200 to £11,200");
   await expect(answer).toContainText("Fernbrook Heat Pump Grant: £5,000");
   await expect(answer).toContainText("Heat Pump Saver, £145.92 less per year");
-  // Each site has its own icon in the agent map.
-  const map = (await browser.locator(".ns-anode").allTextContents()).join(" ");
+  // Each site has its own icon in the swarm graph.
+  const map = (await browser.locator(".swarm-site-name").allTextContents()).join(" ");
   for (const icon of ["⚡ Emberwick", "🔧 Heatwright", "🌱 Fernbrook"]) {
     expect(map).toContain(icon);
   }
-  // How the answer was made: parallel calls and the AAOSA round.
-  const path = browser.locator("#answer-path-list");
-  await expect(path).toContainText("agents on 3 sites");
-  await expect(path).toContainText("3 calls at the same time");
-  await expect(path).toContainText("AAOSA Determine: heat_pump_grant_agent");
-  await expect(path).toContainText("AAOSA Fulfill: heat_pump_grant_agent");
+  // The swarm graph beside the chat: agents on all three sites worked on the answer.
+  const swarm = browser.locator("#swarm-map");
+  await expect(swarm).toContainText("3 sites");
+  for (const agent of ["emberwick_assistant", "retrofit_planner", "heatwright_assistant", "fernbrook_assistant", "heat_pump_grant_agent"]) {
+    await expect(browser.locator(`.swarm-node[data-state="ok"][aria-label^="${agent},"]`)).toHaveCount(1);
+  }
+  await expect(browser.locator('.swarm-node[data-state="idle"][aria-label^="tariff_advisor,"]')).toHaveCount(1);
+  // The scheme agent's tooltip: one short line for its AAOSA round, and the tool it used.
+  await browser.locator('.swarm-node[aria-label^="heat_pump_grant_agent,"]').click();
+  const tip = browser.locator("#swarm-tip");
+  await expect(tip).toContainText("From fernbrook_assistant (AAOSA Determine");
+  await expect(tip).toContainText("Used: check_scheme");
+  await expect(tip).toContainText("ran in your browser, you allowed it");
   // The key went only to the router; partner sites got public files and /mcp only.
   const partnerRequests = seen.filter((request) => PARTNERS.includes(request.host));
   expect(partnerRequests.length).toBeGreaterThan(0);
@@ -99,7 +108,11 @@ test("6. A declined partner is never contacted, and the answer says the visitor 
   const answer = screen.getByText(/^Plan: /);
   await expect(answer).toContainText("£9,200 to £11,200");
   await expect(answer).toContainText("The user declined to contact localhost:8082");
-  await expect(browser.locator("#answer-path-list")).toContainText("You declined contact with localhost:8082.");
+  // The graph shows the grants site as declined, and its agents never ran.
+  await expect(browser.locator('.swarm-node[data-state="refused"][aria-label^="fernbrook_assistant,"]')).toHaveCount(1);
+  expect((await browser.locator(".swarm-site-status").allTextContents()).join(" | ")).toContain("partner · declined");
+  await browser.locator('.swarm-node[aria-label^="fernbrook_assistant,"]').click();
+  await expect(browser.locator("#swarm-tip")).toContainText("Did not run: You declined contact with localhost:8082.");
   expect(seen.filter((request) => request.host === "localhost:8082")).toEqual([]);
 });
 

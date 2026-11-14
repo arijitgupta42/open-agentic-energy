@@ -3,6 +3,8 @@
 // It is the agentify-website skill's templates/site.js with this site's greeting,
 // dialog words and review details filled in.
 import { AnswerPath } from "./js/answer-path.js";
+import { DevLog } from "./js/dev-log.js";
+import { SwarmGraph } from "./js/swarm-graph.js";
 import { VoiceInput } from "./js/voice-input.js";
 import { App } from "./js/app.js";
 
@@ -49,7 +51,7 @@ export class AssistantMount {
         sandboxWorkerUrl: new URL("runtime/sandbox-worker.js", siteBase).href,
       });
       AssistantMount.engine = booted.engine;
-      AssistantMount.watchTrace(booted.trace);
+      AssistantMount.watchTrace(booted.trace, booted.engine.top?.network?.name || "");
       // Voice input is extra: the chat works without it (issue #15).
       VoiceInput.attach(document, window).catch((error) => console.error("Voice input is off", error));
       AssistantMount.defaultReview = booted.engine.onActionConfirm;
@@ -143,8 +145,8 @@ export class AssistantMount {
     AssistantMount.showWholeRequest(info);
     AssistantMount.focusConsentCard();
     const decision = await answer;
-    // The runtime's trace records only a declined card. Record every answer, so "How
-    // each answer was made" can say what the visitor decided (spec 5).
+    // The runtime's trace records only a declined card. Record every answer, so the
+    // swarm graph can say what the visitor decided (spec 5).
     AssistantMount.trace?.note("consent", {page: true, peerOrigin: info?.peerOrigin, decision: decision || "allow", consentFor: info?.kind});
     // Answering the card removes its buttons, so focus may fall to the page body.
     AssistantMount.keepFocusInChat();
@@ -152,27 +154,26 @@ export class AssistantMount {
   }
 
   /**
-   * Keep "How each answer was made" up to date from the runtime's trace, while a message
-   * runs and when it ends. The trace stays in this browser: nothing here sends it.
+   * Keep "The swarm at work" up to date from the runtime's trace, while a message runs
+   * and when it ends. The trace stays in this browser: nothing here sends it.
    *
    * :param trace: The runtime's trace, from boot().
+   * :param network: This site's network name, so the graph can mark this site.
    */
-  static watchTrace(trace) {
-    const section = document.querySelector("#answer-paths");
-    const list = document.querySelector("#answer-path-list");
-    if (!trace || !section || !list) {
+  static watchTrace(trace, network) {
+    if (!trace) {
       return;
     }
     AssistantMount.trace = trace;
+    const graph = AssistantMount.mountSwarm(trace, network);
+    if (!graph) {
+      return;
+    }
     let pending = false;
     const draw = () => {
       pending = false;
       try {
-        const built = AnswerPath.build(trace.events, location.host);
-        if (built.turns.length || built.setup.length) {
-          section.hidden = false;
-          AnswerPath.render(list, built);
-        }
+        graph.update(AnswerPath.build(trace.events, location.host).turns);
       } catch (error) {
         // The view is extra: the chat and the page keep working without it.
         console.error("Could not show how the answer was made", error);
@@ -185,6 +186,36 @@ export class AssistantMount {
       }
     });
     draw();
+  }
+
+  /**
+   * Draw the swarm graph beside the chat, link it to the chat's messages, and add the
+   * developer log's filter buttons. All three are extra: the chat works without them.
+   *
+   * :param trace: The runtime's trace, from boot().
+   * :param network: This site's network name.
+   * :return: The graph, or null when it could not be drawn.
+   */
+  static mountSwarm(trace, network) {
+    try {
+      DevLog.attach(document, trace);
+      const panel = document.querySelector("#swarm-map");
+      if (!panel) {
+        return null;
+      }
+      const graph = new SwarmGraph(panel, network);
+      // The developer log shows the answer on show in the graph.
+      graph.onSelect = DevLog.scope.bind(null, document);
+      const messages = document.querySelector("#ns-msgs");
+      if (messages) {
+        graph.linkChat(messages);
+      }
+      panel.hidden = false;
+      return graph;
+    } catch (error) {
+      console.error("Could not draw the swarm graph", error);
+      return null;
+    }
   }
 
   /**

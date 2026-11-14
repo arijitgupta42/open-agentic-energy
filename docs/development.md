@@ -141,7 +141,7 @@ sites and the MCP servers all run, with no key and no cost.
 | 2 | Heatwright: a heat pump estimate on the page | the estimate form or rules break |
 | 3 | Fernbrook: an eligibility check on the page | the eligibility form or rules break |
 | 4 | No key: the status line says how to set one up, the page still works, Emberwick has its own icon | boot, the settings path or the brand icon breaks |
-| 5 | The heat pump question: two consent cards, then an answer with figures from all three sites; distinct icons; parallel calls and AAOSA in "How each answer was made"; the key goes only to the router | anything in the swarm, linking, consent, MCP, the answer view or key handling |
+| 5 | The heat pump question: two consent cards, then an answer with figures from all three sites; distinct icons and lit agents on all three sites in the swarm graph; the AAOSA round in a scheme agent's tooltip; the key goes only to the router | anything in the swarm, linking, consent, MCP, the answer view or key handling |
 | 6 | Decline one partner: it is never contacted, and the answer and the view say so | consent stops being enforced or reported |
 | 7 | A tariff switch through the assistant waits for the page's own dialog | irreversible actions stop needing confirmation |
 | 8 | The Safety checks page stops all four failure cases | the runtime stops failing closed |

@@ -32,9 +32,11 @@ three sites. The companies, tariffs, prices and grants are fictional.
 4. In about a minute you get the price to fit (£9,200 to £11,200 for an 8 kW pump), the
    £5,000 heat pump grant and what Fernbrook still needs to know, and the running cost:
    Heat Pump Saver at £1,617.79 a year, £145.92 less than the cheapest tariff now.
-5. Open "How each answer was made" under the chat. It lists every agent that ran and the
-   site it came from, the calls that ran at the same time, Fernbrook's AAOSA round, each
-   MCP tool and site action, your consent decisions, and the model and router. The key is
+5. Watch "The swarm at work" beside the chat while the answer is made: a live graph of
+   all 11 agents, grouped by site, where the agents and calls working on your message
+   light up. Point at an agent or a call for a few lines on what it did for that answer:
+   who asked it what, the tools it used, its reply and your consent decision. Point at a
+   chat message to see its path again. The key is
    listed only as "not shown".
 
 Without a key, the [Safety checks page](https://emberwick-energy.open-agentic-energy.workers.dev/lab/)
@@ -119,7 +121,8 @@ knows as a network of agents, and lets another site run that network on request.
   same rules as the page. Prices, amounts and statuses never appear in an agent's
   instructions.
 - The runtime records every agent, tool call, consent decision and model call in a trace.
-  "How each answer was made" is built from that trace, with no change to the runtime.
+  "The swarm at work" (a live graph, plain SVG with no library) is built from that
+  trace, with no change to the runtime.
 
 ## How it meets the specification
 
@@ -145,7 +148,9 @@ browser to check, is in
   the same figures. They take no name, email or reference and never return a customer's
   account.
 - Three published agent networks that any conforming runtime can load as partners.
-- `js/answer-path.js`, which turns the reference runtime's trace into a readable tree of
+- `js/swarm-graph.js` and `js/swarm-map.js`, which draw a swarm as a live graph from the
+  same trace: fixed layout, inline SVG, no dependency.
+- `js/answer-path.js`, which reads the reference runtime's trace into a tree of
   how an answer was made.
 - The Safety checks page and its test networks (`sites/utility/lab/`).
 - `e2e/scripted-router.mjs`, a way to run a whole multi-site agent swarm in a real browser
