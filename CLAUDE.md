@@ -31,6 +31,7 @@ Run from the repository root. Node.js 22 or newer.
 | --- | --- |
 | `npm run build` | Writes each site's `<network>.network.json`, discovery files and `bridge/` from its `.hocon` and manifest |
 | `npm test` | Runs every site's tests (real runtime, real page code, scripted model, no LLM) and the MCP servers' tests |
+| `npm run test:e2e` | Runs the eight browser workflow tests in `e2e/` with e2e, on a scripted router: no key, no model |
 | `npm run check` | Fails when generated files are stale, a runtime copy differs, or a conformance check fails |
 | `npm run serve` | Serves the three sites locally with the headers a host must send, and each site's `/mcp` |
 | `npm run conformance:live` | Fetches the served sites and checks CORS and the bridge |

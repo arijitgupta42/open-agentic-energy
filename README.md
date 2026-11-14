@@ -38,12 +38,14 @@ supplier about heat pump tariffs the same way.
 
 ## Quick start
 
-Node.js 22 or newer. No install step: there are no dependencies. Each site also serves a
-read-only MCP server at `/mcp` (`server/`).
+Node.js 22 or newer. The sites, their tests and the MCP servers have no dependencies.
+Only the browser workflow tests need `npm install` (e2e, a development dependency).
+Each site also serves a read-only MCP server at `/mcp` (`server/`).
 
 ```shell
 npm run build      # write the published network files
-npm test           # 88 tests: real runtime and page code, scripted model, no LLM, plus the MCP servers
+npm test           # 89 tests: real runtime and page code, scripted model, no LLM, plus the MCP servers
+npm run test:e2e   # 8 user workflows in a real browser, on a scripted model (docs/development.md)
 npm run check      # generated files, runtime copies and conformance checks
 npm run serve      # serve the three sites, each with its /mcp
 ```

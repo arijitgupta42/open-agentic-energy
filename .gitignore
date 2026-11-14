@@ -7,3 +7,4 @@ requests.jsonl
 .env
 .env.*
 .wrangler/
+.e2e/

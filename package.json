@@ -12,10 +12,15 @@
     "build": "node scripts/build-all.mjs",
     "check": "node scripts/build-all.mjs --check && node scripts/sync-runtime.mjs --check && node scripts/check-conformance.mjs",
     "test": "node --test \"sites/*/tests/*.test.mjs\" \"server/tests/*.test.mjs\"",
+    "test:e2e": "node scripts/run-e2e.mjs",
     "serve": "node scripts/serve-all.mjs",
     "conformance": "node scripts/check-conformance.mjs",
     "conformance:live": "node scripts/check-conformance.mjs --live",
     "origins": "node scripts/set-origins.mjs",
     "sync-runtime": "node scripts/sync-runtime.mjs"
+  },
+  "devDependencies": {
+    "@e2e-dev/web": "0.16.0",
+    "e2e": "0.23.1"
   }
 }
