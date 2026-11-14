@@ -1,7 +1,9 @@
 // Builds "How this answer was made" from the runtime's execution trace (spec 5,
 // "Observable execution"): for each visitor message, which agent ran on which site,
 // which site actions, MCP tools and partner networks it used, the consent decisions,
-// the model and router, any refusal or error, and the answer.
+// the model and router, any refusal or error, and the answer. For a swarm it also shows
+// which calls ran at the same time, each AAOSA question (Determine) and job (Fulfill),
+// and how many agents on how many sites took part.
 //
 // It reads the trace that runtime/index.js boot() returns and never edits the runtime.
 // It shows the key only as the runtime describes it ("local BYOK (not shown)"). What it
@@ -85,9 +87,11 @@ export class AnswerPath {
    * :return: The turn.
    */
   static turn(run, state) {
-    const counts = {agents: 0, actions: 0, mcp: 0, partners: 0, modelCalls: 0};
+    const counts = {agents: 0, sites: 0, actions: 0, mcp: 0, partners: 0, modelCalls: 0, parallel: 0, determine: 0, fulfill: 0};
     const consents = run.children.filter((child) => child.note && child.kind === "consent" && child.page);
-    const nodes = AnswerPath.nodes(run.children, {...state, counts, consents});
+    const origins = new Set();
+    const nodes = AnswerPath.nodes(run.children, {...state, counts, consents, origins});
+    counts.sites = origins.size;
     return {
       question: run.input || "",
       answer: AnswerPath.plain(run.answerPreview),
@@ -114,15 +118,83 @@ export class AnswerPath {
     if (models.length) {
       nodes.push(AnswerPath.modelNode(models, ctx));
     }
-    for (const child of children) {
-      const node = AnswerPath.node(child, ctx);
+    const groups = AnswerPath.parallelGroups(children);
+    const add = (list, node) => {
       if (Array.isArray(node)) {
-        nodes.push(...node);
+        list.push(...node);
       } else if (node) {
-        nodes.push(node);
+        list.push(node);
+      }
+    };
+    for (const child of children) {
+      const group = groups.get(child);
+      if (!group) {
+        add(nodes, AnswerPath.node(child, ctx));
+      } else if (group[0] === child) {
+        nodes.push(AnswerPath.parallelNode(group, ctx, add));
       }
     }
     return nodes;
+  }
+
+  /**
+   * Find the tool calls that ran at the same time: a call that started before an earlier
+   * one under the same agent ended. The runtime runs the calls a model asks for in one
+   * step together, unless one of them must run alone.
+   *
+   * :param children: Spans and notes under one parent, in the order they started.
+   * :return: A map from each tool span in a group of two or more to its group.
+   */
+  static parallelGroups(children) {
+    const groups = new Map();
+    let group = [];
+    let open = -1;
+    const close = () => {
+      if (group.length > 1) {
+        for (const member of group) {
+          groups.set(member, group);
+        }
+      }
+    };
+    for (const child of children) {
+      if (child.note || child.kind !== "tool") {
+        continue;
+      }
+      if (group.length && child.seq < open) {
+        group.push(child);
+      } else {
+        close();
+        group = [child];
+        open = -1;
+      }
+      open = Math.max(open, child.endSeq === null ? Infinity : child.endSeq);
+    }
+    close();
+    return groups;
+  }
+
+  /**
+   * Show tool calls that ran at the same time as one node holding each call's nodes.
+   *
+   * :param group: The tool spans, in the order they started.
+   * :param ctx: As for nodes().
+   * :param add: Adds a node, a list of nodes or nothing to a list.
+   * :return: The node.
+   */
+  static parallelNode(group, ctx, add) {
+    ctx.counts.parallel += 1;
+    const children = [];
+    for (const span of group) {
+      add(children, AnswerPath.node(span, ctx));
+    }
+    const statuses = children.map((child) => child.status);
+    return {
+      kind: "parallel",
+      title: `${group.length} calls at the same time`,
+      detail: "Asked for in one step and run together by the runtime.",
+      status: statuses.includes("error") ? "error" : (statuses.includes("running") ? "running" : "ok"),
+      children: children,
+    };
   }
 
   /**
@@ -169,6 +241,9 @@ export class AnswerPath {
     }
     if (item.kind === "agent") {
       ctx.counts.agents += 1;
+      if (item.origin) {
+        ctx.origins.add(item.origin);
+      }
       const partner = ctx.pageHost && item.origin && item.origin !== ctx.pageHost;
       return {
         kind: "agent",
@@ -282,6 +357,20 @@ export class AnswerPath {
     if (refusal) {
       base.refusal = refusal;
     }
+    if (span.toolKind === "agent" && span.args && (span.args.mode === "Determine" || span.args.mode === "Fulfill")) {
+      // AAOSA: the caller first asks each agent whether its job fits (Determine), then
+      // asks only those that said so to do it (Fulfill).
+      const determine = span.args.mode === "Determine";
+      ctx.counts[determine ? "determine" : "fulfill"] += 1;
+      return {
+        ...base,
+        kind: "aaosa",
+        title: `AAOSA ${span.args.mode}: ${name}`,
+        detail: determine ? "Asked whether its job fits this request." : "Asked to do its part.",
+        reply: AnswerPath.cut(AnswerPath.plain(AnswerPath.replyText(span.resultPreview))),
+        children: AnswerPath.nodes(span.children, ctx),
+      };
+    }
     if (span.toolKind === "agent") {
       const children = AnswerPath.nodes(span.children, ctx);
       if (children.length && !refusal && status !== "error") {
@@ -327,6 +416,28 @@ export class AnswerPath {
       };
     }
     return {...base, kind: "tool", title: `Tool ${name}${span.toolKind ? ` (${span.toolKind})` : ""}`, detail: AnswerPath.cut(AnswerPath.argsText(span.args))};
+  }
+
+  /**
+   * The text of an agent's reply from a tool span's result preview, which holds the
+   * reply as text or, cut short, as the runner's JSON result with a "text" field, such
+   * as {"cruse":1,"text":"Yes: ...","presentation":null,...}.
+   *
+   * :param preview: The span's resultPreview.
+   * :return: The reply text.
+   */
+  static replyText(preview) {
+    const value = String(preview || "");
+    const match = value.startsWith("{") ? /"text":"((?:[^"\\]|\\.)*)/.exec(value) : null;
+    if (!match) {
+      return value;
+    }
+    try {
+      return JSON.parse(`"${match[1]}"`);
+    } catch {
+      // Cut inside an escape: show it as it is.
+      return match[1];
+    }
   }
 
   /**
@@ -456,10 +567,16 @@ export class AnswerPath {
         parts.push(`${count} ${count === 1 ? one : many}`);
       }
     };
-    add(turn.counts.agents, "agent", "agents");
+    if (turn.counts.agents) {
+      const sites = turn.counts.sites > 1 ? ` on ${turn.counts.sites} sites` : "";
+      parts.push(`${turn.counts.agents} ${turn.counts.agents === 1 ? "agent" : "agents"}${sites}`);
+    }
     add(turn.counts.actions, "site action", "site actions");
     add(turn.counts.mcp, "MCP tool", "MCP tools");
     add(turn.counts.partners, "partner network", "partner networks");
+    add(turn.counts.parallel, "parallel step", "parallel steps");
+    add(turn.counts.determine, "AAOSA Determine", "AAOSA Determines");
+    add(turn.counts.fulfill, "AAOSA Fulfill", "AAOSA Fulfills");
     add(turn.counts.modelCalls, "model call", "model calls");
     if (turn.durationMs !== null) {
       parts.push(`${(turn.durationMs / 1000).toFixed(1)} s`);
@@ -486,7 +603,7 @@ export class AnswerPath {
         const pad = "  ".repeat(depth);
         const mark = node.status === "ok" ? "" : ` [${node.status}]`;
         lines.push(`${pad}- ${node.title}${mark}`);
-        for (const extra of [node.detail, node.quote ? `“${node.quote}”` : "", node.consent, node.refusal, node.error]) {
+        for (const extra of [node.detail, node.quote ? `“${node.quote}”` : "", node.reply ? `Replied: ${node.reply}` : "", node.consent, node.refusal, node.error]) {
           if (extra) {
             lines.push(`${pad}  ${extra}`);
           }
@@ -578,7 +695,7 @@ export class AnswerPath {
         badge.textContent = {refused: "stopped", error: "error", running: "running"}[node.status];
         item.append(" ", badge);
       }
-      for (const [text, name] of [[node.detail, "detail"], [node.quote ? `Request sent: “${node.quote}”` : "", "quote"], [node.consent, "consent"], [node.refusal, "detail"], [node.error, "error"]]) {
+      for (const [text, name] of [[node.detail, "detail"], [node.quote ? `Request sent: “${node.quote}”` : "", "quote"], [node.reply ? `Replied: ${node.reply}` : "", "reply"], [node.consent, "consent"], [node.refusal, "detail"], [node.error, "error"]]) {
         if (text) {
           const line = doc.createElement("span");
           line.className = `answer-path-${name}`;

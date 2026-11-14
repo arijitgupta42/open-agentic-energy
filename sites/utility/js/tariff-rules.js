@@ -24,6 +24,36 @@ export class TariffRules {
   }
 
   /**
+   * Work out a year's cost on a tariff for a home with no gas supply: electricity only,
+   * with no gas standing charge.
+   *
+   * :param tariff: A tariff from AccountData.TARIFFS.
+   * :param electricityKwh: Electricity used in the year.
+   * :return: The cost in whole pence, rounded half up.
+   */
+  static electricOnlyCostPence(tariff, electricityKwh) {
+    const tenths = electricityKwh * tariff.electricityUnit + tariff.electricityStanding * TariffRules.DAYS;
+    return Math.round(tenths / 10);
+  }
+
+  /**
+   * Work out a year's electricity if a heat pump took over the heating a gas boiler does.
+   * The heat the boiler gave (gas times its efficiency) comes instead from the heat
+   * pump, which uses one unit of electricity for each `heatPumpEfficiencyTenths / 10`
+   * units of heat.
+   *
+   * :param electricityKwh: Electricity used in the year now.
+   * :param gasKwh: Gas used in the year now.
+   * :param estimate: AccountData.HEAT_PUMP_ESTIMATE.
+   * :return: {extraElectricityKwh, electricityKwh}, whole kWh rounded half up.
+   */
+  static heatPumpUsage(electricityKwh, gasKwh, estimate) {
+    const heatTimesTen = gasKwh * estimate.boilerEfficiencyPercent / 10;
+    const extra = Math.round(heatTimesTen / estimate.heatPumpEfficiencyTenths);
+    return {extraElectricityKwh: extra, electricityKwh: electricityKwh + extra};
+  }
+
+  /**
    * Check a switch without changing anything.
    *
    * :param account: The account, with hasHeatPump.

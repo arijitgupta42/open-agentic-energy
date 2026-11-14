@@ -8,8 +8,19 @@
 //   Heat Pump Saver:   2,975 x 21.5p + 11,770 x 6.6p + 365 x (60.0p + 31.0p) = 174,859.5p -> 174,860p
 // Heatwright, a heat pump for a 95 m2 semi-detached house: 95 x 70 W = 6,650 W, so the
 //   smallest pump of at least that output is the 8 kW one, £9,200 to £11,200.
+// Emberwick with a heat pump in place of the gas boiler, same usage:
+//   Heat from gas: 11,770 x 90% = 10,593 kWh; at 3.0 units of heat per kWh of electricity,
+//   10,593 / 3.0 = 3,531 kWh more electricity, so 2,975 + 3,531 = 6,506 kWh and no gas.
+//   Standard Variable: 6,506 x 26.4p + 365 x 55.0p = 191,833.4p -> 191,833p
+//   Fixed 12 Month:    6,506 x 24.9p + 365 x 58.0p = 183,169.4p -> 183,169p
+//   Green Flex:        6,506 x 25.8p + 365 x 56.0p = 188,294.8p -> 188,295p
+//   Heat Pump Saver:   6,506 x 21.5p + 365 x 60.0p = 161,779p
+//   Cheapest now is Fixed 12 Month at 176,371p: 176,371 - 161,779 = 14,592p less a year.
 // Fernbrook, an owner-occupier with a gas boiler, EPC band D and income £31,000 or more:
 //   Heat Pump Grant yes, Solar Starter no (income), Warm Walls yes (band D).
+// One scheme at a time: the Heat Pump Grant with only tenure given still needs the
+//   heating; Warm Walls with band C is not met; Solar Starter for an owner-occupier
+//   under £31,000 is met.
 import assert from "node:assert/strict";
 import test from "node:test";
 import { MCP_SERVERS } from "../sites.mjs";
@@ -76,7 +87,11 @@ test("a notification gets 202 and no body; a preflight gets 204 with the CORS he
 });
 
 test("every tool is listed as read-only with an object input schema", async () => {
-  const expected = {utility: ["list_tariffs", "estimate_yearly_costs"], installer: ["list_products", "estimate"], grants: ["list_grants", "check_eligibility"]};
+  const expected = {
+    utility: ["list_tariffs", "estimate_yearly_costs", "estimate_heat_pump_running_cost"],
+    installer: ["list_products", "estimate"],
+    grants: ["list_grants", "check_eligibility", "check_scheme"],
+  };
   for (const [site, names] of Object.entries(expected)) {
     const reply = await send(site, {jsonrpc: "2.0", id: 2, method: "tools/list"});
     const tools = reply.body.result.tools;
@@ -129,6 +144,23 @@ test("Emberwick's yearly costs match the hand-worked sums, and a heat pump opens
   assert.equal(withPump.cheapestAvailable, "Heat Pump Saver");
 });
 
+test("Emberwick's heat pump running costs match the hand-worked sums", async () => {
+  const {isError, value} = await call("utility", "estimate_heat_pump_running_cost", {electricityKwh: 2975, gasKwh: 11770});
+  assert.equal(isError, false);
+  assert.deepEqual(value.withHeatPump, {electricityKwh: 6506, extraElectricityKwh: 3531, gasKwh: 0});
+  assert.deepEqual(value.tariffsWithHeatPump.map((row) => [row.tariff, row.estimatedYearlyCost]), [
+    ["Heat Pump Saver", "£1,617.79"],
+    ["Fixed 12 Month", "£1,831.69"],
+    ["Green Flex", "£1,882.95"],
+    ["Standard Variable", "£1,918.33"],
+  ]);
+  assert.deepEqual(value.cheapestNow, {tariff: "Fixed 12 Month", estimatedYearlyCost: "£1,763.71"});
+  assert.equal(value.cheapestWithHeatPump, "Heat Pump Saver");
+  assert.equal(value.yearlyDifference, "£145.92 less per year");
+  assert.match(value.assumptions, /90% efficient/);
+  assert.doesNotMatch(JSON.stringify(value), /EW-DEMO|Demo household/);
+});
+
 test("Heatwright's estimate matches the hand-worked heat loss and price", async () => {
   const {value} = await call("installer", "estimate", {measure: "heat-pump", homeType: "semi-detached", floorAreaM2: 95});
   assert.equal(value.ok, true);
@@ -157,6 +189,23 @@ test("Fernbrook's eligibility follows the scheme rules", async () => {
   assert.match(value.note, /not an application/);
   const listed = (await call("grants", "list_grants")).value;
   assert.deepEqual(listed.schemes[0].conditions[0].allowed, ["I own the home and live in it", "I am a private landlord"]);
+});
+
+test("Fernbrook checks one scheme from only the answers it needs", async () => {
+  const partial = (await call("grants", "check_scheme", {scheme: "heat-pump-grant", tenure: "owner-occupier"})).value;
+  assert.equal(partial.scheme, "Fernbrook Heat Pump Grant");
+  assert.equal(partial.amount, "£5,000");
+  assert.equal(partial.eligible, null);
+  assert.deepEqual(partial.reasons, []);
+  assert.deepEqual(partial.stillNeeded, ["Say how the home is heated now."]);
+  const notMet = (await call("grants", "check_scheme", {scheme: "warm-walls", epcBand: "C"})).value;
+  assert.equal(notMet.eligible, false);
+  assert.deepEqual(notMet.reasons, ["The home's EPC band must be D, E, F or G."]);
+  const met = (await call("grants", "check_scheme", {scheme: "solar-starter", tenure: "owner-occupier", incomeBand: "under-31000"})).value;
+  assert.equal(met.eligible, true);
+  assert.deepEqual(met.stillNeeded, []);
+  const unknown = await call("grants", "check_scheme", {scheme: "no-such-scheme"});
+  assert.equal(unknown.isError, true);
 });
 
 test("bad arguments come back as a tool error the model can fix, and change nothing", async () => {

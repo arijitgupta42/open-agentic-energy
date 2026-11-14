@@ -71,6 +71,46 @@ export class GrantRules {
   }
 
   /**
+   * Decide one scheme from only the answers it needs, some of which may be missing.
+   * Changes nothing.
+   *
+   * :param scheme: A scheme from GrantData.SCHEMES.
+   * :param input: Any of tenure, currentHeating, epcBand and incomeBand, as ids.
+   * :return: {ok: true, eligible, reasons, missing} or {ok: false, reason, field} for an
+   *   answer that is not one of its options. eligible is null while an answer the scheme
+   *   needs is missing; missing lists what to ask for, as the page asks it. reasons has
+   *   one entry for each rule an answer given does not meet.
+   */
+  static assessScheme(scheme, input) {
+    const answers = {};
+    for (const question of GrantRules.QUESTIONS) {
+      const given = input[question.answer];
+      if (given === undefined || given === null || given === "") {
+        continue;
+      }
+      if (!GrantRules.find(question.options, given)) {
+        return {ok: false, reason: question.missing, field: question.answer};
+      }
+      answers[question.answer] = given;
+    }
+    const reasons = [];
+    const missing = [];
+    for (const rule of scheme.rules) {
+      if (!Object.hasOwn(answers, rule.answer)) {
+        missing.push(GrantRules.QUESTIONS.find((question) => question.answer === rule.answer).missing);
+      } else if (!rule.allowed.includes(answers[rule.answer])) {
+        reasons.push(rule.failure);
+      }
+    }
+    return {
+      ok: true,
+      eligible: reasons.length ? false : (missing.length ? null : true),
+      reasons: reasons,
+      missing: missing,
+    };
+  }
+
+  /**
    * Check an applicant's contact details, without changing anything.
    *
    * :param args: The application, with fullName and email.

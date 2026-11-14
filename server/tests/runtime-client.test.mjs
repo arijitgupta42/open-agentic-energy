@@ -44,6 +44,18 @@ async function load(site) {
   return {network, manifest};
 }
 
+/**
+ * Expand an agent's instructions as the runtime does: each {name} once.
+ *
+ * :param network: The network JSON.
+ * :param text: The instructions.
+ * :return: The expanded text.
+ */
+function expand(network, text) {
+  const strings = network.commondefs?.replacement_strings || {};
+  return text.replace(/\{([A-Za-z0-9_]+)\}/g, (match, key) => (Object.hasOwn(strings, key) ? strings[key] : match));
+}
+
 test("each front agent names its own site's MCP server, and the manifest allows that origin", async () => {
   for (const site of Object.keys(NETWORKS)) {
     const {network, manifest} = await load(site);
@@ -58,8 +70,11 @@ test("each front agent names its own site's MCP server, and the manifest allows 
     assert.equal(manifest.peer_policy.mode, "closed");
     const listed = (await MCP_SERVERS[site].handle(new Request(url, {method: "POST", body: JSON.stringify({jsonrpc: "2.0", id: 1, method: "tools/list"})})));
     const names = (await listed.json()).result.tools.map((tool) => tool.name);
+    // A specialist may own a tool: then it lists the same server, and its instructions
+    // say when to call it.
+    const users = network.tools.filter((agent) => Array.isArray(agent.tools) && agent.tools.includes(url.href));
     for (const name of names) {
-      assert.ok(front.instructions.includes(`mcp_${name}`), `${site}: the front agent's instructions name mcp_${name}.`);
+      assert.ok(users.some((agent) => expand(network, agent.instructions).includes(`mcp_${name}`)), `${site}: no agent that lists ${url.href} names mcp_${name}.`);
     }
   }
 });
@@ -72,7 +87,7 @@ test("the runtime's MCP client lists and calls a partner's tools, sending no cre
   t.mock.method(globalThis, "fetch", fetcher);
   const client = new McpClient({url: url});
   const tools = await client.listTools();
-  assert.deepEqual(tools.map((tool) => tool.name), ["list_grants", "check_eligibility"]);
+  assert.deepEqual(tools.map((tool) => tool.name), ["list_grants", "check_eligibility", "check_scheme"]);
   const text = await client.callTool("check_eligibility", {tenure: "owner-occupier", currentHeating: "oil-boiler", epcBand: "C", incomeBand: "under-31000"});
   const result = JSON.parse(text);
   assert.deepEqual(result.results.map((row) => [row.scheme, row.eligible]), [

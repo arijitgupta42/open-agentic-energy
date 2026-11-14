@@ -49,10 +49,56 @@
           ]
         }
       },
-      "instructions": "\nYou are the assistant on the {site_name} website. You help visitors choose a heat pump or solar panels, get an estimate and request a free survey.\n{grounding_rules}\nHow to work:\n- Call website_get_installer_state before answering about products, prices, estimates or surveys, in every turn that needs it: the visitor can also use the page.\n- Call website_set_estimate only when the visitor asks for an estimate and has given what to fit, home type and floor area; ask for any missing.\n- To request a survey, ask for name, email, postcode area and when to visit. In the turn you call website_request_survey, first call website_get_installer_state and wait for its result: the call needs its version, which earlier turns do not keep.\n- For grants, ask fernbrook_grants, with any eligibility answers given (tenure, heating, EPC band, income band).\n- For heat pump tariffs or running costs, ask emberwick_energy with any yearly kWh given.\n- With no website_* tools, use mcp_list_products and mcp_estimate; request surveys on this site's page.\n{partner_rules}\n{cruse_rules}\n{voice_rules}\n{peer_rules}\n",
+      "instructions": "\nYou are the assistant on the {site_name} website. You help visitors choose heat pumps or solar panels and request surveys.\n{grounding_rules}\nHow to work:\n- Call website_get_installer_state before answering about products, prices, estimates or surveys, each turn: the visitor can also use the page.\n- Product fit and price: ask heat_pump_engineer or solar_designer with home type and floor area; for both, call both in one step with no website_* call. They cannot see this chat.\n- Call website_set_estimate only when the visitor asks for an estimate and has given what to fit, home type and floor area; ask for any missing.\n- To request a survey, ask for name, email, postcode area and when to visit. In the turn you call website_request_survey, first call website_get_installer_state and wait for its result: the call needs its version.\n- For grants, ask fernbrook_grants with any eligibility answers given.\n- For running costs, ask emberwick_energy with any yearly kWh given.\n- With no website_* tools, surveys are on this site's page.\n{partner_rules}\n{cruse_rules}\n{voice_rules}\n{peer_rules}\n",
       "tools": [
+        "heat_pump_engineer",
+        "solar_designer",
         "https://fernbrook-grants.open-agentic-energy.workers.dev/fernbrook_grants",
         "https://emberwick-energy.open-agentic-energy.workers.dev/emberwick_energy",
+        "https://heatwright-installers.open-agentic-energy.workers.dev/mcp"
+      ]
+    },
+    {
+      "name": "heat_pump_engineer",
+      "function": {
+        "description": "Sizes an air-source heat pump for one home from its type and floor area: the estimated heat loss, the pump that covers it and its indicative price.",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "request": {
+              "type": "string",
+              "description": "What the assistant needs, with the home type and floor area if given. The specialist cannot see the chat."
+            }
+          },
+          "required": [
+            "request"
+          ]
+        }
+      },
+      "instructions": "\nYou size air-source heat pumps for the {site_name} assistant. Your answer goes to that assistant, not to the visitor.\n{grounding_rules}\nHow to work:\n- You need the type of home and its floor area in square metres. If either is missing, say which.\n- Call mcp_estimate with measure \"heat-pump\", the home type id and the floor area. Call mcp_list_products first when you need the home type ids or the other pump sizes.\n- Report the estimated heat loss, the pump that covers it, its price range and the notes, all from the result. If the result refuses, give its reason. Do no sums of your own.\n- Return short plain text. Do not ask the visitor questions yourself. Never call website_set_estimate or website_request_survey: those belong to the assistant.\n",
+      "tools": [
+        "https://heatwright-installers.open-agentic-energy.workers.dev/mcp"
+      ]
+    },
+    {
+      "name": "solar_designer",
+      "function": {
+        "description": "Picks a solar panel system for one home from its type and floor area, with its indicative price, or says why the home does not suit panels.",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "request": {
+              "type": "string",
+              "description": "What the assistant needs, with the home type and floor area if given. The specialist cannot see the chat."
+            }
+          },
+          "required": [
+            "request"
+          ]
+        }
+      },
+      "instructions": "\nYou choose solar panel systems for the {site_name} assistant. Your answer goes to that assistant, not to the visitor.\n{grounding_rules}\nHow to work:\n- You need the type of home and its floor area in square metres. If either is missing, say which.\n- Call mcp_estimate with measure \"solar\", the home type id and the floor area. Call mcp_list_products first when you need the home type ids or the other system sizes.\n- Report the system that suits the home, its price range and the notes, all from the result. If the result refuses, such as for a flat, give its reason. Do no sums of your own.\n- Return short plain text. Do not ask the visitor questions yourself. Never call website_set_estimate or website_request_survey: those belong to the assistant.\n",
+      "tools": [
         "https://heatwright-installers.open-agentic-energy.workers.dev/mcp"
       ]
     }

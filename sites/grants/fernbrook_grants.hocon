@@ -47,6 +47,16 @@
 VOICE: Plain words. Answer first, briefly. No filler, hype, praise or closing offers. Lists or tables only when they help.
 """,
 
+            # The scheme agents' half of AAOSA (Neuro SAN's Determine and Fulfill protocol,
+            # after its aaosa.hocon): first each says whether its scheme fits, then only
+            # the ones that fit do the work. The same text for every scheme agent.
+            "aaosa_rules": """
+You are called with JSON: inquiry (what the visitor wants, with any eligibility answers) and mode.
+- mode "Determine": call mcp_check_scheme with your scheme id only. From its summary, answer in one line: start with "Yes" if your scheme pays towards what the inquiry is about, otherwise "No", then name the answers the scheme still needs.
+- mode "Fulfill": call mcp_check_scheme with your scheme id and each eligibility answer the inquiry gives, as the ids its schema allows. Leave out every answer it does not give: never fill one in. Report the scheme, its amount, eligible (yes, no, or not known yet while answers are missing), the reasons and stillNeeded, all from the result.
+Your answer goes to the assistant, not to the visitor. Do not ask the visitor questions yourself. Never call website_set_eligibility_answers or website_start_application.
+""",
+
             "grounding_rules": """
 Facts come only from website_* and mcp_* tool results and from this conversation.
 If a result does not contain a fact, say you do not know. Do not guess.
@@ -88,6 +98,9 @@ Do not ask the visitor to confirm an irreversible action, in chat or with a conf
         }
     },
 
+    # The swarm. fernbrook_assistant talks to the visitor. Each scheme has its own agent,
+    # and the assistant routes between them with AAOSA, as their jobs overlap: a heat
+    # pump question can touch the heat pump scheme and the insulation scheme.
     "tools": [
         {
             "name": "fernbrook_assistant",
@@ -110,9 +123,10 @@ You are the assistant on the {site_name} website. You help visitors understand g
 {grounding_rules}
 How to work:
 - Call website_get_grants_state before answering about schemes, amounts, conditions, results or applications. Call it again in each turn that needs it, because the visitor can also use the page directly.
-- To check eligibility, you need four answers: who owns or rents the home, how it is heated now, its EPC band and the income band. Ask for the missing ones, offering the allowed answers from website_get_grants_state. Call website_set_eligibility_answers only when the visitor asks for a check and has given all four. Report each scheme's result and reasons from the tool result, never from your own reading of the conditions.
+- Which schemes could help with what the visitor wants: use the scheme agents, AAOSA style. First call every scheme agent in one step with mode "Determine" and the inquiry. Then call only those that answered "Yes", in one step, with mode "Fulfill" and every eligibility answer given. Report their results; never judge a scheme yourself.
+- To check eligibility on the page, you need four answers: who owns or rents the home, how it is heated now, its EPC band and the income band. Ask for the missing ones, offering the allowed answers from website_get_grants_state. Call website_set_eligibility_answers only when the visitor asks for a check and has given all four. Report each scheme's result and reasons from the tool result, never from your own reading of the conditions.
 - To apply, ask for the applicant's full name and email. In the turn you call website_start_application, first call website_get_grants_state and wait for its result: the call needs its version, and results from earlier turns are not kept.
-- With no website_* tools, use mcp_list_grants, and mcp_check_eligibility when given all four answers. Say applications are made on this site's page.
+- With no website_* tools, use the scheme agents, mcp_list_grants, and mcp_check_eligibility when given all four answers. Say applications are made on this site's page.
 {cruse_rules}
 {voice_rules}
 {peer_rules}
@@ -121,7 +135,105 @@ How to work:
             # with list_grants and check_eligibility. Another site that runs this network
             # reaches it without a second consent card. A plain URL, so the runtime's agent
             # graph labels it by host.
-            "tools": ["https://fernbrook-grants.open-agentic-energy.workers.dev/mcp"]
+            "tools": [
+                "heat_pump_grant_agent",
+                "solar_starter_agent",
+                "warm_walls_agent",
+                "https://fernbrook-grants.open-agentic-energy.workers.dev/mcp"
+            ]
+        },
+        {
+            "name": "heat_pump_grant_agent",
+            "function": {
+                "description": "Knows the Fernbrook scheme with id heat-pump-grant: says whether it fits a request, then checks it against the answers given.",
+                # AAOSA: the caller sends the inquiry and the mode, as JSON.
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "inquiry": {
+                            "type": "string",
+                            "description": "What the visitor wants, with any eligibility answers they gave. The scheme agent cannot see the chat."
+                        },
+                        "mode": {
+                            "type": "string",
+                            "enum": ["Determine", "Fulfill"],
+                            "description": "Determine: say whether this scheme fits the inquiry. Fulfill: check the scheme against the answers given."
+                        }
+                    },
+                    "required": ["inquiry", "mode"]
+                }
+            },
+            "instructions": """
+You are the agent for one {site_name} scheme, the one with id "heat-pump-grant", working for the {site_name} assistant.
+{grounding_rules}
+{aaosa_rules}
+""",
+            # This site's own MCP server: no consent card, as it is the same site.
+            "tools": [
+                "https://fernbrook-grants.open-agentic-energy.workers.dev/mcp"
+            ]
+        },
+        {
+            "name": "solar_starter_agent",
+            "function": {
+                "description": "Knows the Fernbrook scheme with id solar-starter: says whether it fits a request, then checks it against the answers given.",
+                # AAOSA: the caller sends the inquiry and the mode, as JSON.
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "inquiry": {
+                            "type": "string",
+                            "description": "What the visitor wants, with any eligibility answers they gave. The scheme agent cannot see the chat."
+                        },
+                        "mode": {
+                            "type": "string",
+                            "enum": ["Determine", "Fulfill"],
+                            "description": "Determine: say whether this scheme fits the inquiry. Fulfill: check the scheme against the answers given."
+                        }
+                    },
+                    "required": ["inquiry", "mode"]
+                }
+            },
+            "instructions": """
+You are the agent for one {site_name} scheme, the one with id "solar-starter", working for the {site_name} assistant.
+{grounding_rules}
+{aaosa_rules}
+""",
+            # This site's own MCP server: no consent card, as it is the same site.
+            "tools": [
+                "https://fernbrook-grants.open-agentic-energy.workers.dev/mcp"
+            ]
+        },
+        {
+            "name": "warm_walls_agent",
+            "function": {
+                "description": "Knows the Fernbrook scheme with id warm-walls: says whether it fits a request, then checks it against the answers given.",
+                # AAOSA: the caller sends the inquiry and the mode, as JSON.
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "inquiry": {
+                            "type": "string",
+                            "description": "What the visitor wants, with any eligibility answers they gave. The scheme agent cannot see the chat."
+                        },
+                        "mode": {
+                            "type": "string",
+                            "enum": ["Determine", "Fulfill"],
+                            "description": "Determine: say whether this scheme fits the inquiry. Fulfill: check the scheme against the answers given."
+                        }
+                    },
+                    "required": ["inquiry", "mode"]
+                }
+            },
+            "instructions": """
+You are the agent for one {site_name} scheme, the one with id "warm-walls", working for the {site_name} assistant.
+{grounding_rules}
+{aaosa_rules}
+""",
+            # This site's own MCP server: no consent card, as it is the same site.
+            "tools": [
+                "https://fernbrook-grants.open-agentic-energy.workers.dev/mcp"
+            ]
         }
     ]
 }
