@@ -80,6 +80,16 @@ any of them by itself: the site's own dialog shows the real figures and fees fir
 nothing happens unless the visitor confirms. Writes that can be undone, such as showing a
 comparison or an estimate, run straight away.
 
+Every assistant also takes spoken requests. Press the Speak button beside Send and say
+the request: the words appear in the chat box for the visitor to check, and nothing is
+sent until they press Send. Speech never answers a confirmation dialog or a partner's
+consent card. The page uses only the browser's own speech recognition, so it loads no
+other script and needs no extra key. On the first press the page asks the browser
+whether it can recognise speech on the device. If it can, the audio stays there, after a
+one-time language download. If not, the page says the audio would go to the browser
+maker's speech service, as Chrome's goes to Google's, and listens only after a second
+press. Firefox has no speech recognition, so the button does not appear there.
+
 ### The 11 agents
 
 All 11 run in the visitor's browser. The front agent of each site talks to the visitor.
@@ -192,12 +202,12 @@ agentic-web reference runtime and agentify-website skill (Apache 2.0); Cloudflar
 for static hosting and `/mcp`; Node's test runner; and [e2e](https://github.com/e2e-inc/e2e)
 for browser tests.
 
-89 tests run the real runtime and page code against a scripted model, and the MCP
-servers against hand-worked amounts. Eight browser workflow tests run in Chromium on a
+97 tests run the real runtime and page code against a scripted model, and the MCP
+servers against hand-worked amounts. Nine browser workflow tests run in Chromium on a
 scripted router, so the real runtime, networks, consent cards, partner sites and MCP
 servers all run with no key. They cover the three pages on their own, the no-key state,
 the heat pump question with both partners allowed, a declined partner, a switch that
-waits for the page's dialog, and the four Safety checks.
+waits for the page's dialog, the four Safety checks, and a spoken request on each site.
 
 ### Known limits
 

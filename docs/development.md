@@ -122,7 +122,7 @@ instructions. That needs the browser check above.
 
 ### Browser workflow tests
 
-`npm run test:e2e` runs eight user workflows in Chromium with
+`npm run test:e2e` runs nine user workflows in Chromium with
 [e2e](https://github.com/e2e-inc/e2e) (a development dependency, Apache 2.0). It starts
 `npm run serve` itself, or reuses it, and turns e2e's usage telemetry off
 (`scripts/run-e2e.mjs`). The first time, install its browser with
@@ -145,6 +145,7 @@ sites and the MCP servers all run, with no key and no cost.
 | 6 | Decline one partner: it is never contacted, and the answer and the view say so | consent stops being enforced or reported |
 | 7 | A tariff switch through the assistant waits for the page's own dialog | irreversible actions stop needing confirmation |
 | 8 | The Safety checks page stops all four failure cases | the runtime stops failing closed |
+| 9 | Each site's mic, on a stand-in for speech recognition, fills the chat box on the device and sends nothing | voice input breaks, or a runtime update renames the chat box |
 
 The scripted router knows each agent by a phrase from its instructions. If you rename an
 agent or reword its first line, update `e2e/scripted-router.mjs`.

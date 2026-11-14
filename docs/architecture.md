@@ -33,6 +33,15 @@ host (Cloudflare Worker, or scripts/serve-all.mjs locally)
   irreversible action. It also draws "How each answer was made" under the chat from
   the runtime's trace (`js/answer-path.js`, the same file on every site): agent and site,
   actions, MCP tools, partner networks with the consent decision, model and router.
+  And it adds voice input (`js/voice-input.js`, also the same on every site): a Speak
+  button in the runtime's input bar that puts the browser's own speech recognition
+  into the chat box. On the first press it asks for on-device recognition
+  (`SpeechRecognition.available()`, then a one-time `install()` and `processLocally`).
+  Without it, it says the audio would go to the browser maker's service and listens only
+  after a second press. The check waits for a press because asking on page load crashes
+  the page in some Chromium builds (seen in e2e's headless Chromium). It never presses
+  Send and never answers a dialog or a consent card.
+  It stays hidden when the browser has no speech recognition or the runtime did not boot.
 - **The MCP server** (`server/`) answers `/mcp` on each site's own origin with read-only
   tools over that site's public data. It imports the page's own data and rules modules,
   so a page, its assistant and its MCP tools give the same answers (CLAUDE.md rule 5).

@@ -3,6 +3,7 @@
 // It is the agentify-website skill's templates/site.js with this site's greeting,
 // dialog words and review details filled in.
 import { AnswerPath } from "./js/answer-path.js";
+import { VoiceInput } from "./js/voice-input.js";
 import { App } from "./js/app.js";
 
 /**
@@ -49,6 +50,8 @@ export class AssistantMount {
       });
       AssistantMount.engine = booted.engine;
       AssistantMount.watchTrace(booted.trace);
+      // Voice input is extra: the chat works without it (issue #15).
+      VoiceInput.attach(document, window).catch((error) => console.error("Voice input is off", error));
       AssistantMount.defaultReview = booted.engine.onActionConfirm;
       booted.engine.onActionConfirm = AssistantMount.review;
       AssistantMount.defaultConsent = booted.engine.onConsent;
