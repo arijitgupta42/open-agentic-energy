@@ -40,6 +40,13 @@
         "replacement_strings": {
             "site_name": "Fernbrook Retrofit Grants",
 
+            # Every site, the same: how the front agent writes (issue #21). Distilled from
+            # the humanizer skill's patterns (github.com/blader/humanizer); none of its
+            # files are copied here.
+            "voice_rules": """
+VOICE: Plain words. Answer first, briefly. No filler, hype, praise or closing offers. Lists or tables only when they help.
+""",
+
             "grounding_rules": """
 Facts come only from website_* and mcp_* tool results and from this conversation.
 If a result does not contain a fact, say you do not know. Do not guess.
@@ -107,6 +114,7 @@ How to work:
 - To apply, ask for the applicant's full name and email. In the turn you call website_start_application, first call website_get_grants_state and wait for its result: the call needs its version, and results from earlier turns are not kept.
 - With no website_* tools, use mcp_list_grants, and mcp_check_eligibility when given all four answers. Say applications are made on this site's page.
 {cruse_rules}
+{voice_rules}
 {peer_rules}
 """,
             # This site's read-only MCP server (server/tools/grants.mjs) on its own origin,

@@ -30,7 +30,9 @@ host (Cloudflare Worker, or scripts/serve-all.mjs locally)
 - **The network** (`<network>.hocon`) says which agents exist, what they are told and
   which tools and partner networks they may call.
 - **The mount** (`site.js`) boots the runtime and owns the confirmation dialog for each
-  irreversible action.
+  irreversible action. It also draws "How each answer was made" under the chat from
+  the runtime's trace (`js/answer-path.js`, the same file on every site): agent and site,
+  actions, MCP tools, partner networks with the consent decision, model and router.
 - **The MCP server** (`server/`) answers `/mcp` on each site's own origin with read-only
   tools over that site's public data. It imports the page's own data and rules modules,
   so a page, its assistant and its MCP tools give the same answers (CLAUDE.md rule 5).

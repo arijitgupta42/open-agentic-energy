@@ -2,6 +2,7 @@
 //   <script type="module" src="site.js"></script>
 // It is the agentify-website skill's templates/site.js with this site's greeting,
 // dialog words and review details filled in.
+import { AnswerPath } from "./js/answer-path.js";
 import { App } from "./js/app.js";
 
 /**
@@ -47,6 +48,7 @@ export class AssistantMount {
         sandboxWorkerUrl: new URL("runtime/sandbox-worker.js", siteBase).href,
       });
       AssistantMount.engine = booted.engine;
+      AssistantMount.watchTrace(booted.trace);
       AssistantMount.defaultReview = booted.engine.onActionConfirm;
       booted.engine.onActionConfirm = AssistantMount.review;
       AssistantMount.defaultConsent = booted.engine.onConsent;
@@ -138,9 +140,48 @@ export class AssistantMount {
     AssistantMount.showWholeRequest(info);
     AssistantMount.focusConsentCard();
     const decision = await answer;
+    // The runtime's trace records only a declined card. Record every answer, so "How
+    // each answer was made" can say what the visitor decided (spec 5).
+    AssistantMount.trace?.note("consent", {page: true, peerOrigin: info?.peerOrigin, decision: decision || "allow", consentFor: info?.kind});
     // Answering the card removes its buttons, so focus may fall to the page body.
     AssistantMount.keepFocusInChat();
     return decision;
+  }
+
+  /**
+   * Keep "How each answer was made" up to date from the runtime's trace, while a message
+   * runs and when it ends. The trace stays in this browser: nothing here sends it.
+   *
+   * :param trace: The runtime's trace, from boot().
+   */
+  static watchTrace(trace) {
+    const section = document.querySelector("#answer-paths");
+    const list = document.querySelector("#answer-path-list");
+    if (!trace || !section || !list) {
+      return;
+    }
+    AssistantMount.trace = trace;
+    let pending = false;
+    const draw = () => {
+      pending = false;
+      try {
+        const built = AnswerPath.build(trace.events, location.host);
+        if (built.turns.length || built.setup.length) {
+          section.hidden = false;
+          AnswerPath.render(list, built);
+        }
+      } catch (error) {
+        // The view is extra: the chat and the page keep working without it.
+        console.error("Could not show how the answer was made", error);
+      }
+    };
+    trace.addEventListener("event", () => {
+      if (!pending) {
+        pending = true;
+        setTimeout(draw, 200);
+      }
+    });
+    draw();
   }
 
   /**

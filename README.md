@@ -37,7 +37,7 @@ read-only MCP server at `/mcp` (`server/`).
 
 ```shell
 npm run build      # write the published network files
-npm test           # 62 tests: real runtime and page code, scripted model, no LLM, plus the MCP servers
+npm test           # 79 tests: real runtime and page code, scripted model, no LLM, plus the MCP servers
 npm run check      # generated files, runtime copies and conformance checks
 npm run serve      # serve the three sites, each with its /mcp
 ```
