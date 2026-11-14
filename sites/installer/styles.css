@@ -192,6 +192,10 @@ body > dialog button { margin-right: 8px; }
 .answer-path-error > .answer-path-badge { color: #a40e26; }
 .answer-path-list p { margin: 4px 12px 10px; overflow-wrap: anywhere; }
 .answer-path-answer { color: var(--muted); }
+/* Voice input (js/voice-input.js): a mic button in the chat's input bar. */
+.voice-button { white-space: nowrap; }
+.voice-button[aria-pressed="true"] { outline: 2px solid currentColor; outline-offset: 1px; }
+.voice-status:empty { display: none; }
 /* A swarm: calls that ran together, and AAOSA questions and jobs. */
 .answer-path-tree .answer-path-parallel > .answer-path-tree { border-left-style: double; border-left-width: 4px; }
 .answer-path-aaosa > .answer-path-title { font-style: italic; }

@@ -79,6 +79,10 @@
         <p class="assistant-note">Bring your own key for any OpenAI-compatible provider. To change the provider or the model, open <strong>AI model settings</strong> under the chat, then <strong>Advanced settings (optional)</strong>.</p>
         <p class="assistant-note">To see how an answer was made, read <strong>How each answer was made</strong> under the chat: the agents, sites, tools, partner networks and model behind each reply. For the raw trace, select <strong>⚙ Developer</strong> above the chat.</p>
         <p id="assistant-status" role="status">Connecting the assistant… If this message stays, the assistant could not load. You can still use the page directly.</p>
+        <div id="voice-input" class="voice-input" hidden>
+          <p id="voice-note" class="assistant-note"></p>
+          <p id="voice-status" class="voice-status" role="status" aria-live="polite"></p>
+        </div>
         <div id="agent-app">
           <div data-ns-slot="header"></div>
           <div class="assistant-panels">

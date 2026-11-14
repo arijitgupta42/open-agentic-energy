@@ -57,6 +57,16 @@ any of them by itself: the site's own dialog shows the real figures and fees fir
 nothing happens unless the visitor confirms. Writes that can be undone, such as showing a
 comparison or an estimate, run straight away.
 
+Every assistant also takes spoken requests. Press the Speak button beside Send and say
+the request: the words appear in the chat box for the visitor to check, and nothing is
+sent until they press Send. Speech never answers a confirmation dialog or a partner's
+consent card. The page uses only the browser's own speech recognition, so it loads no
+other script and needs no extra key. On the first press the page asks the browser
+whether it can recognise speech on the device. If it can, the audio stays there, after a
+one-time language download. If not, the page says the audio would go to the browser
+maker's speech service, as Chrome's goes to Google's, and listens only after a second
+press. Firefox has no speech recognition, so the button does not appear there.
+
 ## The 11 agents
 
 All 11 run in the visitor's browser. The front agent of each site talks to the visitor.
@@ -142,10 +152,10 @@ browser to check, is in
 
 ## Tests
 
-`npm test` runs 89 tests with no LLM. They load the real runtime and page code against a
+`npm test` runs 97 tests with no LLM. They load the real runtime and page code against a
 scripted model, and check the MCP servers against amounts worked out by hand.
 
-`npm run test:e2e` runs eight user workflows in Chromium with
+`npm run test:e2e` runs nine user workflows in Chromium with
 [e2e](https://github.com/e2e-inc/e2e). A scripted router inside the browser stands in for
 the model, so the real runtime, networks, consent cards, partner sites and MCP servers
 all run, with no key:
@@ -161,6 +171,8 @@ all run, with no key:
 7. Ask the assistant to switch tariff: nothing changes until the page's dialog is
    confirmed.
 8. Run all four Safety checks.
+9. Speak a request on each site: it fills the chat box, on the device, and is not
+   sent until the visitor presses Send.
 
 ## Known limits
 
@@ -185,8 +197,8 @@ Only the browser workflow tests need `npm install` (e2e, a development dependenc
 
 ```shell
 npm run build      # write the published network files
-npm test           # 89 tests: real runtime and page code, scripted model, no LLM, plus the MCP servers
-npm run test:e2e   # 8 user workflows in a real browser, on a scripted model (docs/development.md)
+npm test           # 97 tests: real runtime and page code, scripted model, no LLM, plus the MCP servers
+npm run test:e2e   # 9 user workflows in a real browser, on a scripted model (docs/development.md)
 npm run check      # generated files, runtime copies and conformance checks
 npm run serve      # serve the three sites, each with its /mcp
 ```
