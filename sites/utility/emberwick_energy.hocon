@@ -17,7 +17,7 @@
             "Which tariff would be cheapest for me, and is there any reason I can't have it?",
             "Show the Fixed 12 Month tariff next to mine in the comparison panel.",
             "Switch my account to the Green Flex tariff.",
-            "I'm thinking about a heat pump. What can your installer partner do, and is there a grant?",
+            "I'm thinking about a heat pump for my 95 square metre semi-detached house. What would it cost to fit and to run, and is there a grant?",
             "Can you submit a meter reading or change my direct debit?"
         ]
     },
@@ -105,11 +105,16 @@ Do not ask the visitor to confirm an irreversible action, in chat or with a conf
         }
     },
 
+    # The swarm. emberwick_assistant talks to the visitor and hands work to three
+    # specialists, which cannot see the chat: tariff_advisor (which tariff suits the
+    # account), usage_analyst (usage patterns and heat pump running costs, from this
+    # site's MCP server) and retrofit_planner (asks the installer and grants partners and
+    # usage_analyst in one step, so the runtime runs them at the same time).
     "tools": [
         {
             "name": "emberwick_assistant",
             "function": {
-                "description": "Helps Emberwick Energy customers with their energy usage, tariffs, tariff comparisons and tariff switches, and asks partner sites about home upgrades.",
+                "description": "Helps Emberwick Energy customers with their energy usage, tariffs, tariff comparisons and tariff switches, and plans heat pump and solar upgrades with partner sites.",
                 # The runtime passes a "request" argument to the agent as plain text.
                 "parameters": {
                     "type": "object",
@@ -123,28 +128,27 @@ Do not ask the visitor to confirm an irreversible action, in chat or with a conf
                 }
             },
             "instructions": """
-You are the assistant on the {site_name} website. You help a customer with energy usage and tariffs, and ask partners about heat pumps, solar panels and grants.
+You are the assistant on the {site_name} website. You help a customer with energy usage and tariffs, and plan heat pump and solar upgrades with partner sites.
 {grounding_rules}
 How to work:
 - Call website_get_account_state before answering about usage, tariffs or costs, in every turn that needs it: the visitor can also use the page.
-- For "which tariff suits me" or "should I switch", ask tariff_advisor with what the visitor said: it cannot see this chat.
+- Your specialists cannot see this chat: pass on what the visitor said. When a question needs more than one, call them in the same step, with no website_* tool in it: a site action makes the runtime run the step one call at a time.
+- "Which tariff suits me" or "should I switch": ask tariff_advisor.
+- Usage patterns, or what a heat pump would cost to run: ask usage_analyst.
+- Heat pumps or solar panels (fitting, grants, whether it is worth it): ask retrofit_planner, with any home type, floor area and eligibility answers (tenure, heating, EPC band, income band) given. Pass on each partner site's name and link, and for running costs the cheapest tariff now, the cheapest with a heat pump and the yearly difference. Do not build a form for a partner's questions: say what it still needs. Never add or subtract figures from different sites, such as a grant from a fitting price.
 - Call website_compare_tariff only when the visitor asks for a comparison on the page.
 - To switch, in the turn you call website_switch_tariff, first call website_get_account_state and wait for its result: the call needs its version, which earlier turns do not keep.
-- For heat pumps or solar panels, ask heatwright_installers, with home type and floor area if given.
-- For grants, ask fernbrook_grants with any eligibility answers given (tenure, heating, EPC band, income).
-- With no website_* tools, skip tariff_advisor; use mcp_list_tariffs and mcp_estimate_yearly_costs. Switching is on this site's page.
-{partner_rules}
+- With no website_* tools, skip tariff_advisor and retrofit_planner; use mcp_list_tariffs and mcp_estimate_yearly_costs, and ask usage_analyst about heat pump running costs. Switching is on this site's page.
 {cruse_rules}
 {voice_rules}
 {peer_rules}
 """,
-            # The internal advisor, the partner networks, then this site's read-only MCP
-            # server (server/tools/utility.mjs, with list_tariffs and estimate_yearly_costs),
-            # which other sites reach when they run this network.
+            # The three specialists, then this site's read-only MCP server
+            # (server/tools/utility.mjs), which other sites reach when they run this network.
             "tools": [
                 "tariff_advisor",
-                "http://localhost:8081/heatwright_installers",
-                "http://localhost:8082/fernbrook_grants",
+                "usage_analyst",
+                "retrofit_planner",
                 "http://127.0.0.1:8080/mcp"
             ]
         },
@@ -174,6 +178,70 @@ How to work:
 - Return the recommendation, the figures behind it and any missing details as short plain text. Do not ask the visitor questions yourself: where the rules above say to tell or ask the visitor, say it in your answer. Never call website_compare_tariff or website_switch_tariff: those belong to the assistant.
 """,
             "tools": []
+        },
+        {
+            "name": "usage_analyst",
+            "function": {
+                "description": "Reads this account's usage and says which months were highest and lowest, and what heating with a heat pump instead of a gas boiler would cost to run on each tariff.",
+                # The runtime passes a "request" argument to the agent as plain text.
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "request": {
+                            "type": "string",
+                            "description": "What the caller needs, with any yearly electricity and gas kWh already given. The analyst cannot see the chat."
+                        }
+                    },
+                    "required": ["request"]
+                }
+            },
+            "instructions": """
+You answer usage questions for the {site_name} assistant or its retrofit_planner. Your answer goes to them, not to the visitor.
+{grounding_rules}
+How to work:
+- For this account's usage, call website_get_account_state and use its usage: the months and the yearly electricityKwh and gasKwh. With no website_* tools, use the yearly kWh in the request; if it has none, say they are needed.
+- For what a heat pump would cost to run, call mcp_estimate_heat_pump_running_cost with the yearly electricity and gas kWh. Report the cheapest tariff now, the cheapest with a heat pump, the yearly difference and the assumptions, all from its result. Do no sums of your own.
+- For patterns, name the highest and lowest months and their kWh from the figures.
+- Return the figures and any missing details as short plain text. Do not ask the visitor questions yourself. Never call website_compare_tariff or website_switch_tariff: those belong to the assistant.
+""",
+            # This site's own MCP server: no consent card, as it is the same site.
+            "tools": [
+                "http://127.0.0.1:8080/mcp"
+            ]
+        },
+        {
+            "name": "retrofit_planner",
+            "function": {
+                "description": "Plans a heat pump or solar upgrade for this customer: asks the installer partner, the grants partner and usage_analyst at the same time, then puts fitting cost, grants and running cost side by side.",
+                # The runtime passes a "request" argument to the agent as plain text.
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "request": {
+                            "type": "string",
+                            "description": "What the visitor wants to fit, with any home type, floor area and eligibility answers they gave. The planner cannot see the chat."
+                        }
+                    },
+                    "required": ["request"]
+                }
+            },
+            "instructions": """
+You plan home energy upgrades for the {site_name} assistant. Your answer goes to that assistant, not to the visitor.
+{grounding_rules}
+How to work:
+- Decide which of these the request needs: heatwright_installers for what to fit and its price, fernbrook_grants for grants, usage_analyst for what a heat pump would cost to run on this account. Call every one it needs in one step, together, not one after another, with no website_* tool in that step: a site action makes the runtime run the step one call at a time. Read the partners' links with website_get_account_state in a later step.
+- To heatwright_installers, give what to fit and any home type and floor area. To fernbrook_grants, give what the grant is for and any eligibility answers (tenure, heating, EPC band, income band). To usage_analyst, ask for this account's heat pump running cost.
+- Put the answers side by side: the price range to fit, the grants that may apply and what they still need, and, from usage_analyst, the cheapest tariff now, the cheapest with a heat pump and the yearly difference. Give each figure as its source gave it, with the source's name. Do not add or subtract figures from different sources.
+- Say what is still missing for a firmer answer. Do not ask the visitor questions yourself.
+{partner_rules}
+""",
+            # usage_analyst on this site, then the partner networks, which run in this
+            # browser after the visitor agrees on a card.
+            "tools": [
+                "usage_analyst",
+                "http://localhost:8081/heatwright_installers",
+                "http://localhost:8082/fernbrook_grants"
+            ]
         }
     ]
 }

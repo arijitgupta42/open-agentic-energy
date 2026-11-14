@@ -86,6 +86,37 @@ function checkEligibility(args, context) {
   };
 }
 
+/**
+ * One scheme, decided from only the answers it needs. Changes nothing.
+ *
+ * :param args: scheme, plus any of tenure, currentHeating, epcBand and incomeBand.
+ * :param context: {page}, this site's page address.
+ * :return: The scheme, what it pays towards, whether the answers given meet it, and
+ *     which answers are still needed, or the page's refusal.
+ */
+function checkScheme(args, context) {
+  const scheme = GrantRules.find(GrantData.SCHEMES, args.scheme);
+  if (!scheme) {
+    return {ok: false, reason: "Choose one of the schemes from list_grants.", field: "scheme"};
+  }
+  const outcome = GrantRules.assessScheme(scheme, args);
+  if (!outcome.ok) {
+    return outcome;
+  }
+  return {
+    ok: true,
+    disclaimer: DISCLAIMER,
+    scheme: scheme.name,
+    amount: scheme.amountWords,
+    summary: scheme.summary,
+    eligible: outcome.eligible,
+    reasons: outcome.reasons,
+    stillNeeded: outcome.missing,
+    note: "eligible is null while an answer this scheme needs is missing. This check is not an application and nothing is saved.",
+    page: context.page,
+  };
+}
+
 export const GRANTS = {
   name: "fernbrook-grants",
   title: "Fernbrook Retrofit Grants",
@@ -115,6 +146,24 @@ export const GRANTS = {
         additionalProperties: false,
       },
       run: checkEligibility,
+    },
+    {
+      name: "check_scheme",
+      title: "Check one scheme",
+      description: "Checks one Fernbrook scheme from only the answers it needs: what it pays towards, whether the answers given meet it, and which answers are still needed. Any answer may be left out. Saves nothing and takes no name or contact details.",
+      inputSchema: {
+        type: "object",
+        properties: {
+          scheme: {type: "string", enum: ids(GrantData.SCHEMES), description: "The scheme's id."},
+          tenure: {type: "string", enum: ids(GrantData.TENURES), description: "Who owns or rents the home, if known."},
+          currentHeating: {type: "string", enum: ids(GrantData.HEATING), description: "How the home is heated now, if known."},
+          epcBand: {type: "string", enum: ids(GrantData.EPC_BANDS), description: "The home's EPC band, if known."},
+          incomeBand: {type: "string", enum: ids(GrantData.INCOME_BANDS), description: "The household's yearly income band, if given."},
+        },
+        required: ["scheme"],
+        additionalProperties: false,
+      },
+      run: checkScheme,
     },
   ],
 };

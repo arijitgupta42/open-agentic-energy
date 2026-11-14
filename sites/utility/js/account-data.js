@@ -13,6 +13,16 @@ export class AccountData {
     hasHeatPump: false,
   };
 
+  /**
+   * How a heat pump estimate turns a year's gas into electricity: the gas boiler's
+   * efficiency in percent, and the heat pump's seasonal efficiency (heat out for each
+   * unit of electricity in) in tenths. Fictional round figures for the demo.
+   */
+  static HEAT_PUMP_ESTIMATE = {
+    boilerEfficiencyPercent: 90,
+    heatPumpEfficiencyTenths: 30,
+  };
+
   /** The tariff the demo account starts on. */
   static STARTING_TARIFF = "standard-variable";
 

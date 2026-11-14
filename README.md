@@ -19,9 +19,15 @@ origin (spec section 6), each on a small test network in `sites/utility/lab/`.
 
 | Site | What a visitor does | Network |
 | --- | --- | --- |
-| [Emberwick Energy](sites/utility) | Sees usage, compares tariffs, switches tariff | `emberwick_energy` (two agents) |
-| [Heatwright Home Energy](sites/installer) | Gets a heat pump or solar estimate, requests a survey | `heatwright_installers` |
-| [Fernbrook Retrofit Grants](sites/grants) | Checks eligibility, starts an application | `fernbrook_grants` |
+| [Emberwick Energy](sites/utility) | Sees usage, compares tariffs, switches tariff, plans a heat pump | `emberwick_energy` (four agents) |
+| [Heatwright Home Energy](sites/installer) | Gets a heat pump or solar estimate, requests a survey | `heatwright_installers` (three agents) |
+| [Fernbrook Retrofit Grants](sites/grants) | Checks eligibility, starts an application | `fernbrook_grants` (four agents, AAOSA) |
+
+Together they are an agent swarm of 11 Neuro SAN agents on three origins, all running in
+the visitor's browser. Specialists work in parallel when a step needs more than one,
+the grants site routes between its scheme agents with Neuro SAN's AAOSA protocol
+(Determine, then Fulfill), and "How each answer was made" shows the whole swarm: which
+agents ran on which site, which ran at the same time, and each AAOSA question.
 
 A customer asks their energy supplier "should I get a heat pump?". The supplier's
 assistant knows their usage and tariffs. After the customer agrees, it runs the
@@ -37,7 +43,7 @@ read-only MCP server at `/mcp` (`server/`).
 
 ```shell
 npm run build      # write the published network files
-npm test           # 80 tests: real runtime and page code, scripted model, no LLM, plus the MCP servers
+npm test           # 88 tests: real runtime and page code, scripted model, no LLM, plus the MCP servers
 npm run check      # generated files, runtime copies and conformance checks
 npm run serve      # serve the three sites, each with its /mcp
 ```

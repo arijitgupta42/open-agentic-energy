@@ -78,7 +78,7 @@ test("a turn shows agent @ site, site action, partner with consent, partner agen
   assert.equal(turns.length, 1);
   const [turn] = turns;
   assert.equal(turn.status, "ok");
-  assert.deepEqual(turn.counts, {agents: 2, actions: 1, mcp: 1, partners: 1, modelCalls: 5});
+  assert.deepEqual(turn.counts, {agents: 2, sites: 2, actions: 1, mcp: 1, partners: 1, modelCalls: 5, parallel: 0, determine: 0, fulfill: 0});
   assert.equal(AnswerPath.toText(turn), [
     "Question: Could I get a heat pump, and is there a grant?",
     "  - Agent emberwick_assistant on emberwick.example",
@@ -99,7 +99,7 @@ test("a turn shows agent @ site, site action, partner with consent, partner agen
     "          {\"bedrooms\":3}",
     "Answer: Yes: Heatwright can fit one.",
   ].join("\n"));
-  assert.equal(AnswerPath.summary(turn).replace(/ · [\d.]+ s$/, ""), "2 agents · 1 site action · 1 MCP tool · 1 partner network · 5 model calls");
+  assert.equal(AnswerPath.summary(turn).replace(/ · [\d.]+ s$/, ""), "2 agents on 2 sites · 1 site action · 1 MCP tool · 1 partner network · 5 model calls");
 });
 
 test("a declined partner shows the decision once and that nothing was fetched", () => {
@@ -225,4 +225,142 @@ test("the real runner's trace: front agent calls an internal agent", async () =>
   assert.equal(front.title, `Agent front on ${PAGE}`);
   assert.deepEqual(front.children.map((node) => node.title), [`Agent helper on ${PAGE}`], "The internal agent sits under the front agent, with no extra 'tool' level.");
   assert.equal(turn.answer, "Fixed 12 is cheapest.");
+});
+
+/**
+ * A fake model for a swarm: each agent gets its own script, chosen by the "AGENT <name>"
+ * line in its instructions, so agents that run at the same time cannot take each
+ * other's replies. A step may ask for several tools at once.
+ */
+class SwarmModel {
+  /**
+   * :param scripts: Each agent's steps by name. A step is {tools: [{tool, arguments}]}
+   *   or {text}.
+   */
+  constructor(scripts) {
+    this.scripts = scripts;
+    this.used = {};
+  }
+
+  /**
+   * Reply with the calling agent's next step.
+   *
+   * :param request: The runtime's request, with messages.
+   * :return: A reply with content and toolCalls.
+   */
+  async chat(request) {
+    const system = (request.messages || []).map((message) => String(message.content || "")).join("\n");
+    const name = Object.keys(this.scripts).find((agent) => system.includes(`AGENT ${agent}.`));
+    if (!name) {
+      throw new Error("SwarmModel: no script for this agent.");
+    }
+    const index = this.used[name] || 0;
+    this.used[name] = index + 1;
+    const step = this.scripts[name][index];
+    if (!step) {
+      throw new Error(`SwarmModel: ${name} ran out of steps.`);
+    }
+    // Let the other agents run first, as a real model's reply would.
+    await new Promise((resolve) => setTimeout(resolve, 1));
+    if (step.tools) {
+      return {
+        content: "",
+        toolCalls: step.tools.map((call, n) => ({
+          id: `${name}-${index}-${n}`,
+          type: "function",
+          function: {name: call.tool, arguments: JSON.stringify(call.arguments || {})},
+        })),
+      };
+    }
+    return {content: step.text, toolCalls: []};
+  }
+}
+
+/**
+ * Run a network's front agent once with the real runner, and build its path.
+ *
+ * :param agents: The network's agents.
+ * :param scripts: As for SwarmModel.
+ * :param question: The visitor's message.
+ * :return: The turn.
+ */
+async function runSwarm(agents, scripts, question) {
+  const network = new AgentNetwork({tools: agents}, "swarm");
+  const trace = new TraceBus();
+  const ctx = {
+    network,
+    manifest: {},
+    baseOrigin: `https://${PAGE}`,
+    displayOrigin: PAGE,
+    trace,
+    isTop: true,
+    frontMan: agents[0].name,
+    history: [],
+    llm: new SwarmModel(scripts),
+    resolveMcp: async () => ({listTools: async () => []}),
+  };
+  const run = trace.start("run", {origin: PAGE, input: question});
+  const result = await runAgent(ctx, agents[0].name, question, run, []);
+  trace.end(run, {answerPreview: String(result.text ?? result)});
+  return AnswerPath.build(trace.events, PAGE).turns[0];
+}
+
+const REQUEST = {type: "object", properties: {request: {type: "string"}}, required: ["request"]};
+const AAOSA = {type: "object", properties: {inquiry: {type: "string"}, mode: {type: "string", enum: ["Determine", "Fulfill"]}}, required: ["inquiry", "mode"]};
+
+test("the real runner's trace: calls asked for in one step show as run at the same time", async () => {
+  const turn = await runSwarm([
+    {name: "front", function: {description: "Front", parameters: REQUEST}, instructions: "AGENT front.", tools: ["planner"]},
+    {name: "planner", function: {description: "Planner", parameters: REQUEST}, instructions: "AGENT planner.", tools: ["fitter", "grants"]},
+    {name: "fitter", function: {description: "Fitter", parameters: REQUEST}, instructions: "AGENT fitter.", tools: []},
+    {name: "grants", function: {description: "Grants", parameters: REQUEST}, instructions: "AGENT grants.", tools: []},
+  ], {
+    front: [{tools: [{tool: "planner", arguments: {request: "Heat pump plan"}}]}, {text: "Here is the plan."}],
+    planner: [{tools: [{tool: "fitter", arguments: {request: "Price?"}}, {tool: "grants", arguments: {request: "Grant?"}}]}, {text: "Fit and grant."}],
+    fitter: [{text: "£9,200 to £11,200."}],
+    grants: [{text: "£5,000."}],
+  }, "Should I get a heat pump?");
+  assert.equal(turn.counts.agents, 4);
+  assert.equal(turn.counts.parallel, 1);
+  const [front] = turn.nodes;
+  const planner = front.children.find((node) => node.title === `Agent planner on ${PAGE}`);
+  const together = planner.children.find((node) => node.kind === "parallel");
+  assert.ok(together, "The planner's two calls sit under one 'at the same time' node.");
+  assert.equal(together.title, "2 calls at the same time");
+  assert.deepEqual(together.children.map((node) => node.title), [`Agent fitter on ${PAGE}`, `Agent grants on ${PAGE}`]);
+  // The scripted model records no model_call spans: the runtime's LLM client does that.
+  assert.match(AnswerPath.summary(turn), /^4 agents · 1 parallel step · [\d.]+ s$/);
+});
+
+test("the real runner's trace: an AAOSA round shows each Determine and Fulfill with its reply", async () => {
+  const scheme = (name) => ({name, function: {description: name, parameters: AAOSA}, instructions: `AGENT ${name}.`, tools: []});
+  const turn = await runSwarm([
+    {name: "front", function: {description: "Front", parameters: REQUEST}, instructions: "AGENT front.", tools: ["pump", "solar", "walls"]},
+    scheme("pump"), scheme("solar"), scheme("walls"),
+  ], {
+    front: [
+      {tools: ["pump", "solar", "walls"].map((tool) => ({tool, arguments: {inquiry: "Grant for a heat pump?", mode: "Determine"}}))},
+      {tools: ["pump", "walls"].map((tool) => ({tool, arguments: {inquiry: "Grant for a heat pump? Owner, gas boiler.", mode: "Fulfill"}}))},
+      {text: "The heat pump grant fits; insulation may too."},
+    ],
+    pump: [{text: "Yes: needs tenure and heating."}, {text: "Eligible: £5,000."}],
+    solar: [{text: "No: solar panels only."}],
+    walls: [{text: "Yes: needs the EPC band."}, {text: "Not known yet: give the EPC band."}],
+  }, "Is there a grant for a heat pump?");
+  assert.equal(turn.counts.determine, 3);
+  assert.equal(turn.counts.fulfill, 2);
+  assert.equal(turn.counts.parallel, 2);
+  const text = AnswerPath.toText(turn);
+  assert.match(text, /- 3 calls at the same time\n.*\n\s+- AAOSA Determine: pump\n\s+Asked whether its job fits this request\.\n\s+Replied: Yes: needs tenure and heating\./);
+  assert.match(text, /- AAOSA Determine: solar\n.*\n\s+Replied: No: solar panels only\./);
+  assert.match(text, /- 2 calls at the same time\n.*\n\s+- AAOSA Fulfill: pump\n\s+Asked to do its part\.\n\s+Replied: Eligible: £5,000\./);
+  assert.match(AnswerPath.summary(turn), /2 parallel steps · 3 AAOSA Determines · 2 AAOSA Fulfills/);
+});
+
+test("calls one after another are not shown as run at the same time", () => {
+  const trace = new TraceBus();
+  recordTurn(trace, "allow");
+  const [turn] = AnswerPath.build(trace.events, PAGE).turns;
+  assert.equal(turn.counts.parallel, 0);
+  assert.doesNotMatch(AnswerPath.toText(turn), /at the same time/);
 });

@@ -41,22 +41,60 @@ host (Cloudflare Worker, or scripts/serve-all.mjs locally)
 
 | Site | Agents | `read` | `write` (undoable) | `irreversible` (confirmed) |
 | --- | --- | --- | --- | --- |
-| utility | `emberwick_assistant`, `tariff_advisor` | `get_account_state` | `compare_tariff` | `switch_tariff` |
-| installer | `heatwright_assistant` | `get_installer_state` | `set_estimate` | `request_survey` |
-| grants | `fernbrook_assistant` | `get_grants_state` | `set_eligibility_answers` | `start_application` |
+| utility | `emberwick_assistant`, `tariff_advisor`, `usage_analyst`, `retrofit_planner` | `get_account_state` | `compare_tariff` | `switch_tariff` |
+| installer | `heatwright_assistant`, `heat_pump_engineer`, `solar_designer` | `get_installer_state` | `set_estimate` | `request_survey` |
+| grants | `fernbrook_assistant`, `heat_pump_grant_agent`, `solar_starter_agent`, `warm_walls_agent` | `get_grants_state` | `set_eligibility_answers` | `start_application` |
 
 `tariff_advisor` is a specialist with its own workflow: it reads the account, ranks the
 tariffs the account can have by the site's own cost estimates, and sets apart the tariff
 that needs a heat pump. That is the hook into the other two sites. It also gives the
 submitted site the two-agent network that spec section 6 asks an implementation to show.
 
+### The swarm
+
+Each network is a small Neuro SAN swarm. Every agent runs in the visitor's browser, on
+the visitor's model and key. A specialist cannot see the chat: its caller passes what it
+needs in the request. Only the front agent of each site may use `write` and
+`irreversible` actions; specialists read.
+
+- **Emberwick.** `usage_analyst` reads the account's usage and asks the site's own MCP
+  server what a heat pump would cost to run on each tariff
+  (`estimate_heat_pump_running_cost`). `retrofit_planner` decides which of
+  `heatwright_installers`, `fernbrook_grants` and `usage_analyst` a request needs and calls
+  them in one step. The runtime runs them at the same time (`runner.js`,
+  `executeToolCalls`, up to four), and asks for consent one partner card at a time
+  (`engine.js`, `requestConsent`). The planner puts the figures side by side, each with
+  its source, and adds none together. Only the planner contacts partner sites.
+- **Heatwright.** `heat_pump_engineer` and `solar_designer` each read one product's
+  estimate from the site's MCP server. Asked about both, the front agent calls both in
+  one step.
+- **Fernbrook.** One agent per grant scheme, routed with AAOSA, Neuro SAN's
+  Determine and Fulfill protocol: the front agent asks every scheme agent at once whether
+  its scheme fits the request (`mode: "Determine"`), then asks only those that said yes
+  to check the answers given (`mode: "Fulfill"`), through `check_scheme`, which decides
+  one scheme from only the answers it needs. The skill advises against AAOSA for small
+  sites because each round costs model calls; here the schemes overlap (a heat pump
+  question can touch the heat pump and the insulation scheme), which is the case it names.
+
+Cost. A full heat pump question took 27 to 28 model calls across the three sites in
+live runs, and about 70 seconds, against about 10 calls before. `max_steps` and the
+runtime's composition budget (four third-party calls per message) still bound it. A
+`website_*` action in a step makes the runtime run every call in that step one at a time
+(`runner.js`, `parallelSafe: false`), so the agents that fan out keep site actions out
+of those steps.
+
+Not used. Neuro SAN's coded tools (`class`) and private context (`sly_data` allow rules)
+are in the runtime, but the agentify-website build refuses `class` tools in a static
+bundle, and only the runtime's own chat panel sets `sly_data`, so a site cannot hand a
+field to a partner without changing the vendored runtime (CLAUDE.md rule 2).
+
 ## MCP servers
 
 | Site | Tools at `<origin>/mcp` | Built on |
 | --- | --- | --- |
-| utility | `list_tariffs`, `estimate_yearly_costs` | `AccountData.TARIFFS`, `TariffRules.annualCostPence` |
+| utility | `list_tariffs`, `estimate_yearly_costs`, `estimate_heat_pump_running_cost` | `AccountData.TARIFFS` and `HEAT_PUMP_ESTIMATE`, `TariffRules.annualCostPence`, `heatPumpUsage` and `electricOnlyCostPence` |
 | installer | `list_products`, `estimate` | `InstallData`, `InstallRules.estimate` |
-| grants | `list_grants`, `check_eligibility` | `GrantData.SCHEMES`, `GrantRules.checkAnswers` and `assess` |
+| grants | `list_grants`, `check_eligibility`, `check_scheme` | `GrantData.SCHEMES`, `GrantRules.checkAnswers`, `assess` and `assessScheme` |
 
 - **Read-only and public.** No tool writes, takes a name, email, phone number or
   reference, or returns a customer's account: Emberwick's account lives only in the
@@ -64,7 +102,7 @@ submitted site the two-agent network that spec section 6 asks an implementation 
 - **Stateless JSON-RPC over HTTP** (`server/mcp-server.mjs`): `initialize`, `ping`,
   `tools/list` and `tools/call`, answered as plain JSON. CORS is `*` because the data is
   as public as `agent-manifest.json` and no credential is accepted (spec 3.4).
-- **Each front agent lists its own site's server** in its `tools`, and each manifest lists
+- **Each front agent lists its own site's server** in its `tools`, as do the specialists that read it, and each manifest lists
   its own origin in `allowed_peers`, which the closed peer policy needs for any MCP call.
   On its own page an agent uses its `website_*` tools. Run by another site, it has none of
   those and uses its `mcp_*` tools instead: that is what gives partner replies real data.

@@ -79,6 +79,53 @@ function estimateYearlyCosts(args, context) {
   };
 }
 
+/**
+ * What a heat pump in place of a gas boiler would cost to run on each tariff, against the
+ * cheapest tariff for the usage now. Changes nothing.
+ *
+ * :param args: electricityKwh and gasKwh, a year's usage now.
+ * :param context: {page}, this site's page address.
+ * :return: The extra electricity, each tariff's yearly cost with a heat pump and no gas,
+ *     the cheapest now and with a heat pump, and the difference.
+ */
+function estimateHeatPumpRunningCost(args, context) {
+  const estimate = AccountData.HEAT_PUMP_ESTIMATE;
+  const usage = TariffRules.heatPumpUsage(args.electricityKwh, args.gasKwh, estimate);
+  const now = AccountData.TARIFFS
+    .filter((tariff) => !tariff.requiresHeatPump)
+    .map((tariff) => ({tariff: tariff.name, pence: TariffRules.annualCostPence(tariff, args.electricityKwh, args.gasKwh)}))
+    .sort((a, b) => a.pence - b.pence)[0];
+  const rows = AccountData.TARIFFS.map((tariff) => {
+    const pence = TariffRules.electricOnlyCostPence(tariff, usage.electricityKwh);
+    return {
+      tariff: tariff.name,
+      estimatedYearlyCost: TariffRules.pounds(pence),
+      estimatedYearlyCostPence: pence,
+      requiresHeatPump: tariff.requiresHeatPump,
+      term: tariff.term,
+      exitFee: TariffRules.pounds(tariff.exitFeePence),
+    };
+  });
+  rows.sort((a, b) => a.estimatedYearlyCostPence - b.estimatedYearlyCostPence);
+  const cheapest = rows[0];
+  const difference = now.pence - cheapest.estimatedYearlyCostPence;
+  return {
+    ok: true,
+    disclaimer: DISCLAIMER,
+    usageNow: {electricityKwh: args.electricityKwh, gasKwh: args.gasKwh},
+    withHeatPump: {electricityKwh: usage.electricityKwh, extraElectricityKwh: usage.extraElectricityKwh, gasKwh: 0},
+    cheapestNow: {tariff: now.tariff, estimatedYearlyCost: TariffRules.pounds(now.pence)},
+    tariffsWithHeatPump: rows,
+    cheapestWithHeatPump: cheapest.tariff,
+    yearlyDifference: difference >= 0
+      ? `${TariffRules.pounds(difference)} less per year`
+      : `${TariffRules.pounds(-difference)} more per year`,
+    assumptions: `The heat pump gives the heat the gas boiler gave now. The boiler is taken as ${estimate.boilerEfficiencyPercent}% efficient, and the heat pump gives ${estimate.heatPumpEfficiencyTenths / 10} units of heat for each unit of electricity. With a heat pump, the gas supply is closed: no gas and no gas standing charge.`,
+    note: "Running costs only: the cost of fitting is the installer's, and grants are the grant body's. Switching is done on Emberwick's own page.",
+    page: context.page,
+  };
+}
+
 export const UTILITY = {
   name: "emberwick-energy",
   title: "Emberwick Energy",
@@ -107,6 +154,21 @@ export const UTILITY = {
         additionalProperties: false,
       },
       run: estimateYearlyCosts,
+    },
+    {
+      name: "estimate_heat_pump_running_cost",
+      title: "Estimate heat pump running cost",
+      description: "Estimates what a home heated by a gas boiler would pay a year on each tariff if a heat pump did the heating instead, from a year's electricity and gas use, against the cheapest tariff now. Running costs only. Saves nothing.",
+      inputSchema: {
+        type: "object",
+        properties: {
+          electricityKwh: {type: "integer", minimum: 0, maximum: 100000, description: "Electricity used in a year now, in kWh."},
+          gasKwh: {type: "integer", minimum: 0, maximum: 200000, description: "Gas used in a year now, in kWh."},
+        },
+        required: ["electricityKwh", "gasKwh"],
+        additionalProperties: false,
+      },
+      run: estimateHeatPumpRunningCost,
     },
   ],
 };

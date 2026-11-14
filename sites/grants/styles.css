@@ -184,7 +184,7 @@ body > dialog button { margin-right: 8px; }
 .answer-path-tree .answer-path-tree { padding-right: 0; padding-left: 20px; border-left: 2px solid var(--tint); }
 .answer-path-tree li { margin: 4px 0; overflow-wrap: anywhere; }
 .answer-path-title { font-weight: 600; }
-.answer-path-detail, .answer-path-quote, .answer-path-consent, .answer-path-error { display: block; color: var(--muted); }
+.answer-path-detail, .answer-path-quote, .answer-path-reply, .answer-path-consent, .answer-path-error { display: block; color: var(--muted); }
 .answer-path-consent { color: var(--brand); }
 .answer-path-error, .answer-path-list .answer-path-error { color: #a40e26; }
 .answer-path-badge { font-size: 0.8em; border: 1px solid currentColor; border-radius: 4px; padding: 0 4px; }
@@ -192,3 +192,6 @@ body > dialog button { margin-right: 8px; }
 .answer-path-error > .answer-path-badge { color: #a40e26; }
 .answer-path-list p { margin: 4px 12px 10px; overflow-wrap: anywhere; }
 .answer-path-answer { color: var(--muted); }
+/* A swarm: calls that ran together, and AAOSA questions and jobs. */
+.answer-path-tree .answer-path-parallel > .answer-path-tree { border-left-style: double; border-left-width: 4px; }
+.answer-path-aaosa > .answer-path-title { font-style: italic; }

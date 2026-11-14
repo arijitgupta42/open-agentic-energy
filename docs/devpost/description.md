@@ -45,8 +45,14 @@ page except the short request the card showed them.
 
 - **Published networks.** Each site publishes its agent network as a resolved Neuro SAN
   network file, with `agent-manifest.json` and `links.json`, from static hosting with
-  CORS. Emberwick's network has two agents: `emberwick_assistant` and `tariff_advisor`,
-  which ranks the tariffs from the site's own cost estimates.
+  CORS. Emberwick's network has four agents: `emberwick_assistant`, `tariff_advisor`
+  (ranks the tariffs), `usage_analyst` (usage and heat pump running costs) and
+  `retrofit_planner` (asks both partners and the analyst at once).
+- **A swarm across three sites.** Eleven Neuro SAN agents on three origins, all in the
+  visitor's browser. When a step needs several specialists or partners, the agent asks
+  for them together and the runtime runs them in parallel. Fernbrook routes between its
+  scheme agents with AAOSA, Neuro SAN's Determine and Fulfill protocol: every scheme
+  agent says whether it fits, then only those that do check the visitor's answers.
 - **Browser runtime.** The hackathon's reference runtime runs each network in the page.
   The agents read the page through `website_*` actions that call the same methods as the
   page's own buttons, so the page and the assistant follow one set of rules.
@@ -62,6 +68,7 @@ page except the short request the card showed them.
   as its page. Any MCP client can use them.
 - **How each answer was made.** Under the chat, each reply has a tree built from the
   runtime's trace: which agent ran on which site, the site actions and MCP tools it used,
+  which calls ran at the same time, each AAOSA Determine and Fulfill with its reply,
   each partner network with the visitor's consent decision, and the model and router,
   with the key shown only as "not shown".
 - **Safety checks page.** `/lab/` shows the runtime stopping an invalid network, a
@@ -75,7 +82,7 @@ page except the short request the card showed them.
 
 Plain HTML, CSS and JavaScript modules, with no dependencies and no bundler; the
 agentic-web reference runtime and agentify-website skill (Apache 2.0); Cloudflare Workers
-for static hosting and `/mcp`; Node's test runner. 80 tests run the real runtime and page
+for static hosting and `/mcp`; Node's test runner. 88 tests run the real runtime and page
 code against a scripted model, and the MCP servers against hand-worked amounts.
 
 ### Known gaps
@@ -96,6 +103,10 @@ These come from the reference runtime, which this project does not edit.
 - The LLM provider must allow browser calls (CORS).
 - Everything in each published network file, including the instructions, is public.
 - There is no publisher-funded model: every visitor brings their own key.
+- A swarm costs more: a full heat pump question took 27 to 28 model calls and about
+  70 seconds in live runs.
+- Neuro SAN's coded tools and `sly_data` allow rules are not used: the static build
+  refuses coded tools, and the runtime gives a page no way to set private context.
 
 ### Shared with the community
 
