@@ -119,3 +119,32 @@ as the page's own form.
 
 The tests do not call an LLM, so they do not show how well a model follows the
 instructions. That needs the browser check above.
+
+### Browser workflow tests
+
+`npm run test:e2e` runs eight user workflows in Chromium with
+[e2e](https://github.com/e2e-inc/e2e) (a development dependency, Apache 2.0). It starts
+`npm run serve` itself, or reuses it, and turns e2e's usage telemetry off
+(`scripts/run-e2e.mjs`). The first time, install its browser with
+`npx @e2e-dev/web install chromium`. e2e documents Windows support through WSL; the suite
+also runs natively on Windows.
+
+The tests have no agent steps and call no model. The assistant's model is
+`e2e/scripted-router.mjs`, routed inside the browser in place of OpenRouter: it answers
+each agent from a fixed script, and repeats only figures that came back from real tool
+calls. So the real runtime, the three published networks, the consent cards, the partner
+sites and the MCP servers all run, with no key and no cost.
+
+| # | Workflow | Breaks when |
+| --- | --- | --- |
+| 1 | Emberwick: compare a tariff and switch on the page | the page or its rules break without the assistant |
+| 2 | Heatwright: a heat pump estimate on the page | the estimate form or rules break |
+| 3 | Fernbrook: an eligibility check on the page | the eligibility form or rules break |
+| 4 | No key: the status line says how to set one up, the page still works, Emberwick has its own icon | boot, the settings path or the brand icon breaks |
+| 5 | The heat pump question: two consent cards, then an answer with figures from all three sites; distinct icons; parallel calls and AAOSA in "How each answer was made"; the key goes only to the router | anything in the swarm, linking, consent, MCP, the answer view or key handling |
+| 6 | Decline one partner: it is never contacted, and the answer and the view say so | consent stops being enforced or reported |
+| 7 | A tariff switch through the assistant waits for the page's own dialog | irreversible actions stop needing confirmation |
+| 8 | The Safety checks page stops all four failure cases | the runtime stops failing closed |
+
+The scripted router knows each agent by a phrase from its instructions. If you rename an
+agent or reword its first line, update `e2e/scripted-router.mjs`.
