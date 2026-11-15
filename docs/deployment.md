@@ -86,7 +86,15 @@ Pages read. For Apache, `tools/agentify-website/references/bundle_and_hosting.md
 
 `npm run origins -- local` switches back for local work. The repository holds one state
 at a time, so deploy from a commit made in the `production` state: a `production` branch
-is the simplest way to keep `main` on `local`.
+is the simplest way to keep `dev` on `local`.
+
+## Branches
+
+- `dev` is the default branch. All work lands here, with the `local` origins. CI runs on it.
+- `production` holds the same code with the `production` origins. To release: merge `dev`
+  into `production`, run `npm run origins -- production`, `npm test` and
+  `node scripts/check-conformance.mjs --production`, commit, push, then deploy the three
+  Workers with `wrangler`. Never merge `production` back into `dev`.
 
 ## Being found
 
