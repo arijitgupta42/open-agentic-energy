@@ -28,7 +28,7 @@ async function connect({ app, screen }) {
  * :param text: The message.
  */
 async function ask(screen, text) {
-  await screen.getByPlaceholder("Type a request…").fill(text);
+  await screen.getByRole("textbox", "Your request").fill(text);
   await screen.getByRole("button", "Send").tap();
 }
 

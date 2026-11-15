@@ -161,7 +161,7 @@ browser to check, is in
 `npm test` runs 97 tests with no LLM. They load the real runtime and page code against a
 scripted model, and check the MCP servers against amounts worked out by hand.
 
-`npm run test:e2e` runs nine user workflows in Chromium with
+`npm run test:e2e` runs ten user workflows in Chromium with
 [e2e](https://github.com/e2e-inc/e2e). A scripted router inside the browser stands in for
 the model, so the real runtime, networks, consent cards, partner sites and MCP servers
 all run, with no key:
@@ -179,6 +179,8 @@ all run, with no key:
 8. Run all four Safety checks.
 9. Speak a request on each site: it fills the chat box, on the device, and is not
    sent until the visitor presses Send.
+10. Suggested requests: a starter in each chat box, a model-written next request after
+    each answer, and Tab to take it.
 
 ## Known limits
 
