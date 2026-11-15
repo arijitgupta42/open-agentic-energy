@@ -6,6 +6,7 @@ import { AnswerPath } from "./js/answer-path.js";
 import { DevLog } from "./js/dev-log.js";
 import { SwarmGraph } from "./js/swarm-graph.js";
 import { PromptHints } from "./js/prompt-hints.js";
+import { LiveChat } from "./js/live-chat.js";
 import { VoiceInput } from "./js/voice-input.js";
 import { App } from "./js/app.js";
 
@@ -73,6 +74,12 @@ export class AssistantMount {
         PromptHints.attach(document, AssistantMount.HINTS);
       } catch (error) {
         console.error("Suggestions are off", error);
+      }
+      // Steps and the answer as it is written, while the runtime works.
+      try {
+        LiveChat.attach(document, booted.engine, booted.trace);
+      } catch (error) {
+        console.error("Live progress is off", error);
       }
       VoiceInput.attach(document, window).catch((error) => console.error("Voice input is off", error));
       AssistantMount.defaultReview = booted.engine.onActionConfirm;
