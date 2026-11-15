@@ -28,11 +28,11 @@ export class AssistantMount {
    * name, an email address or a reference.
    */
   static HINTS = {
-    starter: "Which tariff would be cheapest for me?",
+    starter: "What would a heat pump cost to fit and run in my 95 m² semi-detached house, and is there a grant?",
     followUps: [
       "Why is that tariff cheaper for my usage?",
       "How much gas and electricity did I use this year?",
-      "What would a heat pump cost to run, and is there a grant?",
+      "Which tariff would be cheapest for me?",
       "Compare Green Flex with my current tariff",
     ],
   };

@@ -1,5 +1,6 @@
 import { GrantData } from "./grant-data.js";
 import { GrantRules } from "./grant-rules.js";
+import { PartnerLinks } from "./partner-links.js";
 
 /**
  * The Fernbrook Retrofit Grants page.
@@ -146,6 +147,7 @@ export class GrantsPage {
         incomeBand: GrantData.INCOME_BANDS.map(GrantsPage.idAndName),
       },
       schemes: schemes,
+      partners: PartnerLinks.LINKS.map((link) => ({...link})),
       answers: this.answers === null ? null : {...this.answers},
       results: this.results(),
       applications: applications,
@@ -333,6 +335,24 @@ export class GrantsPage {
     this.renderSchemes(state);
     this.renderResults(state);
     this.renderApplications(state);
+    this.renderPartners(state);
+  }
+
+  /**
+   * Draw the partner links.
+   *
+   * :param state: The page state.
+   */
+  renderPartners(state) {
+    const items = [];
+    for (const partner of state.partners) {
+      const item = this.doc.createElement("li");
+      const link = this.element("a", partner.name);
+      link.href = partner.url;
+      item.append(link, this.element("span", ` ${partner.what}`));
+      items.push(item);
+    }
+    this.doc.getElementById("partner-list").replaceChildren(...items);
   }
 
   /**

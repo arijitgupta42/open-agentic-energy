@@ -33,7 +33,7 @@ class SiteActions {
   static readStateAction() {
     return {
       name: "get_grants_state",
-      description: "Read this page: every scheme with its amount, summary and conditions, the eligibility questions with their allowed answers, the visitor's answers, the result for each scheme, the applications started here, and the page version.",
+      description: "Read this page: every scheme with its amount, summary and conditions, the eligibility questions with their allowed answers, the visitor's answers, the result for each scheme, the applications started here, the installer partner's link, and the page version.",
       effect: "read",
       inputSchema: {
         type: "object",

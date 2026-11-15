@@ -66,9 +66,9 @@ test("9. Every assistant takes a spoken request into the chat box, on the device
 
 test("10. Every assistant suggests a request in its chat box, Tab takes it, and the agent's next one arrives with the answer", async ({ app, screen, browser }) => {
   const STARTERS = [
-    ["http://127.0.0.1:8080/", "Which tariff would be cheapest for me?"],
-    ["http://localhost:8081/", "What would a heat pump cost for a 95 square metre semi-detached house?"],
-    ["http://localhost:8082/", "Which grants could I get for a heat pump?"],
+    ["http://127.0.0.1:8080/", "What would a heat pump cost to fit and run in my 95 m² semi-detached house, and is there a grant?"],
+    ["http://localhost:8081/", "What would a heat pump cost for my 95 m² semi-detached house, and is there a grant to help?"],
+    ["http://localhost:8082/", "Which grants could I get for a heat pump, and what would it cost to fit in a 95 m² house?"],
   ];
   const box = () => screen.getByRole("textbox", "Your request");
   for (const [url, starter] of STARTERS) {
@@ -83,11 +83,15 @@ test("10. Every assistant suggests a request in its chat box, Tab takes it, and 
   await screen.getByRole("button", "Save and start").tap();
   await expect(screen.getByText("Assistant connected to this page.")).toBeVisible();
   await box().press("Tab");
-  await expect(box()).toHaveValue("Which grants could I get for a heat pump?");
+  await expect(box()).toHaveValue(STARTERS[2][1]);
   expect(seen.filter((request) => request.url.endsWith("/chat/completions"))).toEqual([]);
   await screen.getByRole("button", "Send").tap();
+  // The starter reaches another site: Fernbrook asks Heatwright's network, after the visitor allows it.
+  const card = screen.getByRole("group", /Contact Heatwright Home Energy on your behalf/);
+  await expect(card).toBeVisible();
+  await card.getByRole("button", "Allow").tap();
+  await expect(screen.getByText(/^Grant: .*Fit: /)).toBeVisible();
   // With the answer, the agent's own suggestion is in the box, and its tag is not in the chat.
-  await expect(screen.getByText(/^Grant: /)).toBeVisible();
   await expect(browser.locator("#ns-msgs")).not.toContainText("<next>");
   await expect(box()).toHaveAttribute("placeholder", "What do I need to apply for it?");
   await box().press("Tab");

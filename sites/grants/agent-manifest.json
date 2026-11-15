@@ -24,12 +24,13 @@
     "byok_router": "https://openrouter.ai/api/v1"
   },
   "allowed_peers": [
-    "http://localhost:8082"
+    "http://localhost:8082",
+    "http://localhost:8081"
   ],
   "peer_policy": {
     "mode": "closed",
     "deny_origins": [],
-    "note": "Local agents and page-local actions only."
+    "note": "Calls only the partner sites in allowed_peers, after the visitor agrees."
   },
   "agent_mcp": {
     "protocol": "nsdeploy-agent-mcp/v1",

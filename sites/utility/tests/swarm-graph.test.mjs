@@ -174,12 +174,12 @@ test("each site's colour in the map is the brand colour of its own stylesheet", 
   }
 });
 
-test("the layout places 11 agents and 13 calls inside the drawing, with no two agents touching", () => {
+test("the layout places 11 agents and 14 calls inside the drawing, with no two agents touching", () => {
   const plan = SwarmGraph.layout();
   const nodes = [...plan.nodes.values()];
   assert.equal(nodes.length, 11);
-  assert.equal(plan.edges.length, 13);
-  assert.equal(plan.edges.filter((edge) => edge.partner).length, 4);
+  assert.equal(plan.edges.length, 14);
+  assert.equal(plan.edges.filter((edge) => edge.partner).length, 5);
   for (const node of nodes) {
     const site = plan.sites.find((candidate) => candidate.network === node.network);
     assert.ok(node.x - node.r > site.x && node.x + node.r < site.x + site.width, `${node.name} is outside its site's box.`);
