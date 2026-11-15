@@ -1,21 +1,21 @@
 // Suggested requests for each site's assistant, like the grey suggestion in Claude Code.
 // The chat box shows a suggestion in place of "Type a request…". Pressing Tab in the empty
-// box fills it in; typing something else replaces it. Before the first message the
-// suggestion is the site's own starter. After each turn it is a likely next message,
-// asked of the visitor's model, with a fixed follow-up from the site's list when the model
-// cannot give one.
+// box fills it in; typing something else replaces it.
+//
+// Before the first message the suggestion is the site's own starter. After that, the
+// front agent writes the next suggestion itself, as the last line of its answer:
+//   <next>Can I get a survey booked?</next>
+// (the `next_rules` text in each .hocon). This page takes that line out of the chat
+// bubble and puts it in the chat box, in the same moment the answer appears. It is one
+// model call, so it costs nothing extra and the suggestion follows from the answer the
+// model has just written. When the answer has no such line and does not end in a
+// question, a fixed follow-up from the site's own list is used instead. After a
+// question, there is no suggestion, because the visitor has something to answer.
 //
 // A suggestion only fills the chat box. It never sends anything: the visitor reads it and
 // presses Send, as with voice input (js/voice-input.js).
 //
-// The model call goes to the visitor's chosen router only, with the same key as the chat
-// and no tools (spec 4). It carries the last request and the last answer, which the
-// router already has. It is left out of the trace on purpose, so the swarm graph shows
-// only the agents' own work. It never runs in the mock router.
-//
 // This file is the same on all three sites. Each site's values are in its site.js.
-import { LlmClient } from "../runtime/llm.js";
-import { effectiveModel } from "../runtime/model.js";
 
 /**
  * Suggestions in the chat box, with a small hint line under it.
@@ -24,57 +24,46 @@ export class PromptHints {
   /** The runtime's own idle placeholder, which this replaces. */
   static DEFAULT_PLACEHOLDER = "Type a request…";
 
-  /** The longest suggestion to accept from the model. */
+  /** The longest suggestion to accept. */
   static MAX_LENGTH = 110;
 
-  /** Stop waiting for the model after this long. */
-  static TIMEOUT_MS = 15000;
-
-  /**
-   * How much of the last request and answer to give the model.
-   */
-  static CONTEXT_CHARS = 700;
+  /** The line an answer ends with, which this page takes out of the bubble. */
+  static TAG = /<next>([\s\S]*?)<\/next>/gi;
 
   /**
    * Add suggestions to the chat box, if it exists.
    *
    * :param doc: The document.
-   * :param engine: The runtime engine, for the conversation and the router.
-   * :param config: {about, starter, followUps}: what the assistant does, the first
-   *   suggestion, and fixed next suggestions for when the model gives none.
+   * :param config: {starter, followUps}: the first suggestion, and fixed next suggestions
+   *   for answers that bring none of their own.
    * :return: The PromptHints, or null when the chat box is missing.
    */
-  static attach(doc, engine, config) {
+  static attach(doc, config) {
     const bar = doc.querySelector("#agent-app .ns-inputbar");
     const input = doc.querySelector("#agent-app #ns-input");
+    const msgs = doc.querySelector("#agent-app #ns-msgs");
     const newChat = doc.querySelector("#agent-app #ns-newchat");
-    if (!bar || !input) {
+    if (!bar || !input || !msgs) {
       return null;
     }
-    const hints = new PromptHints(doc, {bar, input, newChat}, config, (messages, signal) => PromptHints.ask(engine, messages, signal), () => engine.history || []);
+    const hints = new PromptHints(doc, {bar, input, msgs, newChat}, config);
     hints.watch(doc.defaultView?.MutationObserver);
     return hints;
   }
 
   /**
    * :param doc: The document.
-   * :param parts: The runtime's input bar, chat box and New chat button.
+   * :param parts: The runtime's input bar, chat box, message list and New chat button.
    * :param config: See attach.
-   * :param ask: async (messages, signal) => the model's reply text, or null when there is
-   *   no model to ask.
-   * :param history: () => the conversation so far, as {role, content} messages.
    */
-  constructor(doc, parts, config, ask, history) {
+  constructor(doc, parts, config) {
     this.doc = doc;
     this.bar = parts.bar;
     this.input = parts.input;
+    this.msgs = parts.msgs;
     this.config = config;
-    this.ask = ask;
-    this.history = history;
     this.suggestion = config.starter;
     this.used = new Set();
-    this.seen = 0;
-    this.pending = null;
     this.active = false;
     this.hint = doc.createElement("button");
     this.hint.type = "button";
@@ -93,8 +82,8 @@ export class PromptHints {
   }
 
   /**
-   * Follow the runtime: a turn starting or ending, and the runtime putting its own
-   * placeholder back.
+   * Follow the runtime: answers appearing, a turn starting or ending, and the runtime
+   * putting its own placeholder back.
    *
    * :param Observer: The MutationObserver constructor, when the page has one.
    */
@@ -102,6 +91,9 @@ export class PromptHints {
     if (!Observer) {
       return;
     }
+    // The answer's line is taken out as soon as the bubble is drawn, before the browser
+    // paints it.
+    new Observer(() => this.scan()).observe(this.msgs, {childList: true, subtree: true});
     new Observer((records) => {
       for (const record of records) {
         if (record.attributeName === "data-turn-active") {
@@ -111,6 +103,54 @@ export class PromptHints {
       this.render();
     }).observe(this.bar, {attributes: true, attributeFilter: ["data-turn-active"]});
     new Observer(() => this.render()).observe(this.input, {attributes: true, attributeFilter: ["placeholder"]});
+  }
+
+  /**
+   * Take the `<next>` line out of every answer that has one, and keep the last as the
+   * suggestion for the end of the turn.
+   */
+  scan() {
+    for (const bubble of this.msgs.querySelectorAll(".ns-msg.bot")) {
+      const found = PromptHints.extract(bubble);
+      if (found !== null) {
+        this.pending = found;
+      }
+    }
+  }
+
+  /**
+   * Remove the `<next>…</next>` line from a bubble.
+   *
+   * :param bubble: A chat bubble element.
+   * :return: The line's text, or null when the bubble has none.
+   */
+  static extract(bubble) {
+    if (!/<next>/i.test(bubble.textContent || "")) {
+      return null;
+    }
+    let found = null;
+    const walker = bubble.ownerDocument.createTreeWalker(bubble, 4);
+    const nodes = [];
+    for (let node = walker.nextNode(); node; node = walker.nextNode()) {
+      nodes.push(node);
+    }
+    for (const node of nodes) {
+      const text = node.nodeValue;
+      const next = text.replace(PromptHints.TAG, (all, inner) => {
+        found = inner;
+        return "";
+      });
+      if (next !== text) {
+        node.nodeValue = next.trimEnd();
+        let parent = node.parentNode;
+        if (!node.nodeValue.trim() && parent && parent !== bubble && !parent.textContent.trim() && !parent.children.length) {
+          parent.remove();
+        } else if (!node.nodeValue.trim() && parent === bubble) {
+          node.remove();
+        }
+      }
+    }
+    return found === null ? null : (PromptHints.clean(found) || "");
   }
 
   /**
@@ -124,47 +164,30 @@ export class PromptHints {
     }
     this.active = active;
     if (active) {
-      this.pending?.abort();
-      this.pending = null;
+      this.pending = undefined;
       this.suggestion = "";
       return;
     }
-    this.next();
+    this.scan();
+    this.finish();
   }
 
   /**
-   * Work out the next suggestion after a turn that gave an answer.
+   * The turn ended: choose the next suggestion from the answer.
    */
-  async next() {
-    const messages = this.history();
-    if (messages.length <= this.seen) {
-      // The turn failed or was cancelled: nothing new to follow up on.
-      this.suggestion = this.suggestion || (this.seen === 0 && !this.used.has(this.config.starter) ? this.config.starter : this.fallback());
-      this.render();
-      return;
+  finish() {
+    const bubbles = [...this.msgs.querySelectorAll(".ns-msg.bot")];
+    const answer = (bubbles.at(-1)?.textContent || "").trim();
+    if (this.pending !== undefined) {
+      // The agent wrote one (or an empty one, when it asked a question).
+      this.suggestion = this.pending && !this.used.has(this.pending) ? this.pending : "";
+    } else if (!answer || answer.endsWith("?") || answer.startsWith("⚠️")) {
+      // The agent asked something, or the turn failed: nothing sensible to suggest.
+      this.suggestion = "";
+    } else {
+      this.suggestion = this.fallback();
     }
-    this.seen = messages.length;
-    const controller = new AbortController();
-    this.pending = controller;
-    this.suggestion = "";
-    this.render();
-    let text = null;
-    try {
-      const timer = setTimeout(() => controller.abort(), PromptHints.TIMEOUT_MS);
-      try {
-        text = PromptHints.clean(await this.ask(this.prompt(messages), controller.signal));
-      } finally {
-        clearTimeout(timer);
-      }
-    } catch {
-      // No model, no key, or the router said no: the fixed list covers it.
-      text = null;
-    }
-    if (this.pending !== controller || this.active) {
-      return;
-    }
-    this.pending = null;
-    this.suggestion = text && !this.used.has(text) ? text : this.fallback();
+    this.pending = undefined;
     this.render();
   }
 
@@ -178,33 +201,9 @@ export class PromptHints {
   }
 
   /**
-   * The messages that ask the model for the next request.
+   * Make an agent's line fit for the chat box.
    *
-   * :param messages: The conversation so far.
-   * :return: Chat messages.
-   */
-  prompt(messages) {
-    const clip = (text) => String(text || "").split("\n\nCRUSE presentation")[0].slice(0, PromptHints.CONTEXT_CHARS);
-    const answers = messages.filter((message) => message.role === "assistant");
-    const requests = messages.filter((message) => message.role === "user" && !String(message.content).startsWith("Browser action receipts"));
-    const request = clip(requests.at(-1)?.content);
-    const answer = clip(answers.at(-1)?.content);
-    return [
-      {
-        role: "system",
-        content: `You suggest what the visitor could ask next on ${this.config.site}, a fictional demo website. Its assistant can do this: ${this.config.about}\n`
-          + "Reply with one short message, at most 90 characters, written as the visitor in the first person, that follows naturally from the conversation and that the assistant can do. "
-          + "Do not answer it. Do not include a name, an email address, a phone number, a reference code or any other personal detail. "
-          + "Do not repeat the visitor's last request. Reply with the message only: no quotes, no label, no explanation.",
-      },
-      {role: "user", content: `The visitor's last request:\n${request}\n\nThe assistant's answer:\n${answer}\n\nSuggest the visitor's next message.`},
-    ];
-  }
-
-  /**
-   * Make a model reply fit for the chat box.
-   *
-   * :param reply: The model's text, or null.
+   * :param reply: The line's text.
    * :return: One plain line, or null when it is empty, too long or holds personal-looking
    *   details.
    */
@@ -217,26 +216,6 @@ export class PromptHints {
       return null;
     }
     return line;
-  }
-
-  /**
-   * Ask the visitor's model one question, through the engine's router and key.
-   *
-   * :param engine: The runtime engine.
-   * :param messages: Chat messages.
-   * :param signal: An AbortSignal.
-   * :return: The model's text, or null when the router is the in-page mock or has no key.
-   */
-  static async ask(engine, messages, signal) {
-    const top = engine.top;
-    const key = top?.llm?.apiKey || engine.byokKey;
-    if (!top || top.llm.mock || !key || key === "demo") {
-      return null;
-    }
-    const llm = new LlmClient({baseUrl: top.llm.baseUrl, apiKey: key, mock: false});
-    const model = effectiveModel(engine.modelOverride, undefined, top.network?.config?.llm_config?.model_name);
-    const reply = await llm.chat({model, messages, tools: [], origin: "suggestion", signal});
-    return reply.content;
   }
 
   /**
@@ -296,10 +275,8 @@ export class PromptHints {
    * New chat: back to the site's starter.
    */
   reset() {
-    this.pending?.abort();
-    this.pending = null;
     this.used.clear();
-    this.seen = 0;
+    this.pending = undefined;
     this.suggestion = this.config.starter;
     this.render();
   }

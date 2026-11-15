@@ -24,12 +24,10 @@ export class AssistantMount {
 
   /**
    * Suggested requests for the chat box (js/prompt-hints.js): the starter shown before
-   * the first message, and fixed follow-ups for when the model gives none. None holds a
+   * the first message, and fixed follow-ups for answers that bring none of their own. None holds a
    * name, an email address or a reference.
    */
   static HINTS = {
-    site: "Emberwick Energy, an energy supplier",
-    about: AssistantMount.GREETING,
     starter: "Which tariff would be cheapest for me?",
     followUps: [
       "Why is that tariff cheaper for my usage?",
@@ -72,7 +70,7 @@ export class AssistantMount {
       AssistantMount.watchTrace(booted.trace, booted.engine.top?.network?.name || "");
       // Suggested requests and voice input are extras: the chat works without them.
       try {
-        PromptHints.attach(document, booted.engine, AssistantMount.HINTS);
+        PromptHints.attach(document, AssistantMount.HINTS);
       } catch (error) {
         console.error("Suggestions are off", error);
       }

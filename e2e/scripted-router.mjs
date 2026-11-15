@@ -39,7 +39,8 @@ function sse(reply, step) {
  * text, the step, and the results of the tools called so far by name.
  *
  * :param body: The chat completion request.
- * :return: {system, input, step, results}.
+ * :return: {system, input, site, step, results}: site is true when the agent has this site's own
+ *   website_* tools.
  */
 function read(body) {
   const messages = body.messages || [];
@@ -62,7 +63,8 @@ function read(body) {
       results[names.get(message.tool_call_id)] = text(message);
     }
   }
-  return {system, input, step: turn.filter((message) => message.role === "assistant").length, results};
+  const site = (body.tools || []).some((tool) => String(tool.function?.name).startsWith("website_"));
+  return {system, input, site, step: turn.filter((message) => message.role === "assistant").length, results};
 }
 
 /**
@@ -114,8 +116,23 @@ function answer(raw) {
   return typeof value.text === "string" ? value.text : String(raw || "");
 }
 
-/** What the scripted model suggests as the visitor's next request. */
+/**
+ * What the scripted front agents suggest as the visitor's next request, as the last line
+ * of their answer (the `next_rules` in each .hocon), when they have the site's own tools.
+ */
 export const SUGGESTION = "What do I need to apply for it?";
+
+/**
+ * Add the suggested next request as the last line, as a front agent with its site's own
+ * tools does.
+ *
+ * :param request: The read() result.
+ * :param text: The answer.
+ * :return: {text}.
+ */
+function withNext(request, text) {
+  return {text: request.site ? `${text}\n\n<next>${SUGGESTION}</next>` : text};
+}
 
 const SCHEMES = ["heat-pump-grant", "solar-starter", "warm-walls"];
 
@@ -139,14 +156,15 @@ const AGENTS = [
   {
     name: "fernbrook_assistant",
     match: (system) => system.includes("You are the assistant on the Fernbrook Retrofit Grants website"),
-    reply({step, input, results}) {
+    reply(request) {
+      const {step, input, results} = request;
       if (step === 0) {
         return {calls: ["heat_pump_grant_agent", "solar_starter_agent", "warm_walls_agent"].map((name) => ({name, args: {inquiry: input, mode: "Determine"}}))};
       }
       if (step === 1) {
         return {calls: [{name: "heat_pump_grant_agent", args: {inquiry: `${input} Heating: gas boiler.`, mode: "Fulfill"}}]};
       }
-      return {text: `Grant: ${answer(results.heat_pump_grant_agent)}`};
+      return withNext(request, `Grant: ${answer(results.heat_pump_grant_agent)}`);
     },
   },
   {
@@ -163,11 +181,12 @@ const AGENTS = [
   {
     name: "heatwright_assistant",
     match: (system) => system.includes("You are the assistant on the Heatwright Home Energy website"),
-    reply({step, input, results}) {
+    reply(request) {
+      const {step, input, results} = request;
       if (step === 0) {
         return {calls: [{name: "heat_pump_engineer", args: {request: input}}]};
       }
-      return {text: `Fit: ${answer(results.heat_pump_engineer)}`};
+      return withNext(request, `Fit: ${answer(results.heat_pump_engineer)}`);
     },
   },
   {
@@ -199,7 +218,8 @@ const AGENTS = [
   {
     name: "emberwick_assistant",
     match: (system) => system.includes("You are the assistant on the Emberwick Energy website"),
-    reply({step, input, results}) {
+    reply(request) {
+      const {step, input, results} = request;
       if (/switch/i.test(input)) {
         if (step === 0) {
           return {calls: [{name: "website_get_account_state", args: {}}]};
@@ -214,7 +234,7 @@ const AGENTS = [
       if (step === 0) {
         return {calls: [{name: "retrofit_planner", args: {request: input}}]};
       }
-      return {text: `Plan: ${answer(results.retrofit_planner)}`};
+      return withNext(request, `Plan: ${answer(results.retrofit_planner)}`);
     },
   },
 ];
@@ -228,10 +248,6 @@ const AGENTS = [
  */
 export function reply(body) {
   const request = read(body);
-  // The chat box's suggested next request (js/prompt-hints.js): one plain line, no tools.
-  if (request.system.includes("You suggest what the visitor could ask next")) {
-    return sse({text: SUGGESTION}, 0);
-  }
   for (const agent of AGENTS) {
     const matched = agent.match(request.system);
     if (matched) {

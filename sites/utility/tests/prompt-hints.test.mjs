@@ -1,22 +1,74 @@
 // Checks js/prompt-hints.js, the same file on all three sites, with a small page
-// stand-in. It reads all three sites, so it lives here once.
+// stand-in, and that each site's agents are told to write the suggestion. It reads all
+// three sites, so it lives here once.
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
 import { PromptHints } from "../js/prompt-hints.js";
 
-const SITES = ["utility", "installer", "grants"];
-const CONFIG = {site: "Test Site", about: "It does things.", starter: "Start here", followUps: ["First follow-up", "Second follow-up"]};
+const SITES = {utility: "emberwick_energy", installer: "heatwright_installers", grants: "fernbrook_grants"};
+const CONFIG = {starter: "Start here", followUps: ["First follow-up", "Second follow-up"]};
+
+/** A text node. */
+class FakeText {
+  constructor(value) {
+    this.nodeType = 3;
+    this.nodeValue = value;
+    this.parentNode = null;
+  }
+
+  get textContent() {
+    return this.nodeValue;
+  }
+
+  remove() {
+    this.parentNode.childNodes.splice(this.parentNode.childNodes.indexOf(this), 1);
+  }
+}
 
 /** Just enough of an element for PromptHints. */
 class FakeElement {
-  constructor() {
+  constructor(className = "") {
+    this.className = className;
     this.attributes = {};
     this.listeners = {};
+    this.childNodes = [];
+    this.parentNode = null;
     this.value = "";
     this.placeholder = PromptHints.DEFAULT_PLACEHOLDER;
     this.hidden = false;
-    this.textContent = "";
+    this.ownerDocument = {createTreeWalker: (root) => FakeElement.walker(root)};
+  }
+
+  /** A walker over the text nodes under a root, in order. */
+  static walker(root) {
+    const texts = [];
+    const visit = (node) => node.childNodes.forEach((child) => (child.nodeType === 3 ? texts.push(child) : visit(child)));
+    visit(root);
+    let at = 0;
+    return {nextNode: () => texts[at++] || null};
+  }
+
+  get children() {
+    return this.childNodes.filter((child) => child.nodeType !== 3);
+  }
+
+  get textContent() {
+    return this.childNodes.map((child) => child.textContent).join("");
+  }
+
+  set textContent(value) {
+    this.label = value;
+  }
+
+  append(child) {
+    child.parentNode = this;
+    this.childNodes.push(child);
+    return child;
+  }
+
+  remove() {
+    this.parentNode.childNodes.splice(this.parentNode.childNodes.indexOf(this), 1);
   }
 
   setAttribute(name, value) {
@@ -35,6 +87,10 @@ class FakeElement {
     (this.listeners[event.type] || []).forEach((listener) => listener(event));
   }
 
+  querySelectorAll() {
+    return this.children.filter((child) => child.className.includes("ns-msg") && child.className.includes("bot"));
+  }
+
   insertAdjacentElement() {}
 
   focus() {}
@@ -43,15 +99,43 @@ class FakeElement {
 /**
  * Build the hints on fake parts.
  *
- * :param ask: The model stand-in.
- * :return: {hints, input, history}.
+ * :return: {hints, input, msgs}.
  */
-function build(ask) {
-  const history = [];
+function build() {
   const doc = {createElement: () => new FakeElement(), defaultView: {Event: class { constructor(type) { this.type = type; } }}};
   const input = new FakeElement();
-  const hints = new PromptHints(doc, {bar: new FakeElement(), input, newChat: new FakeElement()}, CONFIG, ask, () => history);
-  return {hints, input, history};
+  const msgs = new FakeElement();
+  const hints = new PromptHints(doc, {bar: new FakeElement(), input, msgs, newChat: new FakeElement()}, CONFIG);
+  return {hints, input, msgs};
+}
+
+/**
+ * Add a rendered answer, the way the runtime does: one paragraph per line.
+ *
+ * :param msgs: The message list.
+ * :param lines: The answer's paragraphs.
+ * :return: The bubble.
+ */
+function answer(msgs, ...lines) {
+  const bubble = msgs.append(new FakeElement("ns-msg bot"));
+  for (const line of lines) {
+    bubble.append(new FakeElement("p")).append(new FakeText(line));
+  }
+  return bubble;
+}
+
+/**
+ * Run a turn that ends with the given answer.
+ *
+ * :param built: The build() result.
+ * :param lines: The answer's paragraphs.
+ * :return: The bubble.
+ */
+function turn(built, ...lines) {
+  built.hints.turn(true);
+  const bubble = answer(built.msgs, ...lines);
+  built.hints.turn(false);
+  return bubble;
 }
 
 /** A Tab key event. */
@@ -59,20 +143,8 @@ function tab() {
   return {key: "Tab", prevented: false, preventDefault() { this.prevented = true; }};
 }
 
-/**
- * Finish a turn that produced an answer, and let the suggestion settle.
- *
- * :param built: The build() result.
- */
-async function answered(built) {
-  built.hints.turn(true);
-  built.history.push({role: "user", content: "Which tariff is cheapest?"}, {role: "assistant", content: "Fixed 12 Month.\n\nCRUSE presentation turn: x"});
-  built.hints.turn(false);
-  await new Promise((resolve) => setTimeout(resolve, 5));
-}
-
 test("The starter shows before the first message, and Tab in an empty box takes it", () => {
-  const {hints, input} = build(async () => null);
+  const {hints, input} = build();
   assert.equal(input.placeholder, "Start here");
   const event = tab();
   hints.keydown(event);
@@ -82,7 +154,7 @@ test("The starter shows before the first message, and Tab in an empty box takes 
 });
 
 test("Tab does nothing in a box with text, with a modifier, or while a turn runs", () => {
-  const {hints, input} = build(async () => null);
+  const {hints, input} = build();
   input.value = "my own words";
   const event = tab();
   hints.keydown(event);
@@ -96,52 +168,64 @@ test("Tab does nothing in a box with text, with a modifier, or while a turn runs
   assert.equal(input.value, "");
 });
 
-test("After a turn the model's reply is the next suggestion, cleaned to one line", async () => {
-  let prompt = null;
-  const built = build(async (messages) => {
-    prompt = messages;
-    return '"Can I switch to Fixed 12 Month?"\nBecause it is cheaper.';
-  });
-  await answered(built);
-  assert.equal(built.input.placeholder, "Can I switch to Fixed 12 Month?");
-  assert.match(prompt[0].content, /fictional demo website/);
-  assert.match(prompt[1].content, /Which tariff is cheapest\?/);
-  assert.doesNotMatch(prompt[1].content, /CRUSE/);
+test("The agent's <next> line leaves the bubble and becomes the suggestion at the same moment", () => {
+  const built = build();
+  const bubble = turn(built, "A survey takes about an hour.", "<next>Can I book a survey?</next>");
+  assert.equal(bubble.textContent, "A survey takes about an hour.");
+  assert.equal(bubble.children.length, 1, "the paragraph that held only the line is gone");
+  assert.equal(built.input.placeholder, "Can I book a survey?");
+  const event = tab();
+  built.hints.keydown(event);
+  assert.equal(built.input.value, "Can I book a survey?");
 });
 
-test("When the model gives nothing or something unusable, the fixed follow-ups are used in turn", async () => {
-  const replies = [null, "Write to me at a@b.example", "x".repeat(300)];
-  const built = build(async () => replies.shift());
-  for (const expected of ["First follow-up", "Second follow-up", PromptHints.DEFAULT_PLACEHOLDER]) {
-    await answered(built);
-    assert.equal(built.input.placeholder, expected);
-    built.hints.keydown(tab());
-    built.input.value = "";
+test("A <next> line at the end of a paragraph is cut off and the rest stays", () => {
+  const built = build();
+  const bubble = turn(built, "The estimate is £9,200.\n<next>What would it cost to run?</next>");
+  assert.equal(bubble.textContent, "The estimate is £9,200.");
+  assert.equal(built.input.placeholder, "What would it cost to run?");
+});
+
+test("With no line and no question, the fixed follow-ups come in turn, each once", () => {
+  const built = build();
+  turn(built, "Fixed 12 Month is cheapest.");
+  assert.equal(built.input.placeholder, "First follow-up");
+  built.hints.keydown(tab());
+  built.input.value = "";
+  turn(built, "Here is the grant.");
+  assert.equal(built.input.placeholder, "Second follow-up");
+});
+
+test("After a question, or a failed turn, there is no suggestion", () => {
+  const asked = build();
+  turn(asked, "What is your EPC band?");
+  assert.equal(asked.input.placeholder, PromptHints.DEFAULT_PLACEHOLDER);
+  assert.equal(asked.hints.canAccept(), false);
+  const failed = build();
+  turn(failed, "⚠️ An AI provider key is required.");
+  assert.equal(failed.input.placeholder, PromptHints.DEFAULT_PLACEHOLDER);
+});
+
+test("An empty or unusable <next> line gives no suggestion, and the line is still removed", () => {
+  for (const line of ["<next></next>", "<next>Write to me at a@b.example</next>", `<next>${"x".repeat(300)}</next>`]) {
+    const built = build();
+    const bubble = turn(built, "Done.", line);
+    assert.equal(bubble.textContent, "Done.");
+    assert.equal(built.input.placeholder, PromptHints.DEFAULT_PLACEHOLDER);
   }
 });
 
-test("A model that throws leaves the fixed follow-up, and a new turn cancels a slow answer", async () => {
-  const failing = build(async () => {
-    throw new Error("router said no");
-  });
-  await answered(failing);
-  assert.equal(failing.input.placeholder, "First follow-up");
-  let signalled = null;
-  const slow = build((messages, signal) => new Promise((resolve) => {
-    signalled = signal;
-    setTimeout(() => resolve("Late suggestion"), 10);
-  }));
-  slow.hints.turn(true);
-  slow.history.push({role: "user", content: "q"}, {role: "assistant", content: "a"});
-  slow.hints.turn(false);
-  slow.hints.turn(true);
-  await new Promise((resolve) => setTimeout(resolve, 20));
-  assert.equal(signalled.aborted, true);
-  assert.notEqual(slow.input.placeholder, "Late suggestion");
+test("A suggestion already taken in this chat is not offered again", () => {
+  const built = build();
+  turn(built, "Done.", "<next>Same again</next>");
+  built.hints.keydown(tab());
+  built.input.value = "";
+  turn(built, "Done.", "<next>Same again</next>");
+  assert.equal(built.input.placeholder, PromptHints.DEFAULT_PLACEHOLDER);
 });
 
 test("New chat goes back to the starter", () => {
-  const {hints, input} = build(async () => null);
+  const {hints, input} = build();
   hints.keydown(tab());
   input.value = "";
   hints.reset();
@@ -157,19 +241,13 @@ test("clean refuses what looks like personal data or a link", () => {
   assert.equal(PromptHints.clean(null), null);
 });
 
-test("The model is not asked on the mock router or without a key, and is never given tools", async () => {
-  const source = await readFile(new URL("../js/prompt-hints.js", import.meta.url), "utf8");
-  assert.match(source, /tools: \[\]/);
-  assert.equal(await PromptHints.ask({top: {llm: {mock: true}}}, [], undefined), null);
-  assert.equal(await PromptHints.ask({top: {llm: {mock: false, apiKey: "demo"}}, byokKey: "demo"}, [], undefined), null);
-});
-
 test("The file is the same on all three sites, and each site wires its own hints", async () => {
   const first = await readFile(new URL("../js/prompt-hints.js", import.meta.url), "utf8");
-  for (const site of SITES) {
+  assert.doesNotMatch(first, /LlmClient|llm\.chat|fetch\(/, "the page makes no model call of its own");
+  for (const site of Object.keys(SITES)) {
     assert.equal(await readFile(new URL(`../../${site}/js/prompt-hints.js`, import.meta.url), "utf8"), first, `${site} differs`);
     const mount = await readFile(new URL(`../../${site}/site.js`, import.meta.url), "utf8");
-    assert.match(mount, /PromptHints\.attach\(document, booted\.engine, AssistantMount\.HINTS\)/);
+    assert.match(mount, /PromptHints\.attach\(document, AssistantMount\.HINTS\)/);
     const starter = mount.match(/starter: "([^"]+)"/)?.[1];
     assert.ok(starter, `${site} starter`);
     const follow = (mount.match(/followUps: \[([^\]]+)\]/)?.[1].match(/"[^"]+"/g) || []).map((item) => item.slice(1, -1));
@@ -178,4 +256,22 @@ test("The file is the same on all three sites, and each site wires its own hints
       assert.equal(PromptHints.clean(text), text, `${site}: ${text}`);
     }
   }
+});
+
+test("Every front agent is told to end with the <next> line, with the same words on every site", async () => {
+  const rules = new Set();
+  for (const [site, name] of Object.entries(SITES)) {
+    const config = JSON.parse(await readFile(new URL(`../../${site}/${name}.network.json`, import.meta.url), "utf8"));
+    const text = config.commondefs.replacement_strings.next_rules;
+    assert.ok(text, `${site}: next_rules is missing.`);
+    rules.add(text.trim());
+    assert.ok(config.tools[0].instructions.includes("{next_rules}"), `${site}: ${config.tools[0].name} lacks {next_rules}.`);
+    for (const agent of config.tools.slice(1)) {
+      assert.ok(!String(agent.instructions || "").includes("{next_rules}"), `${site}: only the front agent writes a suggestion (${agent.name}).`);
+    }
+  }
+  assert.equal(rules.size, 1, "next_rules differs between sites. Keep it the same on all three.");
+  const [rule] = rules;
+  assert.match(rule, /<next>/);
+  assert.match(rule, /no website_\* tools/, "a partner's network, which has no website_* tools, must leave the line out");
 });

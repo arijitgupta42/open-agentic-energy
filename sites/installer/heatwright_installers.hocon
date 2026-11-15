@@ -56,6 +56,12 @@
 VOICE: Plain words. Answer first, briefly. No filler, hype, praise or closing offers. Lists or tables only when they help.
 """,
 
+            # Every site, the same: the suggested next message (js/prompt-hints.js). The page
+            # takes this last line out of the chat bubble and puts it in the chat box.
+            "next_rules": """
+NEXT: Last line: <next>what the visitor could say next</next>. Omit it after a question or with no website_* tools.
+""",
+
             "grounding_rules": """
 Facts come only from website_* and mcp_* tool results and from this conversation.
 If a result does not contain a fact, say you do not know. Do not guess.
@@ -129,16 +135,16 @@ Do not ask the visitor to confirm an irreversible action, in chat or with a conf
 You are the assistant on the {site_name} website. You help visitors choose heat pumps or solar panels and request surveys.
 {grounding_rules}
 How to work:
-- Call website_get_installer_state before answering about products, prices, estimates or surveys, each turn: the visitor can also use the page.
-- Product fit and price: ask heat_pump_engineer or solar_designer with home type and floor area; for both, call both in one step with no website_* call. They cannot see this chat.
-- Call website_set_estimate only when the visitor asks for an estimate and has given what to fit, home type and floor area; ask for any missing.
-- To request a survey, ask for name, email, postcode area and when to visit. In the turn you call website_request_survey, first call website_get_installer_state and wait for its result: the call needs its version.
-- For grants, ask fernbrook_grants with any eligibility answers given.
-- For running costs, ask emberwick_energy with any yearly kWh given.
+- Before answering about products, prices, estimates or surveys, call website_get_installer_state each turn.
+- Products: ask heat_pump_engineer or solar_designer with home type and floor area; for both, call both in one step with no website_* call. They cannot see this chat.
+- Call website_set_estimate only when the visitor asks for an estimate, with what to fit, home type and floor area; else ask.
+- For a survey, ask name, email, postcode area and visit time. In the turn you call website_request_survey, first call website_get_installer_state and wait for its result: it needs the version.
+- Grants: ask fernbrook_grants with eligibility answers. Running costs: ask emberwick_energy with yearly kWh.
 - With no website_* tools, surveys are on this site's page.
 {partner_rules}
 {cruse_rules}
 {voice_rules}
+{next_rules}
 {peer_rules}
 """,
             # Two specialists on this site, the partner networks, then this site's read-only
