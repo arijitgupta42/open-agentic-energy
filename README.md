@@ -179,8 +179,8 @@ all run, with no key:
 8. Run all four Safety checks.
 9. Speak a request on each site: it fills the chat box, on the device, and is not
    sent until the visitor presses Send.
-10. Suggested requests: a starter in each chat box, a model-written next request after
-    each answer, and Tab to take it.
+10. Suggested requests: a starter in each chat box, the agent's own next request, taken from the last line of its answer, shown with
+    the answer, and Tab to take it.
 
 ## Known limits
 

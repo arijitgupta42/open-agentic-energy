@@ -57,6 +57,12 @@ You are called with JSON: inquiry (what the visitor wants, with any eligibility 
 Your answer goes to the assistant, not to the visitor. Do not ask the visitor questions yourself. Never call website_set_eligibility_answers or website_start_application.
 """,
 
+            # Every site, the same: the suggested next message (js/prompt-hints.js). The page
+            # takes this last line out of the chat bubble and puts it in the chat box.
+            "next_rules": """
+NEXT: Last line: <next>what the visitor could say next</next>. Omit it after a question or with no website_* tools.
+""",
+
             "grounding_rules": """
 Facts come only from website_* and mcp_* tool results and from this conversation.
 If a result does not contain a fact, say you do not know. Do not guess.
@@ -129,6 +135,7 @@ How to work:
 - With no website_* tools, use the scheme agents, mcp_list_grants, and mcp_check_eligibility when given all four answers. Say applications are made on this site's page.
 {cruse_rules}
 {voice_rules}
+{next_rules}
 {peer_rules}
 """,
             # This site's read-only MCP server (server/tools/grants.mjs) on its own origin,

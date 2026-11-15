@@ -64,7 +64,7 @@ test("9. Every assistant takes a spoken request into the chat box, on the device
   expect(seen.filter((request) => request.url.endsWith("/chat/completions"))).toEqual([]);
 });
 
-test("10. Every assistant suggests a request in its chat box, Tab takes it, and the next one follows the answer", async ({ app, screen, browser }) => {
+test("10. Every assistant suggests a request in its chat box, Tab takes it, and the agent's next one arrives with the answer", async ({ app, screen, browser }) => {
   const STARTERS = [
     ["http://127.0.0.1:8080/", "Which tariff would be cheapest for me?"],
     ["http://localhost:8081/", "What would a heat pump cost for a 95 square metre semi-detached house?"],
@@ -86,7 +86,9 @@ test("10. Every assistant suggests a request in its chat box, Tab takes it, and 
   await expect(box()).toHaveValue("Which grants could I get for a heat pump?");
   expect(seen.filter((request) => request.url.endsWith("/chat/completions"))).toEqual([]);
   await screen.getByRole("button", "Send").tap();
-  // After the answer, the model's own suggestion is in the box, and Tab takes it.
+  // With the answer, the agent's own suggestion is in the box, and its tag is not in the chat.
+  await expect(screen.getByText(/^Grant: /)).toBeVisible();
+  await expect(browser.locator("#ns-msgs")).not.toContainText("<next>");
   await expect(box()).toHaveAttribute("placeholder", "What do I need to apply for it?");
   await box().press("Tab");
   await expect(box()).toHaveValue("What do I need to apply for it?");
