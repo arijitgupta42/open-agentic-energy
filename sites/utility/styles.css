@@ -289,3 +289,14 @@ body > dialog button { margin-right: 8px; }
 .prompt-hint { display: block; margin: 0; padding: 4px 10px; background: none; border: 0; font: inherit; font-size: 0.85em; opacity: 0.75; text-align: left; cursor: pointer; }
 .prompt-hint[hidden] { display: none; }
 .prompt-hint:hover, .prompt-hint:focus-visible { opacity: 1; text-decoration: underline; }
+
+/* Live progress in the chat (js/live-chat.js): the steps, and the answer as it arrives. */
+#agent-app .ns-turn-status { display: none; }
+#agent-app .ns-live { white-space: pre-wrap; }
+.ns-steps { margin: 6px 0; padding: 6px 10px; border: 1px solid rgba(128, 128, 128, 0.35); border-radius: 10px; font-size: 0.88em; opacity: 0.9; }
+.ns-steps summary { cursor: pointer; }
+.ns-steps ul { margin: 6px 0 2px; padding-left: 4px; list-style: none; }
+.ns-steps li { margin: 2px 0; }
+.ns-steps[data-running="true"] summary::after { content: ""; display: inline-block; width: 6px; height: 6px; margin-left: 6px; border-radius: 50%; background: currentColor; animation: ns-steps-pulse 1s ease-in-out infinite; }
+@keyframes ns-steps-pulse { 50% { opacity: 0.2; } }
+@media (prefers-reduced-motion: reduce) { .ns-steps[data-running="true"] summary::after { animation: none; } }

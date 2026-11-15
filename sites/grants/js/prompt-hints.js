@@ -110,7 +110,7 @@ export class PromptHints {
    * suggestion for the end of the turn.
    */
   scan() {
-    for (const bubble of this.msgs.querySelectorAll(".ns-msg.bot")) {
+    for (const bubble of this.msgs.querySelectorAll(".ns-msg.bot:not(.ns-live)")) {
       const found = PromptHints.extract(bubble);
       if (found !== null) {
         this.pending = found;
@@ -176,7 +176,7 @@ export class PromptHints {
    * The turn ended: choose the next suggestion from the answer.
    */
   finish() {
-    const bubbles = [...this.msgs.querySelectorAll(".ns-msg.bot")];
+    const bubbles = [...this.msgs.querySelectorAll(".ns-msg.bot:not(.ns-live)")];
     const answer = (bubbles.at(-1)?.textContent || "").trim();
     if (this.pending !== undefined) {
       // The agent wrote one (or an empty one, when it asked a question).
