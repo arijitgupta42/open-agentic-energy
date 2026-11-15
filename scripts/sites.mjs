@@ -38,7 +38,7 @@ export class Sites {
     {
       id: "grants",
       network: "fernbrook_grants",
-      originFiles: ["fernbrook_grants.hocon", "agent-manifest.json"],
+      originFiles: ["fernbrook_grants.hocon", "agent-manifest.json", "js/partner-links.js"],
     },
   ];
 

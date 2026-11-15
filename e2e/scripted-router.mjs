@@ -159,12 +159,18 @@ const AGENTS = [
     reply(request) {
       const {step, input, results} = request;
       if (step === 0) {
-        return {calls: ["heat_pump_grant_agent", "solar_starter_agent", "warm_walls_agent"].map((name) => ({name, args: {inquiry: input, mode: "Determine"}}))};
+        const calls = ["heat_pump_grant_agent", "solar_starter_agent", "warm_walls_agent"].map((name) => ({name, args: {inquiry: input, mode: "Determine"}}));
+        // The starter also asks what a heat pump costs to fit: Heatwright's network, run here.
+        if (request.site && /cost to fit/i.test(input)) {
+          calls.push({name: "heatwright_installers", args: {request: "Heat pump for a 95 m2 house: what to fit and its price?"}});
+        }
+        return {calls};
       }
       if (step === 1) {
         return {calls: [{name: "heat_pump_grant_agent", args: {inquiry: `${input} Heating: gas boiler.`, mode: "Fulfill"}}]};
       }
-      return withNext(request, `Grant: ${answer(results.heat_pump_grant_agent)}`);
+      const fit = results.heatwright_installers ? ` | ${answer(results.heatwright_installers)}` : "";
+      return withNext(request, `Grant: ${answer(results.heat_pump_grant_agent)}${fit}`);
     },
   },
   {
@@ -184,9 +190,15 @@ const AGENTS = [
     reply(request) {
       const {step, input, results} = request;
       if (step === 0) {
-        return {calls: [{name: "heat_pump_engineer", args: {request: input}}]};
+        const calls = [{name: "heat_pump_engineer", args: {request: input}}];
+        // The starter also asks about a grant: Fernbrook's network, run here.
+        if (request.site && /is there a grant/i.test(input)) {
+          calls.push({name: "fernbrook_grants", args: {request: "Which grants help pay for a heat pump?"}});
+        }
+        return {calls};
       }
-      return withNext(request, `Fit: ${answer(results.heat_pump_engineer)}`);
+      const grant = results.fernbrook_grants ? ` | ${answer(results.fernbrook_grants)}` : "";
+      return withNext(request, `Fit: ${answer(results.heat_pump_engineer)}${grant}`);
     },
   },
   {

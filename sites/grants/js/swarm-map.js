@@ -59,6 +59,7 @@ export class SwarmMap {
     ["fernbrook_grants/fernbrook_assistant", "fernbrook_grants/heat_pump_grant_agent"],
     ["fernbrook_grants/fernbrook_assistant", "fernbrook_grants/solar_starter_agent"],
     ["fernbrook_grants/fernbrook_assistant", "fernbrook_grants/warm_walls_agent"],
+    ["fernbrook_grants/fernbrook_assistant", "heatwright_installers/heatwright_assistant"],
   ];
 
   /**

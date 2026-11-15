@@ -28,10 +28,10 @@ export class AssistantMount {
    * name, an email address or a reference.
    */
   static HINTS = {
-    starter: "What would a heat pump cost for a 95 square metre semi-detached house?",
+    starter: "What would a heat pump cost for my 95 m² semi-detached house, and is there a grant to help?",
     followUps: [
       "How much would solar panels cost for my roof?",
-      "Is there a grant that could help pay for this?",
+      "What would a heat pump cost to run on my Emberwick tariff?",
       "What happens at a survey, and can I request one?",
       "How long does a heat pump installation take?",
     ],

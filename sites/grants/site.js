@@ -28,11 +28,12 @@ export class AssistantMount {
    * name, an email address or a reference.
    */
   static HINTS = {
-    starter: "Which grants could I get for a heat pump?",
+    starter: "Which grants could I get for a heat pump, and what would it cost to fit in a 95 m² house?",
     followUps: [
       "What do I need to apply for the heat pump grant?",
       "Am I eligible for the solar starter grant?",
       "Can I get help with wall insulation too?",
+      "What would solar panels cost to fit, and is there a grant?",
       "Can you start an application for me?",
     ],
   };

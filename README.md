@@ -85,7 +85,7 @@ agents change anything on a page; specialists read.
 | Heatwright | `heatwright_assistant` | Talks to the visitor. Shows estimates on the page and sends survey requests after the dialog. Asks Fernbrook about grants and Emberwick about running costs. | The page's site actions |
 | Heatwright | `heat_pump_engineer` | Works out the home's heat loss and the pump size and price that cover it. | Heatwright's `estimate` |
 | Heatwright | `solar_designer` | Picks a solar system and price, or says why the home does not suit panels, such as a flat's shared roof. | Heatwright's `estimate` |
-| Fernbrook | `fernbrook_assistant` | Talks to the visitor. Records eligibility answers on the page and starts applications after the dialog. Routes grant questions to the scheme agents with AAOSA. | The page's site actions |
+| Fernbrook | `fernbrook_assistant` | Talks to the visitor. Records eligibility answers on the page and starts applications after the dialog. Routes grant questions to the scheme agents with AAOSA, and asks Heatwright what fitting costs. | The page's site actions |
 | Fernbrook | `heat_pump_grant_agent` | Answers for the £5,000 Heat Pump Grant. | Fernbrook's `check_scheme` |
 | Fernbrook | `solar_starter_agent` | Answers for the £1,200 Solar Starter grant. | Fernbrook's `check_scheme` |
 | Fernbrook | `warm_walls_agent` | Answers for the Warm Walls insulation voucher, up to £2,000. | Fernbrook's `check_scheme` |
@@ -180,7 +180,8 @@ all run, with no key:
 9. Speak a request on each site: it fills the chat box, on the device, and is not
    sent until the visitor presses Send.
 10. Suggested requests: a starter in each chat box, the agent's own next request, taken from the last line of its answer, shown with
-    the answer, and Tab to take it.
+    the answer, and Tab to take it. Each site's starter
+    needs another site, so the first request already runs across the swarm.
 
 ## Known limits
 

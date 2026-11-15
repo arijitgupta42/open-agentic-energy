@@ -15,7 +15,7 @@ against them before you write code, and say which rule or spec section applies.
 | --- | --- | --- | --- | --- |
 | `sites/utility` | Emberwick Energy: account, usage, tariffs, switching. **The site to submit.** | `/emberwick_energy` | `emberwick_assistant` (front), `tariff_advisor`, `usage_analyst`, `retrofit_planner` | installer, grants (from `retrofit_planner`) |
 | `sites/installer` | Heatwright Home Energy: heat pump and solar estimates, survey requests | `/heatwright_installers` | `heatwright_assistant` (front), `heat_pump_engineer`, `solar_designer` | grants, utility |
-| `sites/grants` | Fernbrook Retrofit Grants: eligibility check, applications | `/fernbrook_grants` | `fernbrook_assistant` (front), `heat_pump_grant_agent`, `solar_starter_agent`, `warm_walls_agent` (AAOSA) | none |
+| `sites/grants` | Fernbrook Retrofit Grants: eligibility check, applications | `/fernbrook_grants` | `fernbrook_assistant` (front), `heat_pump_grant_agent`, `solar_starter_agent`, `warm_walls_agent` (AAOSA) | installer (from `fernbrook_assistant`) |
 
 Each site is a self-contained static folder: plain HTML, CSS and JavaScript modules, no
 dependencies and no bundler. All data is fictional and lives in page memory. Each site

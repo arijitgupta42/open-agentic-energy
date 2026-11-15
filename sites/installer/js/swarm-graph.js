@@ -63,13 +63,16 @@ export class SwarmGraph {
       }
     });
     const edges = [];
-    for (const [from, to] of SwarmMap.CALLS) {
+    SwarmMap.CALLS.forEach(([from, to], index) => {
       const a = nodes.get(from);
       const b = nodes.get(to);
       const partner = a.network !== b.network;
-      const shape = partner ? SwarmGraph.curve(a, b, middle) : SwarmGraph.line(a, b);
+      // Two front agents that call each other: the later call takes a lane of its own.
+      const first = SwarmMap.CALLS.findIndex(([caller, callee]) => caller === to && callee === from);
+      const back = first !== -1 && first < index;
+      const shape = partner ? SwarmGraph.curve(a, b, middle, back) : SwarmGraph.line(a, b);
       edges.push({key: `${from}>${to}`, from, to, partner, ...shape});
-    }
+    });
     const last = sites[sites.length - 1];
     return {width: SwarmGraph.WIDTH, height: last.y + last.height + top, sites, nodes, edges};
   }
@@ -102,16 +105,18 @@ export class SwarmGraph {
    * :param a: The calling node.
    * :param b: The called node, a front agent.
    * :param middle: The drawing's middle x.
+   * :param back: True for a call back to a site that has called this one: it takes a
+   *   second lane so the two curves do not lie on each other.
    * :return: {d, arrow, mid}.
    */
-  static curve(a, b, middle) {
+  static curve(a, b, middle, back = false) {
     const side = a.x > middle ? 1 : -1;
     const down = b.y > a.y ? 1 : -1;
     const start = {x: a.x + side * a.r, y: a.y + down * 3};
     const end = {x: b.x + side * (b.r + 2), y: b.y - down * 2};
     // The further the call goes, the wider it swings, so two calls from one agent part.
     const swing = Math.abs(end.y - start.y) > 150 ? 20 : 0;
-    const cx = side > 0 ? 308 + swing : -19;
+    const cx = side > 0 ? 308 + swing : (back ? -3 : -19);
     const peak = 0.125 * start.x + 0.75 * cx + 0.125 * end.x;
     return {
       d: `M${SwarmGraph.n(start.x)},${SwarmGraph.n(start.y)} C${cx},${SwarmGraph.n(start.y)} ${cx},${SwarmGraph.n(end.y)} ${SwarmGraph.n(end.x)},${SwarmGraph.n(end.y)}`,
