@@ -114,6 +114,9 @@ function answer(raw) {
   return typeof value.text === "string" ? value.text : String(raw || "");
 }
 
+/** What the scripted model suggests as the visitor's next request. */
+export const SUGGESTION = "What do I need to apply for it?";
+
 const SCHEMES = ["heat-pump-grant", "solar-starter", "warm-walls"];
 
 /** Each agent's script: the phrase that finds it in its instructions, and its steps. */
@@ -225,6 +228,10 @@ const AGENTS = [
  */
 export function reply(body) {
   const request = read(body);
+  // The chat box's suggested next request (js/prompt-hints.js): one plain line, no tools.
+  if (request.system.includes("You suggest what the visitor could ask next")) {
+    return sse({text: SUGGESTION}, 0);
+  }
   for (const agent of AGENTS) {
     const matched = agent.match(request.system);
     if (matched) {

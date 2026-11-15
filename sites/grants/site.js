@@ -5,6 +5,7 @@
 import { AnswerPath } from "./js/answer-path.js";
 import { DevLog } from "./js/dev-log.js";
 import { SwarmGraph } from "./js/swarm-graph.js";
+import { PromptHints } from "./js/prompt-hints.js";
 import { VoiceInput } from "./js/voice-input.js";
 import { App } from "./js/app.js";
 
@@ -20,6 +21,23 @@ export class AssistantMount {
    * The first chat message once the visitor has a key: what the assistant can do here.
    */
   static GREETING = "I can explain each scheme, check which ones you could apply for from four short answers, and start an application for you.";
+
+  /**
+   * Suggested requests for the chat box (js/prompt-hints.js): the starter shown before
+   * the first message, and fixed follow-ups for when the model gives none. None holds a
+   * name, an email address or a reference.
+   */
+  static HINTS = {
+    site: "Fernbrook Retrofit Grants, a home energy grants body",
+    about: AssistantMount.GREETING,
+    starter: "Which grants could I get for a heat pump?",
+    followUps: [
+      "What do I need to apply for the heat pump grant?",
+      "Am I eligible for the solar starter grant?",
+      "Can I get help with wall insulation too?",
+      "Can you start an application for me?",
+    ],
+  };
 
   /**
    * The confirmation dialog's words for each irreversible action. Name each button after
@@ -52,7 +70,12 @@ export class AssistantMount {
       });
       AssistantMount.engine = booted.engine;
       AssistantMount.watchTrace(booted.trace, booted.engine.top?.network?.name || "");
-      // Voice input is extra: the chat works without it (issue #15).
+      // Suggested requests and voice input are extras: the chat works without them.
+      try {
+        PromptHints.attach(document, booted.engine, AssistantMount.HINTS);
+      } catch (error) {
+        console.error("Suggestions are off", error);
+      }
       VoiceInput.attach(document, window).catch((error) => console.error("Voice input is off", error));
       AssistantMount.defaultReview = booted.engine.onActionConfirm;
       booted.engine.onActionConfirm = AssistantMount.review;

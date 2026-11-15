@@ -122,7 +122,7 @@ instructions. That needs the browser check above.
 
 ### Browser workflow tests
 
-`npm run test:e2e` runs nine user workflows in Chromium with
+`npm run test:e2e` runs ten user workflows in Chromium with
 [e2e](https://github.com/e2e-inc/e2e) (a development dependency, Apache 2.0). It starts
 `npm run serve` itself, or reuses it, and turns e2e's usage telemetry off
 (`scripts/run-e2e.mjs`). The first time, install its browser with

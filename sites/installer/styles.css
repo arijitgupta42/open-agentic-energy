@@ -284,3 +284,8 @@ body > dialog button { margin-right: 8px; }
 #ns-rows[data-show="steps"] .ns-row:not(.k-run, .k-agent, .k-tool, .k-mcp_call, .k-remote_fetch, .k-remote_call, .k-consent, .k-composition_skip, .k-composition_limit, .status-error),
 #ns-rows[data-show="model"] .ns-row:not(.k-model_call),
 #ns-rows[data-show="errors"] .ns-row:not(.status-error) { display: none; }
+
+/* Suggested requests (js/prompt-hints.js): a line under the chat box. */
+.prompt-hint { display: block; margin: 0; padding: 4px 10px; background: none; border: 0; font: inherit; font-size: 0.85em; opacity: 0.75; text-align: left; cursor: pointer; }
+.prompt-hint[hidden] { display: none; }
+.prompt-hint:hover, .prompt-hint:focus-visible { opacity: 1; text-decoration: underline; }
