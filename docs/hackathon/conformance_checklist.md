@@ -62,6 +62,11 @@ repository's own code. Do not hide them.
 - A partner that accepts the connection but never answers leaves the chat waiting until
   the page is reloaded.
 - The LLM provider must allow browser calls (CORS).
+- The runtime speaks the OpenAI protocol. `js/llm-protocol.js` on each site translates to
+  the Anthropic Messages protocol when the visitor picks it (or the Provider URL implies
+  it, as for Azure AI Foundry Claude). It sends the key as `x-api-key` to the same
+  provider only; Microsoft Entra ID tokens are not supported. Not yet checked against a
+  live Azure endpoint.
 - Everything in each `.network.json`, including instructions, is public.
 
 ## Before submitting
