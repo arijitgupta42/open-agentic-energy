@@ -177,12 +177,20 @@ body > dialog button { margin-right: 8px; }
    The box takes the room the old "Speak" button had. */
 #agent-app .ns-inputwrap { position: relative; display: flex; flex: 1 1 220px; min-width: 0; }
 #agent-app .ns-inputwrap input { flex: 1 1 auto; width: 100%; padding-right: 42px; }
-#agent-app .voice-button { position: absolute; top: 50%; right: 5px; display: inline-flex; align-items: center; justify-content: center; width: 30px; height: 30px; margin: 0; padding: 0; border: 0; border-radius: 50%; background: transparent; color: var(--ns-muted); transform: translateY(-50%); }
+#agent-app .ns-inputwrap input[hidden] { display: none; }
+/* The growing chat box (js/chat-box.js): a textarea that starts one line high and grows
+   upward as the request wraps, up to a limit, then scrolls. The bar is at the bottom of
+   the chat, so its bottom edge stays put. */
+#agent-app .ns-inputbar { align-items: flex-end; }
+#agent-app .ns-inputwrap textarea { display: block; flex: 1 1 auto; width: 100%; height: 36px; min-height: 36px; margin: 0; padding: 7px 42px 7px 10px; border: 1px solid var(--ns-border); border-radius: 8px; font: 14px/1.4 system-ui, sans-serif; color: inherit; background: #fff; resize: none; overflow-y: hidden; }
+#agent-app .ns-inputwrap textarea:focus-visible { outline: 2px solid var(--brand); outline-offset: 0; }
+#agent-app #ns-send { align-self: flex-end; min-height: 36px; }
+#agent-app .voice-button { position: absolute; right: 5px; bottom: 3px; display: inline-flex; align-items: center; justify-content: center; width: 30px; height: 30px; margin: 0; padding: 0; border: 0; border-radius: 50%; background: transparent; color: var(--ns-muted); }
 #agent-app .voice-button:hover, #agent-app .voice-button:focus-visible { background: var(--tint); color: var(--brand); filter: none; }
 #agent-app .voice-button:focus-visible { outline: 2px solid var(--brand); outline-offset: 1px; }
 /* While listening, the mic becomes a waveform of thin bars that rise and fall. */
 #agent-app .voice-button[aria-pressed="true"] { width: 56px; border-radius: 15px; background: transparent; color: var(--brand); }
-#agent-app .ns-inputwrap:has(.voice-button[aria-pressed="true"]) input { padding-right: 68px; }
+#agent-app .ns-inputwrap:has(.voice-button[aria-pressed="true"]) :is(input, textarea) { padding-right: 68px; }
 .voice-wave { display: flex; align-items: center; justify-content: center; gap: 2px; height: 20px; }
 .voice-wave i { width: 2px; height: 5px; border-radius: 1px; background: currentColor; animation: voice-bar 0.9s ease-in-out infinite; animation-delay: calc(var(--bar) * -0.11s); }
 .voice-wave i:nth-child(3n) { animation-duration: 0.7s; }

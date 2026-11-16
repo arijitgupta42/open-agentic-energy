@@ -3,6 +3,7 @@
 // It is the agentify-website skill's templates/site.js with this site's greeting,
 // dialog words and review details filled in.
 import { AnswerPath } from "./js/answer-path.js";
+import { ChatBox } from "./js/chat-box.js";
 import { ChatSessions } from "./js/chat-sessions.js";
 import { DevLog } from "./js/dev-log.js";
 import { SwarmGraph } from "./js/swarm-graph.js";
@@ -79,7 +80,13 @@ export class AssistantMount {
       });
       AssistantMount.engine = booted.engine;
       AssistantMount.watchTrace(booted.trace, booted.engine.top?.network?.name || "");
-      // Suggested requests and voice input are extras: the chat works without them.
+      // The growing chat box, suggested requests and voice input are extras: the chat
+      // works without them. The growing box goes first, so the others join it.
+      try {
+        ChatBox.attach(document);
+      } catch (error) {
+        console.error("The growing chat box is off", error);
+      }
       try {
         AssistantMount.hints = PromptHints.attach(document, AssistantMount.HINTS);
       } catch (error) {
