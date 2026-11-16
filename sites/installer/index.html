@@ -79,7 +79,7 @@
       <section id="assistant" class="assistant" aria-labelledby="assistant-heading">
         <h2 id="assistant-heading">Ask Heatwright Home Energy</h2>
         <p>The assistant can explain what we fit, work out an estimate for your home, request a survey, and ask our grants partner what it offers.</p>
-        <p class="assistant-note">Your messages and this page's data go to the LLM provider you choose in the settings below. You confirm anything that cannot be undone before it happens, and you agree before a partner site is contacted.</p>
+        <p class="assistant-note">Your messages and this page's data go to the LLM provider you choose in the settings below. You confirm anything that cannot be undone before it happens, and you agree before a partner site is contacted, unless you choose automatic approval for partner sites in the menu under the chat box.</p>
         <p class="assistant-note">To see how an answer is made, watch <strong>The swarm at work</strong> beside the chat: the agents working on your message light up, on all three sites. Point at an agent or a call to read what it did, and at a message in the chat to see its path again. For the raw trace, select <strong>⚙ Developer</strong> above the chat.</p>
         <p id="assistant-status" role="status">Connecting the assistant… If this message stays, the assistant could not load. You can still use the page directly.</p>
         <div id="voice-input" class="voice-input" hidden>
@@ -89,18 +89,30 @@
         <div id="agent-app">
           <div data-ns-slot="header"></div>
           <div class="assistant-panels">
+            <aside id="chat-side" class="chat-side" aria-label="Chats" hidden>
+              <nav id="chat-list" class="chat-list" aria-labelledby="chat-list-heading" hidden>
+                <h3 id="chat-list-heading">Chats this visit</h3>
+              </nav>
+            </aside>
             <div data-ns-slot="chat"></div>
             <aside id="swarm-map" class="swarm-map" aria-labelledby="swarm-map-heading" hidden>
               <h3 id="swarm-map-heading">The swarm at work</h3>
             </aside>
           </div>
           <div data-ns-slot="agents"></div>
+          <div id="partner-approval" class="partner-approval" hidden>
+            <label for="partner-approval-mode">Partner sites:</label>
+            <select id="partner-approval-mode" name="partner-approval" title="Applies to contacting a partner site. Anything that cannot be undone still asks you first. With automatic approval, each contact is listed in the chat with what was sent.">
+              <option value="ask" selected>Ask me before each contact</option>
+              <option value="auto">Approve automatically</option>
+            </select>
+          </div>
           <div data-ns-slot="settings"></div>
         </div>
       </section>
     </main>
     <footer>
-      <p>Heatwright Home Energy is a fictional installer, made for the Open Agentic Web Challenge. Open source under Apache 2.0.</p>
+      <p>Heatwright Home Energy is a fictional installer, made for the Open Agentic Web Challenge. Open source under Apache 2.0: <a href="https://github.com/arijitgupta42/open-agentic-energy">source code on GitHub</a>.</p>
     </footer>
   </body>
 </html>

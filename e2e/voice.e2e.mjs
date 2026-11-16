@@ -40,7 +40,7 @@ test("9. Every assistant takes a spoken request into the chat box, on the device
   await browser.addInitScript(fakeSpeech, HEARD);
   for (const url of SITES) {
     await app.open(url);
-    await expect(screen.getByRole("button", "🎤 Speak")).toBeVisible();
+    await expect(screen.getByRole("button", "Speak your request")).toBeVisible();
     await expect(browser.locator("#voice-note")).toContainText("the page tells you first");
   }
 
@@ -50,12 +50,12 @@ test("9. Every assistant takes a spoken request into the chat box, on the device
   await screen.getByPlaceholder("Paste your API key").fill(TEST_KEY);
   await screen.getByRole("button", "Save and start").tap();
   await expect(screen.getByText("Assistant connected to this page.")).toBeVisible();
-  await screen.getByRole("button", "🎤 Speak").tap();
+  await screen.getByRole("button", "Speak your request").tap();
   await expect(browser.locator("#voice-note")).toContainText("on this device and does not leave it");
   // The words appear while it is still listening; only Stop ends it.
   await expect(screen.getByRole("textbox", "Your request")).toHaveValue(HEARD);
-  await expect(screen.getByRole("button", "■ Stop")).toBeVisible();
-  await screen.getByRole("button", "■ Stop").tap();
+  await expect(screen.getByRole("button", "Stop listening")).toBeVisible();
+  await screen.getByRole("button", "Stop listening").tap();
   await expect(screen.getByText("Check the request in the chat box, then press Send.")).toBeVisible();
   await expect(screen.getByRole("textbox", "Your request")).toHaveValue(HEARD);
   expect(await browser.evaluate(() => window.__processLocally)).toBe(true);

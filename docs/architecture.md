@@ -39,8 +39,8 @@ host (Cloudflare Worker, or scripts/serve-all.mjs locally)
   copy of the three published networks, checked by a test, so drawing it contacts no
   partner. `js/dev-log.js` makes the runtime's developer log follow the answer on show in the
   graph, with filters.
-  And it adds voice input (`js/voice-input.js`, also the same on every site): a Speak
-  button in the runtime's input bar that puts the browser's own speech recognition
+  And it adds voice input (`js/voice-input.js`, also the same on every site): a small
+  mic button inside the end of the runtime's chat box (a waveform while it listens) that puts the browser's own speech recognition
   into the chat box. On the first press it asks for on-device recognition
   (`SpeechRecognition.available()`, then a one-time `install()` and `processLocally`).
   Without it, it says the audio would go to the browser maker's service and listens only

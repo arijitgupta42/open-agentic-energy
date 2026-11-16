@@ -272,6 +272,31 @@ export class PromptHints {
   }
 
   /**
+   * The suggestion state of this chat, to bring back when the visitor returns to it.
+   *
+   * :return: {suggestion, used}.
+   */
+  snapshot() {
+    return {suggestion: this.suggestion, used: [...this.used]};
+  }
+
+  /**
+   * Bring back a chat's suggestion state, or start afresh.
+   *
+   * :param state: What snapshot() gave, or null for a new chat.
+   */
+  restore(state) {
+    if (!state) {
+      this.reset();
+      return;
+    }
+    this.used = new Set(state.used);
+    this.pending = undefined;
+    this.suggestion = state.suggestion;
+    this.render();
+  }
+
+  /**
    * New chat: back to the site's starter.
    */
   reset() {

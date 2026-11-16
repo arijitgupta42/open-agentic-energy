@@ -68,9 +68,9 @@ any of them by itself: the site's own dialog shows the real figures and fees fir
 nothing happens unless the visitor confirms. Writes that can be undone, such as showing a
 comparison or an estimate, run straight away.
 
-Every assistant also takes spoken requests. Press the Speak button beside Send and say
-the request: the words appear in the chat box as they are spoken, listening goes on
-through pauses until the visitor presses Stop, and nothing is sent until they press Send. Speech never answers a confirmation dialog or a partner's
+Every assistant also takes spoken requests. Press the small mic at the end of the chat box and say
+the request: the mic becomes a moving waveform, the words appear in the chat box as they are spoken, listening goes on
+through pauses until the visitor presses the mic again, and nothing is sent until they press Send. Speech never answers a confirmation dialog or a partner's
 consent card. The page uses only the browser's own speech recognition, so it loads no
 other script and needs no extra key. On the first press the page asks the browser
 whether it can recognise speech on the device. If it can, the audio stays there, after a

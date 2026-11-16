@@ -401,6 +401,9 @@ export class SwarmGraph {
    * :return: Such as "you allowed it", or "".
    */
   static consentWords(sentence) {
+    if (/automatic approval/.test(sentence)) {
+      return "approved automatically";
+    }
     if (/rest of this visit|earlier/.test(sentence)) {
       return "allowed for this visit";
     }
@@ -816,6 +819,20 @@ export class SwarmGraph {
       this.preview = null;
     }
     this.apply();
+  }
+
+  /**
+   * Show the answers of another chat. The newest is on show, and nothing is kept from the
+   * chat before.
+   *
+   * :param turns: The new chat's turns from AnswerPath.build().
+   */
+  replace(turns) {
+    this.pinned = null;
+    this.preview = null;
+    this.shown = undefined;
+    this.hideTip(true);
+    this.update(turns);
   }
 
   /**
