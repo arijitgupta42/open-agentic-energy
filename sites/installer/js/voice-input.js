@@ -114,7 +114,10 @@ export class VoiceInput {
     // The mic sits inside the chat box's right edge, so the box takes the room a
     // "Speak" button would have used.
     const parent = parts.input.parentNode;
-    if (parent && typeof parent.insertBefore === "function" && typeof doc.createElement === "function") {
+    if (parent && parent.className === "ns-inputwrap" && typeof parent.append === "function") {
+      // js/chat-box.js already made the wrapper.
+      parent.append(this.button);
+    } else if (parent && typeof parent.insertBefore === "function" && typeof doc.createElement === "function") {
       const wrap = doc.createElement("div");
       wrap.className = "ns-inputwrap";
       parent.insertBefore(wrap, parts.input);

@@ -107,3 +107,30 @@ test("11. A visitor keeps several chats, the swarm follows the one on show, and 
   await ask(screen, browser, QUESTION);
   await expect(screen.getByRole("group", /Contact Heatwright Home Energy on your behalf/)).toBeVisible();
 });
+
+test("12. The chat box grows upward as a long request wraps, keeps its bottom edge, and shrinks back once the request is sent", async ({ app, screen, browser }) => {
+  await useScriptedRouter(browser, PARTNERS);
+  await connect({ app, screen });
+  const measure = () => browser.evaluate(() => {
+    const box = document.querySelector("#agent-app textarea.ns-grow").getBoundingClientRect();
+    const bar = document.querySelector("#agent-app .ns-inputbar").getBoundingClientRect();
+    // Measured from the input bar's own bottom edge, so scrolling the page changes nothing.
+    return { height: box.height, bottom: bar.bottom - box.bottom };
+  });
+  const box = () => screen.getByRole("textbox", "Your request");
+  const before = await measure();
+  const long = `${SWITCH} ${"Please do it soon, ".repeat(25)}`;
+  await box().fill(long);
+  const grown = await measure();
+  expect(grown.height).toBeGreaterThan(before.height * 2);
+  expect(Math.abs(grown.bottom - before.bottom)).toBeLessThan(2);
+  await expect(box()).toHaveValue(long);
+  // Sending it empties the box and puts it back to one line.
+  await screen.getByRole("button", "Send").tap();
+  await expect(box()).toHaveValue("");
+  const after = await measure();
+  expect(Math.abs(after.height - before.height)).toBeLessThan(2);
+  const dialog = screen.getByRole("dialog", /Switch tariff\?/);
+  await expect(dialog).toBeVisible();
+  await dialog.getByRole("button", "Stay on my tariff").tap();
+});
