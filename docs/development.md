@@ -47,7 +47,13 @@ node tools/agentify-website/scripts/check_partner.mjs http://localhost:8081/heat
    [OpenRouter](https://openrouter.ai) with `openai/gpt-6-luna`. That is only what the
    settings panel fills in: a visitor can choose any router, model and key there, such as
    OpenAI, Anthropic or a local server. The provider must allow browser calls (CORS), and
-   the model must make tool calls. See
+   the model must make tool calls. The runtime speaks the OpenAI chat-completions
+   protocol. For a provider that only speaks the Anthropic Messages protocol, such as
+   Claude on Azure AI Foundry (`https://<resource>.services.ai.azure.com/anthropic`), open
+   **Advanced settings**, enter that Provider URL and set **Provider protocol** to
+   Anthropic Messages (the default, Detect, already picks it for that URL). The page
+   translates the one model request in `js/llm-protocol.js`; the vendored runtime is not
+   changed. It uses key authentication (`x-api-key`), not Microsoft Entra ID tokens. See
    `tools/agentify-website/references/bundle_and_hosting.md`.
 2. On a site, open **AI model settings** under the assistant, paste the key and select
    **Save and start**. Never paste a key into a chat, a file or a terminal.
