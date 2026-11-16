@@ -323,6 +323,8 @@ body > dialog button { margin-right: 8px; }
 #agent-app .ns-chat > .prompt-hint, #agent-app .ns-chat > .voice-status { position: absolute; left: 0; right: 0; bottom: 0; z-index: 1; height: 24px; margin: 0; padding: 0 10px; overflow: hidden; line-height: 24px; white-space: nowrap; text-overflow: ellipsis; }
 #agent-app .ns-chat:has(> .partner-approval:not([hidden])) > .prompt-hint, #agent-app .ns-chat:has(> .partner-approval:not([hidden])) > .voice-status { bottom: 33px; }
 #agent-app .ns-chat > .voice-status { background: #fff; }
+/* The voice status takes the hint's place while it has a message, so the two never overlap. */
+#agent-app .ns-chat:has(> .voice-status:not(:empty)) > .prompt-hint { visibility: hidden; }
 #agent-app .ns-chat > .partner-approval { box-sizing: border-box; height: 33px; padding-top: 0; padding-bottom: 0; }
 .prompt-hint { display: block; margin: 0; padding: 4px 10px; background: none; border: 0; font: inherit; font-size: 0.85em; opacity: 0.75; text-align: left; cursor: pointer; }
 .prompt-hint[hidden] { display: none; }
