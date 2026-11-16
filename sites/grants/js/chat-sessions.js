@@ -17,11 +17,19 @@
  * The list of chats, and the switching between them.
  */
 export class ChatSessions {
-  /** The longest a chat's name gets in the list. */
-  static TITLE_LENGTH = 40;
+  /** The longest a chat's first message gets in its tooltip. */
+  static TITLE_LENGTH = 80;
 
-  /** What an empty chat is called. */
-  static EMPTY_TITLE = "New chat";
+  /**
+   * A chat's name in the list: "Chat session 1", "Chat session 2" and so on, in the order
+   * they were started.
+   *
+   * :param number: The chat's number.
+   * :return: The name.
+   */
+  static name(number) {
+    return `Chat session ${number}`;
+  }
 
   /**
    * Add the chat list to the page, if the runtime's chat is there.
@@ -80,7 +88,8 @@ export class ChatSessions {
   /**
    * A new, empty chat record.
    *
-   * :return: {id, title, frame, history, draft, hint, runs}. frame holds the messages
+   * :return: {id, title, frame, history, draft, hint, runs}. title is the first message,
+   *   shown as the tooltip, and the chat's name comes from its id. frame holds the messages
    *   while the chat is off show, and runs the trace numbers of its messages.
    */
   make() {
@@ -119,7 +128,7 @@ export class ChatSessions {
 
   /**
    * One event of the runtime's trace. A message starting belongs to the chat on show,
-   * and the first one names the chat.
+   * and the first one is kept to tell the chats apart on hover.
    *
    * :param ev: The event.
    */
@@ -135,7 +144,7 @@ export class ChatSessions {
   }
 
   /**
-   * A chat's name: its first message, cut short.
+   * A chat's first message, cut short, for its tooltip.
    *
    * :param text: The message.
    * :return: One line.
@@ -249,10 +258,10 @@ export class ChatSessions {
     this.items.replaceChildren();
     for (const chat of this.chats) {
       const item = this.html("li", "chat-item");
-      const title = chat.title || ChatSessions.EMPTY_TITLE;
-      const button = this.html("button", "chat-pick", title);
+      const name = ChatSessions.name(chat.id);
+      const button = this.html("button", "chat-pick", name);
       button.type = "button";
-      button.title = title;
+      button.title = chat.title ? `${name}: ${chat.title}` : name;
       button.disabled = this.locked && chat !== this.current;
       if (chat === this.current) {
         button.setAttribute("aria-current", "true");

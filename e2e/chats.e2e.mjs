@@ -45,7 +45,7 @@ test("11. A visitor keeps several chats, the swarm follows the one on show, and 
   // The list is to the left of the chat, with one empty chat, and asking is the default.
   const picks = browser.locator("#chat-list .chat-pick");
   await expect(picks).toHaveCount(1);
-  await expect(picks.first()).toHaveText("New chat");
+  await expect(picks.first()).toHaveText("Chat session 1");
   await expect(browser.locator("#partner-approval-mode")).toHaveValue("ask");
 
   // First chat: a switch the visitor declines. No partner is involved.
@@ -54,7 +54,8 @@ test("11. A visitor keeps several chats, the swarm follows the one on show, and 
   await expect(dialog).toBeVisible();
   await dialog.getByRole("button", "Stay on my tariff").tap();
   await settled(browser);
-  await expect(picks.first()).toHaveText(SWITCH);
+  await expect(picks.first()).toHaveText("Chat session 1");
+  await expect(picks.first()).toHaveAttribute("title", `Chat session 1: ${SWITCH}`);
   await expect(browser.locator('.swarm-site-status').filter({hasText: "partner · ran here"})).toHaveCount(0);
 
   // A new chat opens with the greeting only, and the swarm has nothing on show for it.
@@ -113,9 +114,10 @@ test("12. The chat box grows upward as a long request wraps, keeps its bottom ed
   await connect({ app, screen });
   const measure = () => browser.evaluate(() => {
     const box = document.querySelector("#agent-app textarea.ns-grow").getBoundingClientRect();
-    const bar = document.querySelector("#agent-app .ns-inputbar").getBoundingClientRect();
-    // Measured from the input bar's own bottom edge, so scrolling the page changes nothing.
-    return { height: box.height, bottom: bar.bottom - box.bottom };
+    const chat = document.querySelector("#agent-app .ns-chat").getBoundingClientRect();
+    // Measured from the chat's own bottom edge, so scrolling the page changes nothing. The
+    // hint line under the box disappears while typing, and the box must not move for it.
+    return { height: box.height, bottom: chat.bottom - box.bottom };
   });
   const box = () => screen.getByRole("textbox", "Your request");
   const before = await measure();
@@ -132,5 +134,25 @@ test("12. The chat box grows upward as a long request wraps, keeps its bottom ed
   expect(Math.abs(after.height - before.height)).toBeLessThan(2);
   const dialog = screen.getByRole("dialog", /Switch tariff\?/);
   await expect(dialog).toBeVisible();
+  await dialog.getByRole("button", "Stay on my tariff").tap();
+});
+
+test("13. Enter sends, Shift+Enter and pasted text make new lines, and the message keeps them", async ({ app, screen, browser }) => {
+  await useScriptedRouter(browser, PARTNERS);
+  await connect({ app, screen });
+  const box = () => screen.getByRole("textbox", "Your request");
+  await box().fill("line one");
+  await box().press("Shift+Enter");
+  await expect(box()).toHaveValue("line one\n");
+  // Nothing was sent by Shift+Enter.
+  await expect(browser.locator("#ns-msgs .ns-msg.user")).toHaveCount(0);
+  // Pasted line breaks stay line breaks.
+  await box().fill(`${SWITCH}\nPlease do it today.`);
+  await expect(box()).toHaveValue(`${SWITCH}\nPlease do it today.`);
+  await box().press("Enter");
+  const dialog = screen.getByRole("dialog", /Switch tariff\?/);
+  await expect(dialog).toBeVisible();
+  expect(await browser.evaluate(() => document.querySelector("#ns-msgs .ns-msg.user").textContent)).toBe(`${SWITCH}\nPlease do it today.`);
+  await expect(box()).toHaveValue("");
   await dialog.getByRole("button", "Stay on my tariff").tap();
 });

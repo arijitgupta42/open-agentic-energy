@@ -185,6 +185,8 @@ body > dialog button { margin-right: 8px; }
 #agent-app .ns-inputwrap textarea { display: block; flex: 1 1 auto; width: 100%; height: 36px; min-height: 36px; margin: 0; padding: 7px 42px 7px 10px; border: 1px solid var(--ns-border); border-radius: 8px; font: 14px/1.4 system-ui, sans-serif; color: inherit; background: #fff; resize: none; overflow-y: hidden; }
 #agent-app .ns-inputwrap textarea:focus-visible { outline: 2px solid var(--brand); outline-offset: 0; }
 #agent-app #ns-send { align-self: flex-end; min-height: 36px; }
+/* The visitor's line breaks (Shift+Enter, pasted text) show in their message. */
+#agent-app .ns-msg.user { white-space: pre-wrap; }
 #agent-app .voice-button { position: absolute; right: 5px; bottom: 3px; display: inline-flex; align-items: center; justify-content: center; width: 30px; height: 30px; margin: 0; padding: 0; border: 0; border-radius: 50%; background: transparent; color: var(--ns-muted); }
 #agent-app .voice-button:hover, #agent-app .voice-button:focus-visible { background: var(--tint); color: var(--brand); filter: none; }
 #agent-app .voice-button:focus-visible { outline: 2px solid var(--brand); outline-offset: 1px; }
@@ -312,7 +314,16 @@ body > dialog button { margin-right: 8px; }
 #ns-rows[data-show="model"] .ns-row:not(.k-model_call),
 #ns-rows[data-show="errors"] .ns-row:not(.status-error) { display: none; }
 
-/* Suggested requests (js/prompt-hints.js): a line under the chat box. */
+/* Suggested requests (js/prompt-hints.js): a line under the chat box. The line, the voice
+   status and the partner menu sit in a band of fixed height under the input bar, so
+   showing or hiding the hint never moves the bar: its bottom stays put while the box grows
+   upward. */
+#agent-app .ns-chat { position: relative; }
+#agent-app .ns-inputbar { margin-bottom: 24px; }
+#agent-app .ns-chat > .prompt-hint, #agent-app .ns-chat > .voice-status { position: absolute; left: 0; right: 0; bottom: 0; z-index: 1; height: 24px; margin: 0; padding: 0 10px; overflow: hidden; line-height: 24px; white-space: nowrap; text-overflow: ellipsis; }
+#agent-app .ns-chat:has(> .partner-approval:not([hidden])) > .prompt-hint, #agent-app .ns-chat:has(> .partner-approval:not([hidden])) > .voice-status { bottom: 33px; }
+#agent-app .ns-chat > .voice-status { background: #fff; }
+#agent-app .ns-chat > .partner-approval { box-sizing: border-box; height: 33px; padding-top: 0; padding-bottom: 0; }
 .prompt-hint { display: block; margin: 0; padding: 4px 10px; background: none; border: 0; font: inherit; font-size: 0.85em; opacity: 0.75; text-align: left; cursor: pointer; }
 .prompt-hint[hidden] { display: none; }
 .prompt-hint:hover, .prompt-hint:focus-visible { opacity: 1; text-decoration: underline; }
