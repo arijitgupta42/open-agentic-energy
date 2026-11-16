@@ -1,5 +1,5 @@
 // Voice input for each site's assistant (issue #15): speak a request instead of typing
-// it. It uses only the browser's own Web Speech API, so the page loads no third-party
+// it, with a small mic button at the end of the chat box. It uses only the browser's own Web Speech API, so the page loads no third-party
 // script and no key is involved (CLAUDE.md rule 8).
 //
 // Speech only fills the chat box. The visitor reads the text and presses Send. It never
@@ -109,10 +109,19 @@ export class VoiceInput {
     this.button.className = "voice-button";
     this.button.setAttribute("aria-pressed", "false");
     this.button.setAttribute("aria-describedby", "voice-note");
-    this.button.textContent = "🎤 Speak";
-    this.button.title = "Speak your request";
+    this.show(false);
     this.button.addEventListener("click", () => this.toggle());
-    parts.bar.insertBefore(this.button, parts.send);
+    // The mic sits inside the chat box's right edge, so the box takes the room a
+    // "Speak" button would have used.
+    const parent = parts.input.parentNode;
+    if (parent && typeof parent.insertBefore === "function" && typeof doc.createElement === "function") {
+      const wrap = doc.createElement("div");
+      wrap.className = "ns-inputwrap";
+      parent.insertBefore(wrap, parts.input);
+      wrap.append(parts.input, this.button);
+    } else {
+      parts.bar.insertBefore(this.button, parts.send);
+    }
     // Sending the request ends dictation. The runtime's own listeners run first, read the
     // box and clear it; this only stops the microphone and never refills the box.
     parts.send.addEventListener("click", () => this.sent());
@@ -124,7 +133,7 @@ export class VoiceInput {
   }
 
   /** The note before the first press, when the page does not yet know where audio goes. */
-  static NOTE_FIRST = "Voice input: press Speak, say your request, then press Stop. If this browser can turn speech into text on this device, the audio stays here. If not, the page tells you first that the audio would go to the browser maker's online speech service (Chrome uses Google's), and waits for a second press. The text goes into the chat box, and nothing is sent until you press Send.";
+  static NOTE_FIRST = "Voice input: press the mic button at the end of the chat box, say your request, then press it again to stop. If this browser can turn speech into text on this device, the audio stays here. If not, the page tells you first that the audio would go to the browser maker's online speech service (Chrome uses Google's), and waits for a second press. The text goes into the chat box, and nothing is sent until you press Send.";
 
   /** The note once the page knows recognition stays on the device. */
   static NOTE_LOCAL = "Voice input: your speech is turned into text on this device and does not leave it. The text goes into the chat box, and nothing is sent until you press Send.";
@@ -176,6 +185,58 @@ export class VoiceInput {
   /** A session that ends this soon with no words counts as one that never got going. */
   static QUICK_MS = 1500;
 
+  /** The mic as outline strokes: the capsule, the cradle under it and the stem. */
+  static MIC = ["M9 6a3 3 0 0 1 6 0v5a3 3 0 0 1-6 0z", "M5.5 11a6.5 6.5 0 0 0 13 0", "M12 17.5V21"];
+
+  /** How many bars the waveform has while the microphone is on. */
+  static BARS = 9;
+
+  /**
+   * Show the button as a plain outline mic, or, while listening, as a waveform that moves.
+   * The name goes in the button's label, because the button holds only a picture.
+   *
+   * :param listening: True while the microphone is on.
+   */
+  show(listening) {
+    const label = listening ? "Stop listening" : "Speak your request";
+    this.button.setAttribute("aria-pressed", String(listening));
+    this.button.setAttribute("aria-label", label);
+    this.button.title = label;
+    if (listening && typeof this.doc.createElement === "function") {
+      const wave = this.doc.createElement("span");
+      wave.className = "voice-wave";
+      wave.setAttribute("aria-hidden", "true");
+      for (let index = 0; index < VoiceInput.BARS; index += 1) {
+        const bar = this.doc.createElement("i");
+        // CSS gives each bar its own height and delay from this number.
+        bar.setAttribute("style", `--bar: ${index}`);
+        wave.append(bar);
+      }
+      this.button.replaceChildren(wave);
+      return;
+    }
+    if (typeof this.doc.createElementNS !== "function") {
+      this.button.textContent = listening ? "■" : "🎤";
+      return;
+    }
+    const svg = this.doc.createElementNS("http://www.w3.org/2000/svg", "svg");
+    svg.setAttribute("viewBox", "0 0 24 24");
+    svg.setAttribute("width", "18");
+    svg.setAttribute("height", "18");
+    svg.setAttribute("aria-hidden", "true");
+    svg.setAttribute("fill", "none");
+    svg.setAttribute("stroke", "currentColor");
+    svg.setAttribute("stroke-width", "1.8");
+    svg.setAttribute("stroke-linecap", "round");
+    svg.setAttribute("stroke-linejoin", "round");
+    for (const d of VoiceInput.MIC) {
+      const path = this.doc.createElementNS("http://www.w3.org/2000/svg", "path");
+      path.setAttribute("d", d);
+      svg.append(path);
+    }
+    this.button.replaceChildren(svg);
+  }
+
   /**
    * Start listening, or stop when already listening.
    */
@@ -196,7 +257,7 @@ export class VoiceInput {
       }
       if (!this.mode.local) {
         // Audio would leave the device: the visitor agrees with a second press.
-        this.say("This browser would send your speech to its maker's online service. Press Speak again to go ahead, or type your request.");
+        this.say("This browser would send your speech to its maker's online service. Press the mic again to go ahead, or type your request.");
         return;
       }
     }
@@ -228,9 +289,8 @@ export class VoiceInput {
     this.committed = "";
     this.quickEnds = 0;
     this.lastHeard = Date.now();
-    this.button.setAttribute("aria-pressed", "true");
-    this.button.textContent = "■ Stop";
-    this.say("Listening… press Stop when you have finished.");
+    this.show(true);
+    this.say("Listening… press the mic again when you have finished.");
     this.session();
   }
 
@@ -336,8 +396,7 @@ export class VoiceInput {
         // Already ended.
       }
     }
-    this.button.setAttribute("aria-pressed", "false");
-    this.button.textContent = "🎤 Speak";
+    this.show(false);
     this.say("");
   }
 
@@ -364,7 +423,7 @@ export class VoiceInput {
     }
     this.mode = {local: false, lang: VoiceInput.LANGS[0], download: false};
     this.note.textContent = VoiceInput.NOTE_ONLINE;
-    this.done("Speech recognition on this device stopped straight away. This browser can use its maker's online service instead, which sends your speech there. Press Speak again to go ahead, or type your request.");
+    this.done("Speech recognition on this device stopped straight away. This browser can use its maker's online service instead, which sends your speech there. Press the mic again to go ahead, or type your request.");
   }
 
   /**
@@ -373,8 +432,7 @@ export class VoiceInput {
    * :param message: What to tell the visitor, or null for the usual end.
    */
   done(message = null) {
-    this.button.setAttribute("aria-pressed", "false");
-    this.button.textContent = "🎤 Speak";
+    this.show(false);
     if (this.committed) {
       this.fill(VoiceInput.join(this.before, this.committed));
       this.input.focus();

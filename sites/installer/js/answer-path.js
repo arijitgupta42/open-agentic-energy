@@ -509,6 +509,9 @@ export class AnswerPath {
     const index = ctx.consents.findIndex((note) => note.peerOrigin === host);
     if (index >= 0) {
       const [note] = ctx.consents.splice(index, 1);
+      if (note.auto) {
+        return `You had chosen automatic approval, so contact with ${host} went ahead without a card.`;
+      }
       if (note.decision === "always") {
         ctx.always.add(host);
         return `You allowed contact with ${host} for the rest of this visit.`;

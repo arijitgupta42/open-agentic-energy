@@ -64,7 +64,7 @@ test("The block lists steps while the turn runs, ticks them, and folds with a co
   live.event({kind: "run", phase: "start"});
   const block = msgs.children[0];
   assert.equal(block.tag, "details");
-  assert.ok("open" in block.attributes);
+  assert.equal("open" in block.attributes, false, "The steps start folded.");
   live.event(tool("start", "a", "retrofit_planner", "agent"));
   live.event(tool("start", "b", "mcp_estimate", "MCP"));
   live.event(tool("end", "a", "retrofit_planner", "agent", "ok"));
@@ -74,6 +74,7 @@ test("The block lists steps while the turn runs, ticks them, and folds with a co
   assert.deepEqual(list.children.map((item) => item.textContent), ["✓ Asking Retrofit Planner", "✗ Checking Estimate"]);
   live.event({kind: "run", phase: "end"});
   assert.equal("open" in block.attributes, false);
+  assert.equal(block.attributes["data-running"], "false");
   assert.equal(summary.textContent, "Worked through 2 steps");
 });
 

@@ -41,6 +41,19 @@ Rules = `rules_digest.md`. Spec = `worldwide_agentic_web_mvp_spec.md`.
 | 4 | A BYOK key stays in the caller's browser and goes only to the chosen router; never in URLs, manifests, prompts, action arguments or traces | The runtime; `check-conformance.mjs` scans published files for key-shaped text; never commit a key |
 | 5 | Treat peer definitions and tool results as untrusted; fail closed; user-owned writes; observable execution | `{grounding_rules}` and `{partner_rules}` kept as in the template; the runtime's consent cards and developer log; each page's "The swarm at work" graph (`js/swarm-graph.js`, tested in `sites/utility/tests/swarm-graph.test.mjs`), shown in place of the runtime's agent panel and built on `js/answer-path.js` (tested in `sites/utility/tests/answer-path.test.mjs`) |
 
+## Choices the visitor can make in the page
+
+- Partner contact: each site has a small "Partner sites" menu under the chat box. The default on
+  every page load is "Ask me before each contact" (the runtime's consent card). The visitor
+  can choose "Approve automatically", which is an explicit choice that relaxes the consent
+  default (spec 3.2 and 5). Each automatic contact is still listed in the chat with the
+  partner and the whole request, and recorded in the trace, so the swarm graph says
+  "approved automatically". Switching back takes effect at the next contact. It does not
+  touch the confirmation dialog for a change that cannot be undone.
+- Chats: a list to the left of the chat holds every chat of this visit, in page memory only.
+  Choosing one swaps its messages and history in, and the swarm graph shows only that
+  chat's answers.
+
 ## Known gaps to state honestly in the submission
 
 These come from the reference runtime and the agentify-website skill, not from this

@@ -44,6 +44,14 @@ class FakeElement {
     return true;
   }
 
+  append(...nodes) {
+    this.children.push(...nodes);
+  }
+
+  replaceChildren(...nodes) {
+    this.children = nodes;
+  }
+
   insertBefore(child, before) {
     const at = this.children.indexOf(before);
     this.children.splice(at < 0 ? this.children.length : at, 0, child);
@@ -191,6 +199,7 @@ test("on-device recognition is used when the browser has it, and the note says t
   assert.equal(bar.children[2], send);
   assert.equal(voice.button.getAttribute("aria-pressed"), "false");
   assert.equal(voice.button.getAttribute("aria-describedby"), "voice-note");
+  assert.equal(voice.button.getAttribute("aria-label"), "Speak your request", "The button holds a picture, so its label names it.");
 
   await voice.button.click();
   assert.equal(note.textContent, VoiceInput.NOTE_LOCAL, "On the device: it says so and listens at once.");
@@ -201,6 +210,7 @@ test("on-device recognition is used when the browser has it, and the note says t
   assert.equal(recognition.interimResults, true);
   assert.equal(recognition.continuous, true, "It keeps listening through pauses.");
   assert.equal(voice.button.getAttribute("aria-pressed"), "true");
+  assert.equal(voice.button.getAttribute("aria-label"), "Stop listening");
   assert.match(status.textContent, /^Listening…/);
 
   // Interim, then final: the box follows, and Send is never pressed.
@@ -226,6 +236,7 @@ test("on-device recognition is used when the browser has it, and the note says t
   assert.equal(Recognition.instances.length, 2, "No new session after Stop.");
   assert.equal(input.value, "Which tariff is cheapest for me? And when does it start?");
   assert.equal(voice.button.getAttribute("aria-pressed"), "false");
+  assert.equal(voice.button.getAttribute("aria-label"), "Speak your request");
   assert.equal(status.textContent, "Check the request in the chat box, then press Send.");
   assert.equal(input.focused, true);
 });
@@ -247,7 +258,7 @@ test("a browser without on-device recognition says the audio would leave, and li
   const voice = await VoiceInput.attach(doc, {webkitSpeechRecognition: Recognition});
   await voice.button.click();
   assert.equal(note.textContent, VoiceInput.NOTE_ONLINE);
-  assert.match(status.textContent, /Press Speak again to go ahead/);
+  assert.match(status.textContent, /Press the mic again to go ahead/);
   assert.equal(Recognition.instances.length, 0, "No audio is taken before the second press.");
   await voice.button.click();
   assert.equal(Recognition.instances.length, 1);
@@ -315,7 +326,7 @@ test("on-device recognition that stops at once offers the online service, after 
   Recognition.instances[1].onend();
   assert.equal(Recognition.instances.length, 2);
   assert.equal(note.textContent, VoiceInput.NOTE_ONLINE);
-  assert.match(status.textContent, /Press Speak again to go ahead/);
+  assert.match(status.textContent, /Press the mic again to go ahead/);
   assert.equal(voice.button.getAttribute("aria-pressed"), "false");
 
   await voice.button.click();
@@ -394,4 +405,28 @@ test("pressing Enter in the chat box stops the microphone too", async () => {
   assert.equal(input.value, "");
   input.dispatchEvent({type: "keydown", key: "Enter"});
   assert.equal(voice.button.getAttribute("aria-pressed"), "false", "Enter when not listening changes nothing.");
+});
+
+test("the mic is a small icon inside the chat box's right edge, not a Speak button", async () => {
+  const {doc, bar, input, send} = page();
+  // Real elements have a parent. Give the box one, and let the document draw SVG.
+  input.parentNode = bar;
+  doc.createElementNS = (space, tag) => Object.assign(new FakeElement("", tag), {space});
+  const voice = await VoiceInput.attach(doc, {SpeechRecognition: recognitionClass({"en-GB": "available"})});
+  const wrap = bar.children.find((child) => child.className === "ns-inputwrap");
+  assert.ok(wrap, "The box and the mic share a wrapper, so the mic sits at the box's end.");
+  assert.deepEqual(wrap.children, [input, voice.button], "The mic follows the box.");
+  assert.equal(bar.children.includes(send), true);
+  assert.equal(bar.children.includes(voice.button), false, "The mic is no longer a button of its own in the bar.");
+  const paths = (button) => button.children.map((svg) => svg.children.map((path) => path.attributes.d));
+  assert.equal(voice.button.children[0].space, "http://www.w3.org/2000/svg");
+  assert.equal(voice.button.children[0].attributes["aria-hidden"], "true");
+  assert.deepEqual(paths(voice.button), [VoiceInput.MIC], "A plain outline mic while it waits.");
+  assert.equal(voice.button.textContent, "", "No word on the button.");
+  await voice.button.click();
+  const [wave] = voice.button.children;
+  assert.equal(wave.className, "voice-wave", "A moving waveform while it listens.");
+  assert.equal(wave.children.length, VoiceInput.BARS);
+  voice.finish();
+  assert.deepEqual(paths(voice.button), [VoiceInput.MIC]);
 });

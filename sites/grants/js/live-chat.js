@@ -2,8 +2,9 @@
 // waiting on a blank screen. Two parts, both drawn from what the runtime already reports:
 //
 // 1. A collapsible "Working…" block of steps: which agents are asked, which partner
-//    sites are contacted, which services are checked. It is open while the turn runs and
-//    folds to "Worked through N steps" when it ends. It shows names only, never the
+//    sites are contacted, which services are checked. It is folded to start with, and its
+//    summary line names the step that is running, then "Worked through N steps" when the
+//    turn ends. The visitor opens it to read the list. It shows names only, never the
 //    arguments of a call.
 // 2. The front agent's answer as it is written. The runtime draws the answer in one go
 //    when the turn ends; this shows the same words as they arrive, then the runtime's
@@ -129,7 +130,8 @@ export class LiveChat {
     this.text = "";
     const block = this.doc.createElement("details");
     block.className = "ns-steps";
-    block.setAttribute("open", "");
+    // Folded: the summary line already says which step is running, and the visitor opens
+    // the list when they want it.
     block.setAttribute("data-running", "true");
     const summary = this.doc.createElement("summary");
     summary.textContent = "Working…";
@@ -169,7 +171,8 @@ export class LiveChat {
   }
 
   /**
-   * The turn ends: fold the block, or drop it when nothing was done.
+   * The turn ends: name the block's steps, or drop it when nothing was done. It stays as
+   * the visitor left it, open or folded.
    */
   fold() {
     const block = this.block;
@@ -181,7 +184,6 @@ export class LiveChat {
       block.element.remove();
       return;
     }
-    block.element.removeAttribute("open");
     block.element.setAttribute("data-running", "false");
     block.summary.textContent = `Worked through ${block.count} step${block.count === 1 ? "" : "s"}`;
   }

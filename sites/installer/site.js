@@ -3,11 +3,13 @@
 // It is the agentify-website skill's templates/site.js with this site's greeting,
 // dialog words and review details filled in.
 import { AnswerPath } from "./js/answer-path.js";
+import { ChatSessions } from "./js/chat-sessions.js";
 import { DevLog } from "./js/dev-log.js";
 import { SwarmGraph } from "./js/swarm-graph.js";
 import { PromptHints } from "./js/prompt-hints.js";
 import { LiveChat } from "./js/live-chat.js";
 import { LlmProtocol } from "./js/llm-protocol.js";
+import { PartnerApproval } from "./js/partner-approval.js";
 import { VoiceInput } from "./js/voice-input.js";
 import { App } from "./js/app.js";
 
@@ -79,7 +81,7 @@ export class AssistantMount {
       AssistantMount.watchTrace(booted.trace, booted.engine.top?.network?.name || "");
       // Suggested requests and voice input are extras: the chat works without them.
       try {
-        PromptHints.attach(document, AssistantMount.HINTS);
+        AssistantMount.hints = PromptHints.attach(document, AssistantMount.HINTS);
       } catch (error) {
         console.error("Suggestions are off", error);
       }
@@ -94,7 +96,12 @@ export class AssistantMount {
       } catch (error) {
         console.error("Provider protocol picker is off", error);
       }
-      VoiceInput.attach(document, window).catch((error) => console.error("Voice input is off", error));
+      VoiceInput.attach(document, window)
+        .then((voice) => {
+          AssistantMount.voice = voice;
+        })
+        .catch((error) => console.error("Voice input is off", error));
+      AssistantMount.mountChats(booted.engine, booted.trace);
       AssistantMount.defaultReview = booted.engine.onActionConfirm;
       booted.engine.onActionConfirm = AssistantMount.review;
       AssistantMount.defaultConsent = booted.engine.onConsent;
@@ -115,6 +122,56 @@ export class AssistantMount {
       status.textContent = "The assistant could not load. You can still use the page directly.";
       console.error("Assistant startup failed", error);
       return null;
+    }
+  }
+
+  /**
+   * Add the list of this visit's chats and the choice of how a partner site is approved,
+   * in the panel to the left of the chat. Both are extra: the chat works without them.
+   *
+   * :param engine: The runtime's engine.
+   * :param trace: The runtime's trace.
+   */
+  static mountChats(engine, trace) {
+    try {
+      PartnerApproval.attach(document);
+    } catch (error) {
+      console.error("The partner approval choice is off", error);
+    }
+    try {
+      AssistantMount.sessions = ChatSessions.attach(document, engine, trace, {
+        hints: AssistantMount.hints,
+        // Dictation belongs to the chat it started in.
+        beforeChange: () => AssistantMount.voice?.sent(),
+        onChange: AssistantMount.showChat,
+      });
+    } catch (error) {
+      console.error("The list of chats is off", error);
+    }
+    const side = document.querySelector("#chat-side");
+    if (side && AssistantMount.sessions) {
+      side.hidden = false;
+    }
+  }
+
+  /**
+   * The answers of the chat on show, from the trace. The trace holds every chat's.
+   *
+   * :return: The turns, oldest first.
+   */
+  static turns() {
+    const all = AnswerPath.build(AssistantMount.trace.events, location.host).turns;
+    return AssistantMount.sessions ? AssistantMount.sessions.turnsOf(all) : all;
+  }
+
+  /**
+   * The visitor picked another chat: "The swarm at work" shows that chat's answers only.
+   */
+  static showChat() {
+    try {
+      AssistantMount.graph?.replace(AssistantMount.turns());
+    } catch (error) {
+      console.error("Could not show how the answers were made", error);
     }
   }
 
@@ -180,6 +237,10 @@ export class AssistantMount {
    *   allows the call when this returns nothing.
    */
   static async consent(info) {
+    // The visitor chose automatic approval for partner sites: no card.
+    if (PartnerApproval.auto) {
+      return AssistantMount.approveAutomatically(info);
+    }
     // defaultConsent() adds the card at once. The card has no role, and the stylesheet
     // hides the status line while it waits, so name the card and focus its title.
     const answer = AssistantMount.defaultConsent(info);
@@ -192,6 +253,22 @@ export class AssistantMount {
     // Answering the card removes its buttons, so focus may fall to the page body.
     AssistantMount.keepFocusInChat();
     return decision;
+  }
+
+  /**
+   * Allow a partner contact without a card, because the visitor chose automatic approval.
+   * The page still records the decision, so the swarm graph can say so (spec 5), and
+   * shows the whole request in the chat.
+   *
+   * :param info: What the card would have shown, such as the partner's label and host and
+   *   the request.
+   * :return: "allow": this one contact. The next contact is checked again, so switching
+   *   back to asking takes effect at once.
+   */
+  static approveAutomatically(info) {
+    AssistantMount.trace?.note("consent", {page: true, peerOrigin: info?.peerOrigin, decision: "allow", auto: true, consentFor: info?.kind});
+    PartnerApproval.announce(document, info);
+    return "allow";
   }
 
   /**
@@ -210,11 +287,12 @@ export class AssistantMount {
     if (!graph) {
       return;
     }
+    AssistantMount.graph = graph;
     let pending = false;
     const draw = () => {
       pending = false;
       try {
-        graph.update(AnswerPath.build(trace.events, location.host).turns);
+        graph.update(AssistantMount.turns());
       } catch (error) {
         // The view is extra: the chat and the page keep working without it.
         console.error("Could not show how the answer was made", error);
