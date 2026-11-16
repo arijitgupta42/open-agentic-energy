@@ -183,7 +183,7 @@ class Conformance {
    * :return: True when the path's block has Access-Control-Allow-Origin: *.
    */
   static hasCorsRule(headers, file) {
-    const lines = headers.split("\n");
+    const lines = headers.split(/\r?\n/);
     const at = lines.indexOf(file);
     return at !== -1 && (lines[at + 1] || "").trim() === "Access-Control-Allow-Origin: *";
   }
