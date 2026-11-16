@@ -129,7 +129,7 @@ knows as a network of agents, and lets another site run that network on request.
 | Spec section 6 check | Where it happens |
 | --- | --- |
 | A two-agent network and manifest on an HTTPS host | Emberwick publishes four agents, `agent-manifest.json` and `links.json` on Cloudflare Workers |
-| Runs in a browser on the site's router; BYOK shown | OpenRouter with `openai/gpt-6-luna` by default; any OpenAI-compatible provider that allows browser calls |
+| Runs in a browser on the site's router; BYOK shown | OpenRouter with `openai/gpt-6-luna` by default; any OpenAI-compatible provider that allows browser calls; a protocol picker also supports Anthropic Messages endpoints such as Claude on Azure AI Foundry |
 | An internal agent and a grounded capability | `emberwick_assistant` → `usage_analyst` → MCP `estimate_heat_pump_running_cost` |
 | An exact named network from a second origin, after approval | `retrofit_planner` → `heatwright_installers` and `fernbrook_grants`, each after its own card |
 | The second site never gets the key or changes the router | Checked live in the browser's network log, and by browser workflow test 5 |

@@ -7,6 +7,7 @@ import { DevLog } from "./js/dev-log.js";
 import { SwarmGraph } from "./js/swarm-graph.js";
 import { PromptHints } from "./js/prompt-hints.js";
 import { LiveChat } from "./js/live-chat.js";
+import { LlmProtocol } from "./js/llm-protocol.js";
 import { VoiceInput } from "./js/voice-input.js";
 import { App } from "./js/app.js";
 
@@ -63,6 +64,13 @@ export class AssistantMount {
     const siteBase = new URL("./", import.meta.url).href;
     try {
       // Load the runtime here, so a missing or broken runtime is reported too.
+      // Model calls follow the visitor's protocol choice (js/llm-protocol.js). It is an
+      // extra: with it off, the runtime talks the OpenAI protocol as before.
+      try {
+        LlmProtocol.install(window);
+      } catch (error) {
+        console.error("Provider protocol choice is off", error);
+      }
       const { boot } = await import("./runtime/index.js");
       const booted = await boot("#agent-app", {
         originUrl: siteBase,
@@ -81,6 +89,11 @@ export class AssistantMount {
         LiveChat.attach(document, booted.engine, booted.trace);
       } catch (error) {
         console.error("Live progress is off", error);
+      }
+      try {
+        LlmProtocol.attachPicker(document, window);
+      } catch (error) {
+        console.error("Provider protocol picker is off", error);
       }
       VoiceInput.attach(document, window).catch((error) => console.error("Voice input is off", error));
       AssistantMount.defaultReview = booted.engine.onActionConfirm;
