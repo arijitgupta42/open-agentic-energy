@@ -5,14 +5,14 @@
 //
 // The runtime and the other page scripts keep using #ns-input and never learn about the
 // textarea. The input stays in the page, hidden, and the two are kept the same:
-//   - typing in the textarea sets the input's value and sends it an "input" event;
+//   - the input's value is the textarea's text, line breaks included (a one-line input
+//     would drop them), and typing sends the input an "input" event;
 //   - when a script sets the input's value (the runtime clearing it after Send, a
 //     suggestion, voice input, switching chats), the textarea follows and resizes;
 //   - Enter and Tab in the textarea go to the input's own key handlers, which send the
 //     request and take a suggestion;
 //   - the input's placeholder, disabled state and focus() are handed on to the textarea.
-// The input would drop a line break, so pasted line breaks become spaces. Enter sends,
-// and the text only wraps.
+// Enter sends. Shift+Enter, and line breaks in pasted text, make new lines.
 //
 // Nothing here reads, stores or sends what is typed. This file is the same on all three
 // sites.
@@ -45,7 +45,6 @@ export class ChatBox {
   constructor(doc, input) {
     this.doc = doc;
     this.input = input;
-    this.syncing = false;
     this.box = doc.createElement("textarea");
     this.box.className = "ns-input ns-grow";
     this.box.rows = 1;
@@ -75,21 +74,18 @@ export class ChatBox {
    */
   hook() {
     const {input, box} = this;
-    // A script setting input.value: the textarea follows.
+    // The input's value is the textarea's text. A script setting it: the textarea follows.
     const own = ChatBox.descriptor(input, "value");
-    let stored = input.value;
     Object.defineProperty(input, "value", {
       configurable: true,
-      get() {
-        return own.get ? own.get.call(this) : stored;
-      },
+      get: () => box.value,
       set: (value) => {
+        const text = String(value ?? "");
         if (own.set) {
-          own.set.call(input, value);
-        } else {
-          stored = String(value);
+          own.set.call(input, text);
         }
-        this.follow();
+        box.value = text;
+        this.resize();
       },
     });
     // The page's focus calls reach the box the visitor sees.
@@ -125,27 +121,10 @@ export class ChatBox {
   }
 
   /**
-   * The input's value changed: show it in the textarea.
-   */
-  follow() {
-    if (this.syncing) {
-      return;
-    }
-    this.box.value = this.input.value;
-    this.resize();
-  }
-
-  /**
-   * The visitor typed, pasted or deleted in the textarea: hand the text to the input.
+   * The visitor typed, pasted or deleted in the textarea: fit the height and tell the
+   * input's listeners, as a keystroke in the input would.
    */
   typed() {
-    const text = this.box.value.replace(/\r?\n/g, " ");
-    if (text !== this.box.value) {
-      this.box.value = text;
-    }
-    this.syncing = true;
-    this.input.value = text;
-    this.syncing = false;
     this.resize();
     const EventClass = this.doc.defaultView?.Event || Event;
     this.input.dispatchEvent(new EventClass("input", {bubbles: true}));
@@ -153,7 +132,7 @@ export class ChatBox {
 
   /**
    * A key in the textarea. Enter sends and Tab takes the suggestion, by way of the
-   * input's own handlers.
+   * input's own handlers. Shift+Enter is a line break.
    *
    * :param event: The keydown event.
    */
@@ -161,8 +140,8 @@ export class ChatBox {
     if (event.isComposing) {
       return;
     }
-    if (event.key === "Enter") {
-      // Shift+Enter too: the input holds one line, so a line break has nowhere to go.
+    if (event.key === "Enter" && !event.shiftKey) {
+      // Shift+Enter is left alone: the textarea starts a new line.
       event.preventDefault();
       this.forward(event);
     } else if (event.key === "Tab" && !event.shiftKey && !event.altKey && !event.ctrlKey && !event.metaKey) {

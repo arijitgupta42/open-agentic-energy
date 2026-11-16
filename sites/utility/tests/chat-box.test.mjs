@@ -104,12 +104,12 @@ test("the textarea takes the input's place, and the input stays for the runtime 
   assert.equal(ChatBox.attach({querySelector: () => null, createElement: () => null}), null, "No chat box, nothing added.");
 });
 
-test("typing goes to the input as typed, and pasted line breaks become spaces", () => {
+test("the input's value is the textarea's text, line breaks included, and typing tells the input's listeners", () => {
   const {input, box} = page();
   box.value = "Which tariff\nis cheapest?";
   box.dispatchEvent({type: "input"});
-  assert.equal(box.value, "Which tariff is cheapest?");
-  assert.equal(input.value, "Which tariff is cheapest?");
+  assert.equal(input.value, "Which tariff\nis cheapest?", "Pasted and typed line breaks reach the runtime.");
+  assert.equal(box.value, "Which tariff\nis cheapest?");
   assert.ok(input.events.includes("input"), "The runtime and the suggestions see it as typed.");
 });
 
@@ -138,17 +138,18 @@ test("the box grows with its text up to the limit, then scrolls", () => {
   assert.equal(box.style.height, "", "Empty: one line, however long the placeholder.");
 });
 
-test("Enter sends and Tab takes the suggestion, through the input's own listeners", () => {
+test("Enter sends and Tab takes the suggestion, through the input's own listeners; Shift+Enter is a line break", () => {
   const {box, keys} = page();
-  const press = (key) => {
-    const event = {type: "keydown", key, defaultPrevented: false, preventDefault() { this.defaultPrevented = true; }};
+  const press = (key, extra = {}) => {
+    const event = {type: "keydown", key, defaultPrevented: false, preventDefault() { this.defaultPrevented = true; }, ...extra};
     box.dispatchEvent(event);
     return event;
   };
-  assert.equal(press("Enter").defaultPrevented, true, "The textarea never adds a line break.");
+  assert.equal(press("Enter").defaultPrevented, true, "Enter sends, so the textarea adds no line break.");
+  assert.equal(press("Enter", {shiftKey: true}).defaultPrevented, false, "Shift+Enter is left to the textarea, which starts a new line.");
   assert.equal(press("Tab").defaultPrevented, true, "Tab was taken by the suggestion, so it does not leave the box.");
   assert.equal(press("a").defaultPrevented, false);
-  assert.deepEqual(keys, ["Enter", "Tab"], "Other keys stay in the textarea.");
+  assert.deepEqual(keys, ["Enter", "Tab"], "Only Enter and Tab reach the input; Shift+Enter and other keys stay in the textarea.");
 });
 
 test("the page's focus calls reach the textarea, and a changed placeholder follows", () => {

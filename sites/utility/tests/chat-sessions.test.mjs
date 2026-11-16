@@ -157,23 +157,27 @@ function names(parts) {
 test("the list shows once the assistant is there, with one empty chat", () => {
   const parts = page();
   assert.equal(parts.list.hidden, false);
-  assert.deepEqual(names(parts), {titles: ["New chat"], current: 0});
+  assert.deepEqual(names(parts), {titles: ["Chat session 1"], current: 0});
   assert.equal(ChatSessions.attach({querySelector: () => null}, {history: []}, null), null, "No chat, no list.");
 });
 
-test("the first message names the chat, cut short when long", () => {
+test("chats are named Chat session 1, 2, 3 in the order they start, and the first message is the tooltip", () => {
   const parts = page();
   ask(parts, "Which tariff is cheapest for me?");
-  assert.deepEqual(names(parts).titles, ["Which tariff is cheapest for me?"]);
+  assert.deepEqual(names(parts).titles, ["Chat session 1"], "The name does not change when a message is sent.");
+  assert.equal(parts.sessions.items.children[0].children[0].title, "Chat session 1: Which tariff is cheapest for me?");
+  parts.sessions.newButton.click();
+  ask(parts, "Second");
+  parts.sessions.newButton.click();
+  assert.deepEqual(names(parts).titles, ["Chat session 1", "Chat session 2", "Chat session 3"]);
   const long = page();
-  ask(long, "What would a heat pump cost to fit and run in my 95 square metre semi-detached house?");
-  const [title] = names(long).titles;
-  assert.ok(title.length <= ChatSessions.TITLE_LENGTH, "Cut to fit the list.");
-  assert.ok(title.endsWith("…"));
+  ask(long, "What would a heat pump cost to fit and run in my 95 square metre semi-detached house? ".repeat(3));
+  const tip = long.sessions.items.children[0].children[0].title;
+  assert.ok(tip.endsWith("…"), "A long first message is cut in the tooltip.");
   const second = page();
   ask(second, "First");
   ask(second, "Second");
-  assert.deepEqual(names(second).titles, ["First"], "Only the first message names it.");
+  assert.equal(second.sessions.items.children[0].children[0].title, "Chat session 1: First", "Only the first message is kept.");
 });
 
 test("a new chat starts with the greeting, an empty history and its own list entry, and the old chat is kept", () => {
@@ -192,7 +196,7 @@ test("a new chat starts with the greeting, an empty history and its own list ent
   assert.notEqual(parts.engine.history, oldHistory);
   assert.equal(parts.input.value, "", "The draft stays with the chat it was typed in.");
   assert.deepEqual(parts.sessions.current.runs.size, 0);
-  assert.deepEqual(names(parts), {titles: ["Which tariff is cheapest for me?", "New chat"], current: 1});
+  assert.deepEqual(names(parts), {titles: ["Chat session 1", "Chat session 2"], current: 1});
   assert.deepEqual(hints.restored, [null], "The new chat gets the site's starter.");
   assert.deepEqual(changed, [2]);
   assert.equal(before, 1);
@@ -202,7 +206,7 @@ test("a new chat starts with the greeting, an empty history and its own list ent
 test("a new chat while this one is empty changes nothing", () => {
   const parts = page();
   parts.sessions.newButton.click();
-  assert.deepEqual(names(parts), {titles: ["New chat"], current: 0});
+  assert.deepEqual(names(parts), {titles: ["Chat session 1"], current: 0});
   assert.equal(parts.input.focused, true);
 });
 
@@ -226,7 +230,7 @@ test("picking an earlier chat brings back its messages, history, draft and sugge
   assert.deepEqual(parts.engine.history.map((entry) => entry.content), ["First chat question", "Answer to First chat question"]);
   assert.equal(parts.input.value, "typing in the first chat");
   assert.equal(hints.current, "first-suggestion");
-  assert.deepEqual(names(parts), {titles: ["First chat question", "Second chat question"], current: 0});
+  assert.deepEqual(names(parts), {titles: ["Chat session 1", "Chat session 2"], current: 0});
   assert.equal(parts.sessions.pickedButton.focused, true, "Keyboard focus stays on the picked chat.");
   // And forward again: the second chat is as it was left.
   parts.sessions.select(parts.sessions.chats[1].id);
