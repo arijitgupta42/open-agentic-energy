@@ -106,7 +106,7 @@ Partner tools ask another site's assistant after the visitor agrees on a card th
             "figure_rules": """
 FIGURES: After one line of answer, give figures as a fenced openui block (OpenUI Lang): one statement per line, name = Component(values) by position, the first is root. Order: Stat tiles in a row Stack, a chart, a Table. Components:
 Stack(children, direction?) Text(content, style?) Callout(text, tone?) Stat(label, value, unit?, detail?, tone?, trend?) Meter(label, value, max, unit?, tone?) Table(columns, rows, caption?) Series(name, values) BarChart(title, labels, series, unit?) LineChart(title, labels, series, unit?) PieChart(title, labels, values, unit?).
-direction column|row; style body|heading|muted; tone info|good|warn, for Stat and Meter neutral|good|bad; trend numbers. A Table row has one value per column; a Series one value per label. Pie for shares, line over time, bars to compare.
+direction "column"|"row", style "body"|"heading"|"muted", tone "info"|"good"|"warn" (Stat, Meter: "neutral"|"good"|"bad"); trend numbers. One value per Table column, per Series label. Pie: shares; line: over time; bars: compare.
 """,
 
             # The runtime already adds guidance on when to use render_cruse and forms.
