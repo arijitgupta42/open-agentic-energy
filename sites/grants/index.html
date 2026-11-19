@@ -2,12 +2,14 @@
 <html lang="en" data-theme="dark">
   <head>
     <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content">
     <meta name="description" content="Fernbrook Retrofit Grants demo: check which home energy grants you could apply for and start an application. A fictional site for the Open Agentic Web Challenge.">
     <title>Fernbrook Retrofit Grants · Check and apply</title>
     <link rel="icon" href="favicon.svg" type="image/svg+xml">
     <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="mobile.css" media="(max-width: 760px)">
     <script type="module" src="js/theme.js"></script>
+    <script type="module" src="js/mobile.js"></script>
     <script type="module" src="js/app.js"></script>
     <script type="module" src="site.js"></script>
   </head>
@@ -21,7 +23,7 @@
         <a href="#assistant">Ask us</a>
       </nav>
     </header>
-    <main>
+    <main data-m-label="Grants">
       <section class="intro" aria-labelledby="welcome">
         <p class="eyebrow">Heat pumps · Solar · Insulation</p>
         <h1 id="welcome">Find out which grants your home could get before you apply.</h1>

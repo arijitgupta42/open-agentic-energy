@@ -2,12 +2,14 @@
 <html lang="en" data-theme="dark">
   <head>
     <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content">
     <meta name="description" content="Emberwick Energy demo account: see your usage, compare tariffs and switch. A fictional site for the Open Agentic Web Challenge.">
     <title>Emberwick Energy · Your account</title>
     <link rel="icon" href="favicon.svg" type="image/svg+xml">
     <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="mobile.css" media="(max-width: 760px)">
     <script type="module" src="js/theme.js"></script>
+    <script type="module" src="js/mobile.js"></script>
     <script type="module" src="js/app.js"></script>
     <script type="module" src="site.js"></script>
   </head>
@@ -22,7 +24,7 @@
         <a href="#assistant">Ask us</a>
       </nav>
     </header>
-    <main>
+    <main data-m-label="Account">
       <section class="intro" aria-labelledby="welcome">
         <p class="eyebrow">Your account</p>
         <h1 id="welcome">See what your energy costs, and whether another tariff would cost less.</h1>
