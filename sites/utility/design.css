@@ -29,12 +29,22 @@ section:not(.assistant) button:active { transform: translateY(1px); }
 @media (min-width: 761px) {
   #agent-app .ns-chat { border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow-2); overflow: hidden; }
   .swarm-map, .chat-list { border-radius: var(--radius); box-shadow: var(--shadow-1); }
-  /* The settings and the developer log sit under the row of panels, so they take the row's own width. */
-  #agent-app > [data-ns-slot="settings"], #agent-app > [data-ns-slot="agents"] { margin-inline: calc(50% - min(760px, 50vw - 24px)); }
+  /* The settings sit under the chat, in the chat's own column: they start after the chats list and stop before
+     the swarm. The widths are the grid's in styles.css (a 176px or 200px list, a 360px swarm, a 16px gap). */
+  #agent-app { --row-left: 0px; --row-right: 0px; }
+  #agent-app:has(.swarm-map:not([hidden])) { --row-right: 376px; }
+  #agent-app > [data-ns-slot="settings"] { margin-inline: calc(50% - min(760px, 50vw - 24px) + var(--row-left)) calc(50% - min(760px, 50vw - 24px) + var(--row-right)); }
+  /* The developer log is wide, so it takes the whole row. */
+  #agent-app > [data-ns-slot="agents"] { margin-inline: calc(50% - min(760px, 50vw - 24px)); }
   #agent-app > [data-ns-slot="settings"] > details { margin-top: 16px; padding: 4px 20px 16px; border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface); }
   #agent-app > [data-ns-slot="settings"] > details > summary { padding: 10px 0; cursor: pointer; }
   #agent-app .ns-msg.bot { border-radius: var(--radius) var(--radius) var(--radius) 3px; }
   #agent-app .ns-msg.user { border-radius: var(--radius) var(--radius) 3px var(--radius); }
+}
+
+@media (min-width: 1101px) {
+  #agent-app:has(.chat-side:not([hidden])) { --row-left: 192px; }
+  #agent-app:has(.chat-side:not([hidden])):has(.swarm-map[hidden]) { --row-left: 216px; }
 }
 
 /* One moment of motion: the top of the page settles in once, and only for visitors who allow motion. */
