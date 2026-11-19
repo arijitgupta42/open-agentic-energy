@@ -13,14 +13,14 @@
  */
 export class SwarmMap {
   /**
-   * The three sites, in the order the graph draws them. color is each site's own brand
-   * colour, as in its styles.css. glow is a lighter shade of it for the graph's dark
+   * The three sites, in the order the graph draws them. logo is the shape js/brand-logos.js
+   * draws for the site. color is each site's own brand colour, as in its styles.css. glow is a lighter shade of it for the graph's dark
    * background.
    */
   static SITES = [
-    {network: "emberwick_energy", name: "Emberwick Energy", icon: "⚡", color: "#9a3412", glow: "#fb923c"},
-    {network: "heatwright_installers", name: "Heatwright Home Energy", icon: "🔧", color: "#0f5132", glow: "#34d399"},
-    {network: "fernbrook_grants", name: "Fernbrook Retrofit Grants", icon: "🌱", color: "#3730a3", glow: "#a5b4fc"},
+    {network: "emberwick_energy", name: "Emberwick Energy", logo: "ember", color: "#9a3412", glow: "#fb923c"},
+    {network: "heatwright_installers", name: "Heatwright Home Energy", logo: "fan", color: "#0f5132", glow: "#34d399"},
+    {network: "fernbrook_grants", name: "Fernbrook Retrofit Grants", logo: "leaf", color: "#3730a3", glow: "#a5b4fc"},
   ];
 
   /**

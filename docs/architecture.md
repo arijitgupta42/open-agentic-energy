@@ -82,7 +82,10 @@ host (Cloudflare Worker, or scripts/serve-all.mjs locally)
   rate cards). Heatwright is a spec sheet (an engineering sans, a blueprint grid that fades out,
   plates with crop marks, a fan for a mark). Fernbrook is a public form (a humanist sans over a
   book serif, schemes as notices with a spine, a seal and a leaf, buttons that press down). It
-  uses system fonts only and loads nothing from another host (rule 8). `styles.css` keeps the
+  uses system fonts only and loads nothing from another host (rule 8). Each site's logo (an ember,
+  a fan, a leaf) is also drawn in SVG by `js/brand-logos.js` for the swarm graph, its tooltips, the
+  chat header and the favicon, so no emoji stands in for a logo; the manifest brand keeps one plain
+  character that the page swaps for the logo. `styles.css` keeps the
   base colours and layout; `mobile.css` loads after the design on phones.
 - **The phone layout** (`js/mobile.js` and `mobile.css`, the same on every site). It is the
   same page, runtime and rules as on a laptop (rule 5): `mobile.css` is linked with
