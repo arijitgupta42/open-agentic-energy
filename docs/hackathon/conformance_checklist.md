@@ -75,6 +75,10 @@ repository's own code. Do not hide them.
 - A partner that accepts the connection but never answers leaves the chat waiting until
   the page is reloaded.
 - The LLM provider must allow browser calls (CORS).
+- The pages send no Content-Security-Policy header (spec 4 says a publisher SHOULD send a
+  restrictive one). No page loads a third-party script, and the runtime's coded-tool
+  worker has its own strict CSP in each `_headers`. This one is ours to fix, not the
+  runtime's.
 - The runtime speaks the OpenAI protocol. `js/llm-protocol.js` on each site translates to
   the Anthropic Messages protocol when the visitor picks it (or the Provider URL implies
   it, as for Azure AI Foundry Claude). It sends the key as `x-api-key` to the same
