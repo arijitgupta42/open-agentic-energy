@@ -1167,10 +1167,9 @@ export class OpenUi {
 .ou-meter-label{font-weight:600}.ou-meter-value{color:var(--ou-muted);font-variant-numeric:tabular-nums}
 .ou-meter-track{height:10px;border-radius:999px;background:var(--ou-soft);box-shadow:inset 0 0 0 1px var(--ou-line);overflow:hidden}
 .ou-meter-fill{height:100%;border-radius:999px;background:currentColor}
-.ou-callout{margin:0;display:flex;gap:8px;align-items:flex-start;padding:7px 11px;border-radius:10px;border:1px solid var(--ou-line);background:var(--ou-soft);color:var(--ou-info)}
-.ou-callout-good{color:var(--ou-good)}.ou-callout-warn{color:var(--ou-warn)}
-.ou-callout-icon{flex:none;width:20px;height:20px;border-radius:50%;background:currentColor;display:grid;place-items:center;font-size:12px;font-weight:800;line-height:1}
-.ou-callout-icon{color:var(--ou-surface)}
+.ou-callout{--ou-tone:var(--ou-info);margin:0;display:flex;gap:8px;align-items:flex-start;padding:7px 11px;border-radius:10px;border:1px solid var(--ou-line);border-left:4px solid var(--ou-tone);background:var(--ou-soft)}
+.ou-callout-good{--ou-tone:var(--ou-good)}.ou-callout-warn{--ou-tone:var(--ou-warn)}
+.ou-callout-icon{flex:none;width:20px;height:20px;border-radius:50%;background:var(--ou-tone);color:var(--ou-surface);display:grid;place-items:center;font-size:12px;font-weight:800;line-height:1}
 .ou-callout-text{color:var(--ou-ink)}
 .ou-table-frame{border:1px solid var(--ou-line);border-radius:12px;overflow:hidden;background:var(--ou-surface);box-shadow:0 1px 2px rgba(0,0,0,.08)}
 .ou-table-caption{padding:8px 10px 2px;font-weight:700}
@@ -1183,6 +1182,7 @@ export class OpenUi {
 .ou-table .ou-first{font-weight:650}
 .ou-table .ou-num{text-align:right!important;font-variant-numeric:tabular-nums;white-space:nowrap}
 .ou-table tr.ou-total td{font-weight:750;border-top:2px solid var(--ou-line);background:var(--ou-soft)}
+@media (max-width:760px){.ou-table th:first-child,.ou-table td:first-child{position:sticky;left:0;z-index:1;background:var(--ou-surface);box-shadow:1px 0 0 var(--ou-line)}.ou-table th:first-child{background:var(--ou-soft)}.ou-table tr.ou-total td:first-child{background:var(--ou-soft)}}
 .ou-chart{margin:0;display:flex;flex-direction:column;gap:6px;border:1px solid var(--ou-line);border-radius:12px;padding:10px 12px;background:var(--ou-surface);box-shadow:0 1px 2px rgba(0,0,0,.08);min-width:0}
 .ou-chart-title{font-weight:700}
 .ou-svg{display:block;width:100%;height:auto;min-width:280px;overflow:visible}

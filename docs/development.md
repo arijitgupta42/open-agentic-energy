@@ -152,6 +152,11 @@ sites and the MCP servers all run, with no key and no cost.
 | 7 | A tariff switch through the assistant waits for the page's own dialog | irreversible actions stop needing confirmation |
 | 8 | The Safety checks page stops all four failure cases | the runtime stops failing closed |
 | 9 | Each site's mic, on a stand-in for speech recognition, fills the chat box on the device and sends nothing | voice input breaks, or a runtime update renames the chat box |
+| 11 | A usage answer is drawn as stat tiles and a chart, with its numbers in a table and no code left in the chat | the figures renderer (`js/openui.js`) or its prompt breaks |
+| 14 | Every site is dark until the switch is flipped, and keeps the choice | the theme (`js/theme.js`) or a page's `data-theme` breaks |
+| 15 | At 390 x 844 every site opens on the chat, and the page, swarm and settings are one tap away, with no sideways scroll | the phone layout (`js/mobile.js`, `mobile.css`) breaks |
+| 16 | A heat pump question on a phone: consent cards with thumb-sized buttons, then the chats sheet | a control is too small to hit, or the sheet stops opening or closing |
+| 17 | Figures on a phone fit the screen | a chart or table sticks out past the screen |
 
 The scripted router knows each agent by a phrase from its instructions. If you rename an
 agent or reword its first line, update `e2e/scripted-router.mjs`.

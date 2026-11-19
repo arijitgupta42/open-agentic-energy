@@ -1,0 +1,167 @@
+/* The phone layout. index.html loads this file only on screens up to 760px wide
+   (media="(max-width: 760px)"). js/mobile.js sets data-view on <body> (ask, page, swarm or
+   settings) and data-sheet="chats" while the chat list is open, so every rule here starts
+   with body[data-view]: without the script the page is the stacked desktop page.
+   Same file on all three sites; the colours come from styles.css's variables. */
+
+body[data-view] {
+  --m-header: 52px;
+  --m-tabs: calc(60px + env(safe-area-inset-bottom, 0px));
+  padding-bottom: var(--m-tabs);
+  -webkit-text-size-adjust: 100%;
+}
+
+/* ---- Header: the brand and the theme switch; the links become chips on the Page screen. */
+body[data-view] header {
+  position: sticky; top: 0; z-index: 30;
+  flex-wrap: wrap; gap: 4px 10px; align-items: center; justify-content: space-between;
+  min-height: var(--m-header); padding: 4px 14px;
+}
+body[data-view] header .brand { font-size: 1.05em; white-space: nowrap; }
+body[data-view] header nav { display: none; }
+body[data-view="page"] header nav {
+  display: flex; order: 3; flex: 1 0 100%; flex-wrap: nowrap; gap: 8px;
+  overflow-x: auto; padding: 2px 0 8px; scrollbar-width: none;
+}
+body[data-view="page"] header nav a {
+  flex: none; padding: 8px 14px; border-radius: 999px; background: rgba(255, 255, 255, 0.16);
+  font-size: 0.9em; text-decoration: none;
+}
+/* The switch keeps its words, and is at least a thumb tall. */
+body[data-view] .theme-switch { min-height: 44px; padding: 0 10px 0 6px; gap: 6px; font-size: 0.8em; }
+
+/* ---- Tab bar. */
+body[data-view] .m-tabs {
+  position: fixed; left: 0; right: 0; bottom: 0; z-index: 35;
+  display: grid; grid-template-columns: repeat(4, 1fr);
+  height: var(--m-tabs); padding-bottom: env(safe-area-inset-bottom, 0px);
+  background: var(--surface); border-top: 1px solid var(--line);
+}
+body[data-view] .m-tabs .m-tab {
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px;
+  margin: 0; padding: 0; min-height: 0; border: 0; border-radius: 0; background: transparent;
+  color: var(--muted); font-size: 11px; font-weight: 600;
+}
+body[data-view] .m-tabs .m-tab svg { width: 24px; height: 24px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+body[data-view] .m-tabs .m-tab[aria-current="true"] { color: var(--brand-ink); box-shadow: inset 0 2px 0 var(--brand-ink); }
+body[data-view] .m-tabs .m-tab:focus-visible { outline: 2px solid var(--brand-ink); outline-offset: -4px; }
+
+/* ---- Screens. The Page screen is the site's own content and scrolls like a page. */
+body[data-view="page"] #assistant { display: none; }
+body[data-view="page"] main { padding: 8px 16px 28px; }
+body[data-view="page"] section { margin-top: 28px; }
+body[data-view="page"] h1 { font-size: 1.6em; }
+body[data-view="page"] .card-list { grid-template-columns: minmax(0, 1fr); }
+body[data-view="page"] .bars { gap: 3px; }
+body[data-view="page"] header + main { scroll-margin-top: 110px; }
+body[data-view="page"] section[id] { scroll-margin-top: 112px; }
+
+/* The other screens fill what is left between the header and the tab bar, and do not scroll
+   as a page: the chat and the other panels scroll inside themselves. */
+html:has(body[data-view]:not([data-view="page"])) { overflow: hidden; }
+body[data-view]:not([data-view="page"]) { height: var(--m-vh, 100dvh); overflow: hidden; }
+body[data-view]:not([data-view="page"]) header { height: var(--m-header); flex-wrap: nowrap; }
+body[data-view]:not([data-view="page"]) main { max-width: none; padding: 0; }
+body[data-view]:not([data-view="page"]) main > :not(#assistant),
+body[data-view]:not([data-view="page"]) footer { display: none; }
+body[data-view]:not([data-view="page"]) #assistant {
+  display: flex; flex-direction: column; margin: 0; padding: 0;
+  height: calc(var(--m-vh, 100dvh) - var(--m-header) - var(--m-tabs)); overflow: hidden;
+}
+body[data-view="ask"] #assistant > h2,
+body[data-view="ask"] #assistant > p:not(#assistant-status),
+body[data-view="swarm"] #assistant > h2,
+body[data-view="swarm"] #assistant > p:not(#assistant-status) { display: none; }
+body[data-view]:not([data-view="page"]) #agent-app { flex: 1 1 0; min-height: 0; display: flex; flex-direction: column; }
+
+/* The line over the chat: the chat list button, the status and the demo notice. */
+.m-toolbar, .m-backdrop { display: none; }
+body[data-view="ask"] .m-toolbar { display: flex; align-items: center; gap: 10px; padding: 6px 12px; border-bottom: 1px solid var(--line); }
+body[data-view="ask"] .m-toolbar .m-chats { margin: 0; min-height: 40px; padding: 0 14px; border-radius: 999px; background: var(--surface-2); color: var(--ink); border: 1px solid var(--line); font-size: 0.9em; }
+body[data-view="ask"] .m-toolbar .m-chats:focus-visible { outline: 2px solid var(--brand-ink); outline-offset: 2px; }
+body:has(#chat-side[hidden]) .m-toolbar .m-chats { display: none; }
+body[data-view="ask"] .m-demo { margin-left: auto; font-size: 0.78em; color: var(--muted); }
+body[data-view]:not([data-view="settings"]) #assistant-status { margin: 0; padding: 6px 12px; font-size: 0.85em; color: var(--ink); background: var(--tint); }
+/* Connected: the runtime's own badge and welcome message say the rest. */
+body[data-view]:not([data-view="settings"]):not([data-m-status="alert"]) #assistant-status { display: none; }
+body[data-view="swarm"] #assistant-status, body[data-view="swarm"] .m-toolbar { display: none; }
+
+/* Ask: the runtime's header line, then the chat taking the rest. */
+body[data-view="ask"] .assistant-panels { flex: 1 1 0; min-height: 0; display: flex; flex-direction: column; margin: 0; }
+body[data-view="ask"] .assistant-panels > [data-ns-slot="chat"] { flex: 1 1 0; min-height: 0; height: auto !important; }
+body[data-view="ask"] .assistant-panels > [data-ns-slot="chat"] .ns-chat { height: 100%; border-radius: 0; border-left: 0; border-right: 0; }
+body[data-view="ask"] .assistant-panels > .swarm-map,
+body[data-view="ask"] [data-ns-slot="agents"],
+body[data-view="ask"] [data-ns-slot="settings"],
+body[data-view="ask"] #voice-input { display: none; }
+body[data-view] #agent-app .ns-header { flex-wrap: nowrap; align-items: center; padding: 6px 12px; gap: 8px; }
+body[data-view] #agent-app .ns-title { flex: 1 1 auto; min-width: 0; font-size: 0.95em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+body[data-view] #agent-app .ns-title > * { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+body[data-view] #agent-app .ns-llmbadge { flex: none; font-size: 11px; padding: 3px 8px; }
+body[data-view] #agent-app .ns-devtoggle { flex: none; min-height: 36px; padding: 4px 10px; }
+#agent-app .ns-msg { max-width: 96%; }
+
+/* Swarm: the map, then the developer log when it is on. */
+body[data-view="swarm"] #agent-app { overflow-y: auto; }
+body[data-view="swarm"] .assistant-panels { display: block; margin: 0; }
+body[data-view="swarm"] .assistant-panels > :not(#swarm-map),
+body[data-view="swarm"] [data-ns-slot="settings"],
+body[data-view="swarm"] #voice-input { display: none; }
+body[data-view="swarm"] .assistant-panels > .swarm-map:not([hidden]) { display: flex; width: auto; max-width: none; margin: 10px 12px; }
+body[data-view="swarm"] #agent-app:not([data-dev="true"]) [data-ns-slot="agents"] { display: none; }
+body[data-view="swarm"] [data-ns-slot="agents"] { margin: 0 12px 12px; }
+body[data-view="swarm"] [data-ns-slot="agents"] > .ns-dev { height: 60vh; }
+
+/* Settings: what goes to the AI provider, then the AI model settings. */
+body[data-view="settings"] #assistant { display: block; overflow-y: auto; padding: 12px 14px 20px; }
+body[data-view="settings"] #assistant > h2 { display: block; margin: 0 0 8px; font-size: 1.2em; }
+body[data-view="settings"] #assistant > p:not(#assistant-status) { display: block; font-size: 0.92em; }
+body[data-view="settings"] #agent-app { display: block; }
+body[data-view="settings"] #agent-app > [data-ns-slot="header"],
+body[data-view="settings"] .assistant-panels,
+body[data-view="settings"] [data-ns-slot="agents"],
+body[data-view="settings"] .m-toolbar,
+body[data-view="settings"] #voice-input { display: none; }
+
+/* ---- The chat list is a sheet from the bottom. */
+body[data-view] .chat-side {
+  position: fixed; left: 0; right: 0; bottom: 0; z-index: 50; display: flex; flex-direction: column; gap: 10px;
+  max-height: 72dvh; overflow-y: auto; padding: 14px 14px calc(14px + env(safe-area-inset-bottom, 0px));
+  background: var(--surface); border-radius: 18px 18px 0 0; box-shadow: 0 -10px 34px rgba(0, 0, 0, 0.5);
+  transform: translateY(110%); visibility: hidden; transition: transform 0.22s ease, visibility 0.22s;
+}
+body[data-view] .chat-side[hidden] { display: none; }
+body[data-sheet="chats"] .chat-side { transform: none; visibility: visible; }
+body[data-view] .chat-side .chat-list { border: 0; padding: 0; background: transparent; flex: none; }
+body[data-view] .chat-side .chat-items { flex-direction: column; flex-wrap: nowrap; max-height: none; }
+body[data-view] #agent-app .chat-pick { width: 100%; max-width: none; min-height: 48px; font-size: 15px; }
+body[data-view] #agent-app .chat-new { width: 100%; min-height: 48px; }
+body[data-view] .m-backdrop { display: block; position: fixed; inset: 0; z-index: 40; background: rgba(0, 0, 0, 0.55); opacity: 0; pointer-events: none; transition: opacity 0.2s; }
+body[data-sheet="chats"] .m-backdrop { opacity: 1; pointer-events: auto; }
+
+/* ---- Touch: large targets, and type that does not make a phone zoom in. */
+body[data-view] input, body[data-view] select, body[data-view] textarea { font-size: 16px; }
+body[data-view] select, body[data-view] input:not([type="checkbox"]):not([type="radio"]) { min-height: 44px; }
+body[data-view="page"] main button { min-height: 46px; width: 100%; justify-self: stretch; }
+#agent-app .ns-inputwrap textarea { font-size: 16px; min-height: 44px; }
+#agent-app #ns-send { min-height: 44px; min-width: 68px; }
+#agent-app .voice-button { width: 40px; height: 40px; }
+#agent-app .prompt-hint { min-height: 32px; }
+#agent-app .partner-approval select { min-height: 40px; }
+#agent-app .ns-consent-actions { flex-wrap: wrap; gap: 8px; }
+#agent-app .ns-consent-actions button { min-height: 44px; padding: 8px 16px; flex: 1 1 120px; }
+#agent-app .ns-w-btn, #agent-app .ns-w-choice { min-height: 44px; }
+
+/* ---- Confirmation dialogs (the site's own, and the runtime's) are sheets from the bottom. */
+body > dialog.assistant-review {
+  width: 100%; max-width: none; max-height: 88dvh; margin: auto 0 0; border-radius: 18px 18px 0 0;
+  padding: 18px 16px calc(18px + env(safe-area-inset-bottom, 0px));
+}
+body > dialog.assistant-review button { display: block; width: 100%; min-height: 48px; margin: 8px 0 0; }
+
+/* The notes under the page's forms and the footer stay readable. */
+body[data-view] footer { padding: 16px 16px 24px; font-size: 0.85em; }
+
+@media (prefers-reduced-motion: reduce) {
+  body[data-view] .chat-side, body[data-view] .m-backdrop { transition: none; }
+}

@@ -398,6 +398,7 @@ body > dialog button { margin-right: 8px; }
 :root[data-theme="dark"] #agent-app a { color: var(--brand-ink); }
 :root[data-theme="dark"] .error { color: #f87171; }
 :root[data-theme="dark"] #agent-app .ns-consent { background: #2a2410; }
+:root[data-theme="dark"] #agent-app .ns-consent-actions button.ghost { color: #fbbf24; border-color: #f59e0b; }
 :root[data-theme="dark"] #agent-app .ns-auto-approved { background: #10281a; border-color: #1f6b3a; }
 :root[data-theme="dark"] .ns-auto-approved-title { color: #4ade80; }
 :root[data-theme="dark"] .ns-auto-approved-request { color: var(--muted); }
@@ -412,3 +413,6 @@ body > dialog button { margin-right: 8px; }
 .theme-switch[aria-checked="true"] .theme-track { background: rgba(255, 255, 255, 0.85); }
 .theme-switch[aria-checked="true"] .theme-knob { transform: translateX(16px); background: #0f5132; }
 @media (prefers-reduced-motion: reduce) { .theme-track, .theme-knob { transition: none; } }
+
+/* The phone layout (js/mobile.js, mobile.css): its bars are only for phones. */
+.m-tabs, .m-toolbar, .m-backdrop { display: none; }

@@ -101,13 +101,19 @@ class FakeElement {
  *
  * :return: {hints, input, msgs}.
  */
-function build() {
-  const doc = {createElement: () => new FakeElement(), defaultView: {Event: class { constructor(type) { this.type = type; } }}};
+function build(coarse = false) {
+  const view = {Event: class { constructor(type) { this.type = type; } }, matchMedia: (query) => ({matches: coarse && query === "(pointer: coarse)"})};
+  const doc = {createElement: () => new FakeElement(), defaultView: view};
   const input = new FakeElement();
   const msgs = new FakeElement();
   const hints = new PromptHints(doc, {bar: new FakeElement(), input, msgs, newChat: new FakeElement()}, CONFIG);
   return {hints, input, msgs};
 }
+
+test("The hint line says Tap on a touch screen, and Press Tab on a keyboard", () => {
+  assert.equal(build(false).hints.hint.label, "Press Tab to use this suggestion");
+  assert.equal(build(true).hints.hint.label, "Tap to use this suggestion");
+});
 
 /**
  * Add a rendered answer, the way the runtime does: one paragraph per line.
