@@ -414,7 +414,7 @@ export class GrantsPage {
       const words = result.eligible
         ? `${result.scheme}: you can apply (${result.amount}).`
         : `${result.scheme}: not with these answers. ${result.reasons.join(" ")}`;
-      items.push(this.element("li", words));
+      items.push(this.element("li", words, result.eligible ? "eligible" : "ineligible"));
     }
     list.replaceChildren(...items);
     list.hidden = false;
