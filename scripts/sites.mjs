@@ -22,7 +22,7 @@ export class Sites {
       id: "utility",
       network: "emberwick_energy",
       originFiles: [
-        "emberwick_energy.hocon", "agent-manifest.json", "js/partner-links.js",
+        "emberwick_energy.hocon", "agent-manifest.json", "js/partner-links.js", "_headers",
         // The Safety checks page's test networks (lab/) name this site's own origin.
         "lab/invalid/agent-manifest.json",
         "lab/cycle/agent-manifest.json", "lab/cycle/lab_cycle_a.network.json", "lab/cycle/lab_cycle_b.network.json",
@@ -33,12 +33,12 @@ export class Sites {
     {
       id: "installer",
       network: "heatwright_installers",
-      originFiles: ["heatwright_installers.hocon", "agent-manifest.json", "js/partner-links.js"],
+      originFiles: ["heatwright_installers.hocon", "agent-manifest.json", "js/partner-links.js", "_headers"],
     },
     {
       id: "grants",
       network: "fernbrook_grants",
-      originFiles: ["fernbrook_grants.hocon", "agent-manifest.json", "js/partner-links.js"],
+      originFiles: ["fernbrook_grants.hocon", "agent-manifest.json", "js/partner-links.js", "_headers"],
     },
   ];
 

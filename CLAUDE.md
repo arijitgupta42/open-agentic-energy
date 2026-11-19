@@ -51,7 +51,7 @@ production origins and is what is deployed. Every change follows the same path:
    there, never straight to `dev` or `production`, and name the issue in the message when
    there is one. Run the build, tests and check above before each commit.
    **Update the README's "Compliance with the hackathon rules" section** on the branch
-   before it is merged: the date, the commit, any row the change affects, and any count
+   before it is merged: the date, the branch, any row the change affects, and any count
    it changes (tests, checks, workflows). A change that opens or closes a gap updates
    "Met only in part" and `docs/hackathon/conformance_checklist.md` together.
 2. **Merge the branch into `dev`** with `git merge --no-ff`, then push `dev`.
@@ -97,7 +97,8 @@ switch that would otherwise refuse.
    `DIALOGS` entry and `reviewDetails` in `site.js`, and `expectedVersion`. When unsure,
    use `irreversible`.
 7. **Partners.** A partner is its exact network URL in the calling agent's `tools`, a
-   `link_labels` entry, and its origin in `allowed_peers`. Keep `peer_policy.mode`
+   `link_labels` entry, its origin in `allowed_peers`, and its origin in `frame-src` of
+   each page's Content-Security-Policy in `_headers`. Keep `peer_policy.mode`
    `"closed"`. Change origins only through `origins.json` and `npm run origins`. A
    request to a partner never holds a name, email, phone number or reference code, and
    stays under 140 characters. A partner's network gets none of its own site's
@@ -112,7 +113,8 @@ switch that would otherwise refuse.
 8. **Keys and privacy.** Never put a key, token or personal data in any file, URL,
    prompt, action argument or log. Never ask the user to paste a key into a chat. The
    visitor's key belongs in the runtime's settings panel only. Load no third-party
-   scripts on any page.
+   scripts on any page, and keep each page's Content-Security-Policy in `_headers` as
+   restrictive as `sites/utility/tests/csp.test.mjs` requires.
 9. **Each page must work without the assistant.** If the runtime fails to boot, the page
    says so and stays usable.
 10. **Stay honest in the product.** Every site says it is a fictional demo. Do not use

@@ -9,6 +9,8 @@
 // got, which come from the sites' own data and rules: a test that finds "£145.92" in the
 // chat knows the figure travelled through the swarm, not from this script.
 
+import { watchCsp } from "./csp.mjs";
+
 /** The router the sites' manifests name, and the test key typed into the settings. */
 export const ROUTER = "https://openrouter.ai/api/v1";
 export const TEST_KEY = "e2e-test-key-not-real";
@@ -295,6 +297,7 @@ export function reply(body) {
  * :return: The recorded requests: {host, url, headers}.
  */
 export async function useScriptedRouter(browser, hosts = []) {
+  await watchCsp(browser);
   const seen = [];
   for (const host of hosts) {
     await browser.route(new RegExp(`^https?://${host.replace(/[.:[\]]/g, "\\$&")}/`), async (route) => {

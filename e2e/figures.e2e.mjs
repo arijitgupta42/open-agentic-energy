@@ -6,6 +6,7 @@
 import { test } from "@e2e-dev/web";
 import { expect } from "e2e";
 import { TEST_KEY, useScriptedRouter } from "./scripted-router.mjs";
+import { expectNoCspViolations } from "./csp.mjs";
 
 test("11. A usage answer is drawn as stat tiles and a chart, with its numbers in a table", async ({ app, screen, browser }) => {
   await useScriptedRouter(browser);
@@ -26,6 +27,8 @@ test("11. A usage answer is drawn as stat tiles and a chart, with its numbers in
   await expect(browser.locator("#ns-msgs .ou-data table tbody tr")).toHaveCount(12);
   // Only what was drawn is shown: no code, and no copy of what the assistant wrote.
   await expect(browser.locator("#ns-msgs pre")).toHaveCount(0);
+  // Drawing the figures needs no inline script and nothing the page's policy blocks.
+  await expectNoCspViolations(browser);
 });
 
 test("14. Every site is dark until the visitor flips the switch, and keeps the choice", async ({ app, screen, browser }) => {
