@@ -262,7 +262,13 @@ export class OpenUi {
       if (!part.closed && partial) {
         continue;
       }
-      const match = part.text.match(/^([A-Za-z_]\w*)\s*=\s*([\s\S]+)$/);
+      let match = part.text.match(/^([A-Za-z_]\w*)\s*=\s*([\s\S]+)$/);
+      // A first statement may be one component call with no name, such as
+      // Stack([...], "row"): models write that too. It is the root.
+      const bare = part.text.match(/^([A-Za-z_]\w*)\s*\(/);
+      if (!match && bare && !statements.size && Object.hasOwn(OpenUi.LIBRARY, bare[1])) {
+        match = [part.text, "root", part.text];
+      }
       if (!match) {
         if (!partial || part.closed) {
           errors.push(`Not a statement: ${part.text.slice(0, 40)}`);
@@ -586,10 +592,14 @@ export class OpenUi {
    * the fence's label, so this goes by the first statement.
    *
    * :param code: The text of a code block.
-   * :return: True when it starts with "root =", or with any name set to one of the
-   *     components, such as "summary = Stack(".
+   * :return: True when it starts with "root =", with any name set to one of the
+   *     components, such as "summary = Stack(", or with a call to one, such as "Stack(".
    */
   static looksLike(code) {
+    const call = String(code || "").match(/^\s*([A-Za-z_]\w*)\s*\(/);
+    if (call) {
+      return Object.hasOwn(OpenUi.LIBRARY, call[1]);
+    }
     const first = String(code || "").match(/^\s*([A-Za-z_]\w*)\s*=\s*([A-Za-z_]\w*)?\s*(\()?/);
     if (!first) {
       return false;
