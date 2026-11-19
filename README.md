@@ -34,10 +34,10 @@ three sites. The companies, tariffs, prices and grants are fictional.
    Heat Pump Saver at £1,617.79 a year, £145.92 less than the cheapest tariff now.
 5. Watch "The swarm at work" beside the chat while the answer is made: a live graph of
    all 11 agents, grouped by site, where the agents and calls working on your message
-   light up. Point at an agent or a call for a few lines on what it did for that answer:
-   who asked it what, the tools it used, its reply and your consent decision. Point at a
-   chat message to see its path again. The key is
-   listed only as "not shown".
+   light up, with sparks moving along the calls until the answer is done. Point at an
+   agent or a call for a few plain lines on what it did for that answer: who asked it
+   what, what it looked up or worked out, whom it asked, and your consent decision.
+   Point at a chat message to see its path again.
 
 **Other AI providers.** OpenRouter is only the default. Under Advanced settings, any
 OpenAI-compatible provider that allows browser calls works, and so does Claude on
@@ -133,22 +133,93 @@ knows as a network of agents, and lets another site run that network on request.
   "The swarm at work" (a live graph, plain SVG with no library) is built from that
   trace, with no change to the runtime.
 
-## How it meets the specification
+## Compliance with the hackathon rules
 
-| Spec section 6 check | Where it happens |
-| --- | --- |
-| A two-agent network and manifest on an HTTPS host | Emberwick publishes four agents, `agent-manifest.json` and `links.json` on Cloudflare Workers |
-| Runs in a browser on the site's router; BYOK shown | OpenRouter with `openai/gpt-6-luna` by default; any OpenAI-compatible provider that allows browser calls; a protocol picker also supports Anthropic Messages endpoints such as Claude on Azure AI Foundry |
-| An internal agent and a grounded capability | `emberwick_assistant` → `usage_analyst` → MCP `estimate_heat_pump_running_cost` |
-| An exact named network from a second origin, after approval | `retrofit_planner` → `heatwright_installers` and `fernbrook_grants`, each after its own card |
-| The second site never gets the key or changes the router | Checked live in the browser's network log, and by browser workflow test 5 |
-| Private context absent at the peer | No network declares a private-context allow rule; partners receive only the request text the card showed |
-| Visible errors for an invalid network, a cycle, an over-budget request, a denied origin | The [Safety checks page](https://emberwick-energy.open-agentic-energy.workers.dev/lab/), and browser workflow test 8 |
+**Last checked: 19 November 2026**, at commit `0ebb319` on `production`, against the
+[official rules](https://cognizant-agenticweb.devpost.com/rules) and
+[updates](https://cognizant-agenticweb.devpost.com/updates) as read that day, and the
+specification as it stood when the submission period opened.
+
+**In short:** the hosted sites meet every requirement the rules set for the submitted
+URL, and every check in section 6 of the specification. Stage one of judging is a pass
+or fail on exactly those. What remains is outside the code: the video and the Devpost
+entry. Two MUSTs in specification section 3.1 are met only in part because of how the
+reference runtime works, and one SHOULD in section 4 (a Content Security Policy) is not
+met yet. They are listed below rather than hidden.
+
+How it was checked:
+
+- `npm run check`: 54 conformance checks on the built files, all passing.
+- `npm run conformance:live -- --env production`: 69 checks on the hosted sites (CORS,
+  manifests, networks, bridge), all passing.
+- `check_partner.mjs` on all five cross-site calls from their real callers, all passing.
+- `npm test` (293 tests) and `npm run test:e2e` (18 browser workflows), all passing.
+- The browser checks with a live key, recorded on issues #4 to #8, all closed.
+- The Devpost rules page and updates page, read again on 19 November 2026. The only
+  update is an office-hour notice, with no change to the rules.
+
+### What the rules require
+
+| Rule | Status | Evidence |
+| --- | --- | --- |
+| A working open agentic website built with standard open web technologies | Met | Plain HTML, CSS and JavaScript modules, no dependencies, no bundler |
+| Conforms to the specification as at the start of the submission period | Met | Our copy in `docs/hackathon/` is identical to upstream commit `fd872b9` (MVP Profile 0.2), the version in force on 11 November 2026. Upstream's Profile 0.3 (19 November) only fixes links and typos. See the next table |
+| Publicly accessible, runs consistently in a current browser | Met | Hosted over HTTPS on Cloudflare Workers; 18 browser workflows pass in Chromium |
+| The URL holds a public, conforming `.json` describing the network | Met | `agent-manifest.json` and `emberwick_energy.network.json`, served with CORS |
+| The URL holds a runtime file that runs the network in the browser | Met | `runtime/`, an unchanged copy of the reference runtime (`sync-runtime --check`) |
+| The URL holds an interface to the network | Met | "Ask Emberwick Energy" on the page |
+| Optional: an interface to choose LLMs and keys | Met | The runtime's AI model settings, with a protocol picker for Anthropic Messages endpoints |
+| The network works with the website, and optionally with other agentic websites | Met | `website_*` site actions on the page; it calls Heatwright and Fernbrook, and both call it |
+| New, or significantly updated in the submission period | Met | The first commit is dated 13 November 2026 |
+| Third-party code and APIs used under their terms | Met | The reference runtime is Apache 2.0, credited in `NOTICE`. No page loads a third-party script. A model provider is reached only with the visitor's own key, under the visitor's own terms |
+| Original work, open source, builds on what it uses | Met | Apache 2.0, public at github.com/arijitgupta42/open-agentic-energy. Our own: three sites, 11 agents, three MCP servers, the swarm graph, the answer-path reader, the Anthropic protocol adapter, the Safety checks page |
+| Free to test, without restriction, until judging ends | Met, with a note | The sites are free and every page works without the assistant. Chatting needs a model key the tester supplies (the specification allows BYOK); the Safety checks page needs no key. The description must say so plainly |
+| Fictional, with no third-party marks in the product | Met | Every page says it is a fictional demo; the logos are drawn in SVG here; the companies, tariffs and grants are invented |
+| All materials in English | Met | |
+| No financial or preferential support from the sponsor | The entrant's own declaration | Not something the code can show |
+| Text description and screenshots | Drafted | `docs/devpost/description.md` (issue #11) |
+| A demo video under two minutes, narrated by the entrant, public on YouTube, no third-party marks or music | **Not done yet** | Issue #10; `docs/devpost/demo_script.md` is the script |
+| The Devpost entry itself, by 11 January 2027 16:00 UTC | **Not done yet** | Issues #12 and #13 |
+
+### What the specification requires
+
+| Spec section 6 check | Status | Where it happens |
+| --- | --- | --- |
+| A two-agent network and manifest on an HTTPS host | Met | Emberwick publishes four agents, `agent-manifest.json` and `links.json` on Cloudflare Workers |
+| Runs in a browser on the site's router; BYOK shown | Met | OpenRouter with `openai/gpt-6-luna` by default; any OpenAI-compatible provider that allows browser calls; Anthropic Messages endpoints such as Claude on Azure AI Foundry |
+| An internal agent and a grounded capability | Met | `emberwick_assistant` → `usage_analyst` → MCP `estimate_heat_pump_running_cost` |
+| An exact named network from a second origin, after approval | Met | `retrofit_planner` → `heatwright_installers` and `fernbrook_grants`, each after its own card |
+| The second site never gets the key or changes the router | Met | Checked live in the browser's network log (issue #7), and by browser workflow 5 |
+| Private context absent at the peer | Met | No network declares a private-context allow rule; partners receive only the request text the card showed |
+| Visible errors for an invalid network, a cycle, an over-budget request, a denied origin | Met | The [Safety checks page](https://emberwick-energy.open-agentic-energy.workers.dev/lab/), and browser workflow 8 |
 
 Peer policy is closed on every site: each manifest lists the partner origins it may
-contact, and the runtime refuses any other. The full mapping, including what needs a
-browser to check, is in
+contact, and the runtime refuses any other. Each network sets `max_steps`. Irreversible
+actions (a tariff switch, a survey request, an application) open the site's own
+confirmation dialog first. After the visitor allows a partner, that partner's agents
+reach its own `/mcp` without a second card. Spec section 5 scopes a remembered approval
+to the destination origin for the session, so this is within the rules.
+
+### Met only in part
+
+The first two come from the reference runtime, which the rules ask us to build on and
+which this project does not edit. The third is ours to fix.
+
+| Spec | What it asks | Where we stand |
+| --- | --- | --- |
+| 3.1, MUST | Show the destination and arguments before a write | Irreversible actions do. Writes the visitor can undo on the page (show a comparison, show an estimate, record answers) run without a preview |
+| 3.1, MUST | Finite limits on elapsed time | Steps, calls and concurrency are bounded. A partner that accepts the connection and never answers leaves the chat waiting until the page is reloaded |
+| 4, SHOULD | A restrictive Content Security Policy | No page loads a third-party script, and the runtime's coded-tool worker has a strict CSP. The pages themselves send no CSP header yet |
+
+The full mapping, including what needs a browser to check, is in
 [docs/hackathon/conformance_checklist.md](docs/hackathon/conformance_checklist.md).
+
+### Keeping this section current
+
+Every pull request updates this section before it is merged into `dev`: the date, the
+commit, and any row the change affects. A change that adds a gap, closes one or changes
+a count changes the table in the same pull request. Before submitting, read the Devpost
+rules and updates pages again and compare the specification with upstream.
 
 ## Shared with the community
 
@@ -167,10 +238,10 @@ browser to check, is in
 
 ## Tests
 
-`npm test` runs 97 tests with no LLM. They load the real runtime and page code against a
+`npm test` runs 293 tests with no LLM. They load the real runtime and page code against a
 scripted model, and check the MCP servers against amounts worked out by hand.
 
-`npm run test:e2e` runs ten user workflows in Chromium with
+`npm run test:e2e` runs 18 user workflows in Chromium with
 [e2e](https://github.com/e2e-inc/e2e). A scripted router inside the browser stands in for
 the model, so the real runtime, networks, consent cards, partner sites and MCP servers
 all run, with no key:
@@ -191,6 +262,16 @@ all run, with no key:
 10. Suggested requests: a starter in each chat box, the agent's own next request, taken from the last line of its answer, shown with
     the answer, and Tab to take it. Each site's starter
     needs another site, so the first request already runs across the swarm.
+11. A usage answer is drawn as stat tiles and a chart, with its numbers in a table.
+12. Several chats in one visit: the swarm follows the chat on show, and partners can be
+    approved automatically.
+13. The chat box grows as a long request wraps, and shrinks back once it is sent.
+14. Enter sends; Shift+Enter and pasted text make new lines, and the message keeps them.
+15. Every site starts dark and keeps the visitor's light or dark choice.
+16. On a phone, every site opens on the chat, with the page, swarm and settings one tap
+    away.
+17. The heat pump question on a phone: thumb-sized consent cards, then the chats sheet.
+18. Figures fit a phone's screen.
 
 ## Known limits
 
@@ -215,8 +296,8 @@ Only the browser workflow tests need `npm install` (e2e, a development dependenc
 
 ```shell
 npm run build      # write the published network files
-npm test           # 97 tests: real runtime and page code, scripted model, no LLM, plus the MCP servers
-npm run test:e2e   # 9 user workflows in a real browser, on a scripted model (docs/development.md)
+npm test           # 293 tests: real runtime and page code, scripted model, no LLM, plus the MCP servers
+npm run test:e2e   # 18 user workflows in a real browser, on a scripted model (docs/development.md)
 npm run check      # generated files, runtime copies and conformance checks
 npm run serve      # serve the three sites, each with its /mcp
 ```

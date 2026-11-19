@@ -50,6 +50,10 @@ production origins and is what is deployed. Every change follows the same path:
 1. **Branch from `dev`.** Name it `feat/<name>`, `fix/<name>` or `docs/<name>`. Commit
    there, never straight to `dev` or `production`, and name the issue in the message when
    there is one. Run the build, tests and check above before each commit.
+   **Update the README's "Compliance with the hackathon rules" section** on the branch
+   before it is merged: the date, the commit, any row the change affects, and any count
+   it changes (tests, checks, workflows). A change that opens or closes a gap updates
+   "Met only in part" and `docs/hackathon/conformance_checklist.md` together.
 2. **Merge the branch into `dev`** with `git merge --no-ff`, then push `dev`.
 3. **Merge `dev` into `production`.** Run `npm run origins -- production`, `npm test` and
    `node scripts/check-conformance.mjs --production`, commit what the origins step
