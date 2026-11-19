@@ -86,12 +86,14 @@ test("5. The swarm answers a heat pump question from all three sites, after the 
     await expect(browser.locator(`.swarm-node[data-state="ok"][aria-label^="${agent},"]`)).toHaveCount(1);
   }
   await expect(browser.locator('.swarm-node[data-state="idle"][aria-label^="tariff_advisor,"]')).toHaveCount(1);
-  // The scheme agent's tooltip: one short line for its AAOSA round, and the tool it used.
+  // The scheme agent's tooltip is plain: its job, and that it helped. No tool names, no AAOSA, no timings.
   await browser.locator('.swarm-node[aria-label^="heat_pump_grant_agent,"]').click();
   const tip = browser.locator("#swarm-tip");
-  await expect(tip).toContainText("From fernbrook_assistant (AAOSA Determine");
-  await expect(tip).toContainText("Used: check_scheme");
-  await expect(tip).toContainText("ran in your browser, you allowed it");
+  await expect(tip).toContainText("Heat pump grant");
+  await expect(tip).toContainText("Helped with this answer (you allowed it).");
+  await expect(tip).not.toContainText("check_scheme");
+  await expect(tip).not.toContainText("AAOSA");
+  await expect(tip).not.toContainText("model call");
   // The key went only to the router; partner sites got public files and /mcp only.
   const partnerRequests = seen.filter((request) => PARTNERS.includes(request.host));
   expect(partnerRequests.length).toBeGreaterThan(0);
@@ -118,7 +120,7 @@ test("6. A declined partner is never contacted, and the answer says the visitor 
   await expect(browser.locator('.swarm-node[data-state="refused"][aria-label^="fernbrook_assistant,"]')).toHaveCount(1);
   expect((await browser.locator(".swarm-site-status").allTextContents()).join(" | ")).toContain("partner · declined");
   await browser.locator('.swarm-node[aria-label^="fernbrook_assistant,"]').click();
-  await expect(browser.locator("#swarm-tip")).toContainText("Did not run: You declined contact with localhost:8082.");
+  await expect(browser.locator("#swarm-tip")).toContainText("You chose not to contact this site.");
   expect(seen.filter((request) => request.host === "localhost:8082")).toEqual([]);
 });
 
