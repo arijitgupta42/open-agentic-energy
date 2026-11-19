@@ -266,9 +266,16 @@ export class AssistantMount {
     // defaultConsent() adds the card at once. The card has no role, and the stylesheet
     // hides the status line while it waits, so name the card and focus its title.
     const answer = AssistantMount.defaultConsent(info);
+    const cards = document.querySelectorAll("#ns-msgs .ns-consent");
+    const card = cards[cards.length - 1];
     AssistantMount.showWholeRequest(info);
     AssistantMount.focusConsentCard();
     const decision = await answer;
+    // The runtime writes "✓ Allowed" and "✕ Declined" with the same class. Mark the card
+    // with the answer, so the stylesheet can show a decline in red.
+    if (card) {
+      card.dataset.decision = decision || "allow";
+    }
     // The runtime's trace records only a declined card. Record every answer, so the
     // swarm graph can say what the visitor decided (spec 5).
     AssistantMount.trace?.note("consent", {page: true, peerOrigin: info?.peerOrigin, decision: decision || "allow", consentFor: info?.kind});

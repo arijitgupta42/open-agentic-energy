@@ -778,6 +778,8 @@ class AgentifiedSiteTest {
     AgentifiedSiteTest.answerCard("decline");
     assert.equal(await answer, "decline");
     assert.equal(chatInput.focused, true, "consent() did not put focus back in the chat input.");
+    assert.equal(newest.card.dataset.decision, "decline", "consent() did not mark the card with the visitor's answer.");
+    assert.equal(older.card.dataset.decision, undefined, "consent() marked an older card.");
   }
 
   /**
