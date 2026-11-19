@@ -1,3 +1,4 @@
+// Workflows 11 and 14: figures in the chat, and the dark and light themes.
 // Workflow 11: figures in the chat. The assistant answers with an openui block
 // (js/openui.js) and the chat draws stat tiles and a chart from it, on the scripted router
 // in scripted-router.mjs: no model and no real key. The figures come from the account
@@ -23,7 +24,22 @@ test("11. A usage answer is drawn as stat tiles and a chart, with its numbers in
   await expect(browser.locator("#ns-msgs .ou-root rect.ou-bar")).toHaveCount(24);
   // The numbers are in a table for anyone who cannot see the picture.
   await expect(browser.locator("#ns-msgs .ou-data table tbody tr")).toHaveCount(12);
-  // The only code left is the folded copy of what the assistant wrote.
-  await expect(browser.locator("#ns-msgs pre")).toHaveCount(1);
-  await expect(browser.locator("#ns-msgs details.ou-source pre")).toHaveCount(1);
+  // Only what was drawn is shown: no code, and no copy of what the assistant wrote.
+  await expect(browser.locator("#ns-msgs pre")).toHaveCount(0);
+});
+
+test("14. Every site is dark until the visitor flips the switch, and keeps the choice", async ({ app, screen, browser }) => {
+  for (const url of ["/", "http://localhost:8081/", "http://localhost:8082/"]) {
+    await app.open(url);
+    await expect(browser.locator('html[data-theme="dark"]')).toHaveCount(1);
+    const toggle = screen.getByRole("switch", "Dark mode");
+    await expect(toggle).toBeVisible();
+    await toggle.tap();
+    await expect(browser.locator('html[data-theme="light"]')).toHaveCount(1);
+    // The choice is kept for the next visit to the same site.
+    await app.open(url);
+    await expect(browser.locator('html[data-theme="light"]')).toHaveCount(1);
+    await screen.getByRole("switch", "Dark mode").tap();
+    await expect(browser.locator('html[data-theme="dark"]')).toHaveCount(1);
+  }
 });
