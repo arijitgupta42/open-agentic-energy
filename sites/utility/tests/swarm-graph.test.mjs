@@ -267,6 +267,34 @@ test("a finished answer gives each agent its request, tools, model, reply and ca
   assert.deepEqual(unused.at(-1), {label: "", text: "Not needed for this answer."});
 });
 
+test("a tooltip never shows the runtime's own notes, only what the agent did", () => {
+  // A skipped partner, a limit, a tool call and a failed model call used to add a red "Note"
+  // row. They are for the developer log: a visitor reads what the agent did, and the
+  // orb itself turns red when it failed.
+  const asked = "Which tariff would be cheapest for me?";
+  const turn = {
+    question: asked,
+    answer: "Green Flex.",
+    nodes: [{
+      kind: "agent", agent: "emberwick_assistant", network: OWN, status: "error", error: "The model call failed", asked, replied: "Green Flex.",
+      children: [
+        {kind: "skip", title: "Not offered heatwright_installers", detail: "The runtime left it out: already in this request.", status: "ok", children: []},
+        {kind: "limit", title: "Stopped by the runtime", detail: "too many steps", status: "refused", children: []},
+        {kind: "tool", title: "Tool website_get_account_state (site action)", detail: "", status: "ok", children: []},
+        {kind: "error", title: "Something failed", error: "boom", status: "error", children: []},
+        {kind: "model", title: "Model: openai/gpt-6-luna", calls: 1, error: "429 rate limited", status: "error", children: []},
+      ],
+    }],
+  };
+  const act = SwarmGraph.activity(turn);
+  const lines = SwarmGraph.agentLines("emberwick_energy/emberwick_assistant", act, turn, OWN);
+  assert.ok(lines.rows.length > 0, "The tooltip still says who asked and what came back.");
+  for (const row of lines.rows) {
+    assert.notEqual(row.label, "Note");
+    assert.doesNotMatch(`${row.label} ${row.text}`, /runtime left it out|Stopped by the runtime|rate limited|boom/);
+  }
+});
+
 test("no tooltip ever holds a key, and a long request is cut", () => {
   const trace = new TraceBus();
   finish(trace, recordHeatPump(trace, "allowed"));
