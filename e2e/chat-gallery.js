@@ -90,6 +90,7 @@ async (theme) => {
   add(msgs, "ns-msg bot ns-consent", '<div class="ns-consent-title">🔗 Contact <b>Fernbrook Retrofit Grants</b> on your behalf?</div><div class="ns-consent-sub">https://fernbrook.example · est. ~900 tokens</div><div class="ns-consent-req">“Which grants pay towards a heat pump?”</div><div class="ns-consent-actions"><button>Allow</button><button class="ghost">Always allow</button><button class="ghost">Decline</button></div>');
   add(msgs, "ns-msg bot ns-consent", '<div class="ns-consent-title">🔗 Contact <b>Heatwright</b> on your behalf?</div><div class="ns-consent-done">✓ Allowed</div>');
   add(msgs, "ns-msg bot ns-consent", '<div class="ns-consent-title">🔗 Contact <b>Heatwright</b> on your behalf?</div><div class="ns-consent-done">✕ Declined</div>');
+  msgs.lastElementChild.dataset.decision = "decline";
   add(msgs, "ns-msg bot ns-auto-approved", '<div class="ns-auto-approved-title">✓ Contacted Heatwright automatically</div><div class="ns-auto-approved-origin">https://heatwright.example</div><div class="ns-auto-approved-request">“Heat pump estimate for a 95 m2 semi?”</div>');
   add(msgs, "ns-msg bot ns-linker", '<div class="ns-linker-title">🔗 Link a partner network</div><div class="ns-linker-sub">Paste its network URL.</div><form class="ns-linker-form"><input type="text" value="https://partner.example/network"><button>Link</button></form>');
   add(msgs, "ns-hint", "Your key stays in this browser.");

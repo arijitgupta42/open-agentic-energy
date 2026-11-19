@@ -112,11 +112,15 @@ footer { border-top: 1px solid var(--line); padding: 18px 24px; font-size: 0.85e
 #agent-app .ns-w-cmeta { color: var(--brand-ink); }
 #agent-app .ns-w-field { border-bottom-color: var(--line); }
 #agent-app .ns-w-btn.ghost { color: var(--muted); border-color: var(--line); }
-#agent-app .ns-consent { --caution: #b45309; --done: #166534; background: color-mix(in srgb, #f59e0b 10%, var(--surface)); border-color: color-mix(in srgb, #f59e0b 60%, var(--line)); color: var(--ink); }
-:root[data-theme="dark"] #agent-app .ns-consent { --caution: #fbbf24; --done: #4ade80; }
+#agent-app .ns-consent { --caution: #b45309; --done: #166534; --declined: #b42318; background: color-mix(in srgb, #f59e0b 10%, var(--surface)); border-color: color-mix(in srgb, #f59e0b 60%, var(--line)); color: var(--ink); }
+:root[data-theme="dark"] #agent-app .ns-consent { --caution: #fbbf24; --done: #4ade80; --declined: #f87171; }
+/* Every consent card, waiting or answered, is one width on every site, whatever its text. */
+#agent-app .ns-msg.ns-consent { box-sizing: border-box; width: min(95%, 520px); max-width: 95%; }
 #agent-app .ns-consent-req, #agent-app .ns-consent-sub { color: var(--muted); }
 #agent-app .ns-consent-actions button.ghost { color: var(--caution); border-color: color-mix(in srgb, var(--caution) 70%, transparent); }
 #agent-app .ns-consent-done { color: var(--done); }
+/* site.js marks the card with the visitor's answer: a decline reads in red. */
+#agent-app .ns-consent[data-decision="decline"] .ns-consent-done { color: var(--declined); }
 /* The model badges and warning hints keep their status hue, mixed with this theme's ink
    so the text stays readable on light and dark. */
 #agent-app .ns-llmbadge { --tone: #64748b; background: color-mix(in srgb, var(--tone) 14%, var(--surface)); border-color: color-mix(in srgb, var(--tone) 55%, var(--line)); color: color-mix(in srgb, var(--tone) 45%, var(--ink)); }
