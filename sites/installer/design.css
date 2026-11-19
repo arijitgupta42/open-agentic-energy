@@ -2,167 +2,137 @@
    (a test keeps it so); the rest is this site's own character. */
 /* ===== design core: the same on all three sites ===== */
 :root {
-  --radius: 14px;
-  --radius-sm: 9px;
-  --shadow-1: 0 1px 2px rgba(16, 24, 40, 0.06), 0 1px 3px rgba(16, 24, 40, 0.05);
-  --shadow-2: 0 16px 34px -16px rgba(16, 24, 40, 0.3), 0 3px 8px rgba(16, 24, 40, 0.06);
-  --ring: color-mix(in srgb, var(--brand-ink) 34%, transparent);
+  --radius: 8px;
+  --radius-sm: 6px;
+  --shadow-1: none;
+  --shadow-2: 0 18px 40px -26px rgba(0, 0, 0, 0.45);
   --ease: cubic-bezier(0.22, 0.7, 0.2, 1);
+  --ring: color-mix(in srgb, var(--brand-ink) 34%, transparent);
   --font-body: system-ui, -apple-system, "Segoe UI Variable Text", "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-}
-:root[data-theme="dark"] {
-  --shadow-1: 0 1px 0 rgba(255, 255, 255, 0.04) inset, 0 1px 3px rgba(0, 0, 0, 0.45);
-  --shadow-2: 0 20px 44px -18px rgba(0, 0, 0, 0.8), 0 0 0 1px rgba(255, 255, 255, 0.03);
 }
 ::selection { background: color-mix(in srgb, var(--brand-ink) 36%, transparent); }
 :focus-visible { outline: 2px solid var(--brand-ink); outline-offset: 2px; }
-
-/* The page: a quiet glow of the brand's colour behind the top. */
-body {
-  font-family: var(--font-body);
-  -webkit-font-smoothing: antialiased;
-  text-rendering: optimizeLegibility;
-  line-height: 1.62;
-  background:
-    radial-gradient(900px 420px at 88% -90px, color-mix(in srgb, var(--brand-ink) 12%, transparent), transparent 70%),
-    var(--paper);
-  background-repeat: no-repeat;
-}
-
-/* Header: a gradient of the brand colour, a mark, and links that light up. */
-header {
-  padding: 12px 28px;
-  background: linear-gradient(120deg, var(--brand) 0%, color-mix(in srgb, var(--brand) 74%, #000) 100%);
-  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.14) inset, 0 8px 22px -12px rgba(0, 0, 0, 0.6);
-}
-.brand { display: inline-flex; align-items: center; gap: 10px; font-family: var(--font-display, inherit); letter-spacing: 0.005em; }
-.brand::before {
-  content: ""; flex: none; width: 22px; height: 22px; background: var(--mark, #fff);
-  border-radius: var(--mark-radius, 50%); box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.38), 0 2px 8px rgba(0, 0, 0, 0.3);
-}
-header nav a { padding: 6px 13px; border-radius: 999px; transition: background 0.18s var(--ease); }
-header nav a:hover, header nav a:focus-visible { background: rgba(255, 255, 255, 0.17); text-decoration: none; }
-
-/* Type. */
-h1, h2, h3 { font-family: var(--font-display, inherit); letter-spacing: var(--display-tracking, -0.01em); text-wrap: balance; }
-h1 { font-size: clamp(1.9em, 4.6vw, 2.9em); line-height: 1.12; font-weight: var(--display-weight, 700); margin: 10px 0 16px; }
-h2 { font-size: 1.55em; font-weight: var(--display-weight, 700); margin: 0 0 14px; }
-main section > h2::after { content: ""; display: block; width: 42px; height: 3px; margin-top: 9px; border-radius: 3px; background: var(--brand-ink); opacity: 0.9; }
-main { padding-top: 14px; }
-section { margin-top: 52px; }
+body { font-family: var(--font-body); -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility; line-height: 1.6; }
+h1, h2, h3 { font-family: var(--font-display, inherit); font-weight: var(--display-weight, 700); letter-spacing: var(--display-tracking, -0.01em); text-wrap: balance; }
+p, li { text-wrap: pretty; }
+main section > p, main section > ul, .assistant-note { max-width: 68ch; }
+.assistant-note { color: var(--muted); font-size: 0.93em; }
 .intro p:not(.eyebrow):not(.note) { color: var(--muted); }
 
-.eyebrow {
-  display: inline-block; margin: 34px 0 0; padding: 4px 13px; font-size: 0.72em; letter-spacing: 0.11em;
-  border-radius: 999px; background: var(--tint); border: 1px solid color-mix(in srgb, var(--brand-ink) 30%, transparent);
-}
-.note {
-  position: relative; padding: 13px 18px 13px 50px; border: 1px solid color-mix(in srgb, var(--brand-ink) 26%, transparent);
-  border-radius: var(--radius); background: var(--tint);
-}
-.note::before {
-  content: "i"; position: absolute; left: 15px; top: 14px; width: 22px; height: 22px; border-radius: 50%;
-  background: var(--brand-ink); color: var(--surface); display: grid; place-items: center; font: 700 13px/1 var(--font-body);
-}
-
-/* The account summary and other panels. */
-.summary {
-  background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius);
-  padding: 16px 22px; box-shadow: var(--shadow-1); gap: 8px 24px;
-}
-.summary dt { color: var(--muted); font-weight: 650; font-size: 0.8em; text-transform: uppercase; letter-spacing: 0.06em; align-self: center; }
-
-/* Cards lift and take the brand's colour when pointed at. */
-.card {
-  position: relative; padding: 18px 20px; border-radius: var(--radius); box-shadow: var(--shadow-1);
-  transition: transform 0.22s var(--ease), box-shadow 0.22s var(--ease), border-color 0.22s;
-}
-.card:hover { transform: translateY(-3px); box-shadow: var(--shadow-2); border-color: color-mix(in srgb, var(--brand-ink) 48%, var(--line)); }
-.card h3 { font-size: 1.12em; }
-.card .strong { font-variant-numeric: tabular-nums; }
-.card.current {
-  border-color: var(--brand-ink);
-  background: linear-gradient(180deg, color-mix(in srgb, var(--brand-ink) 10%, var(--surface)), var(--surface) 65%);
-  box-shadow: 0 0 0 1px var(--brand-ink), var(--shadow-1);
-}
-
-/* The page's own forms and buttons (not the assistant's). */
-section:not(.assistant) > form {
-  max-width: 600px; gap: 12px; padding: 22px 24px; background: var(--surface);
-  border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow-1);
-}
-section:not(.assistant) label { font-size: 0.9em; }
-section:not(.assistant) :is(input, select) {
-  padding: 11px 13px; border-radius: var(--radius-sm); transition: border-color 0.15s, box-shadow 0.15s;
-}
+/* The page's own forms: a clear focus ring, and buttons that answer a press. */
+section:not(.assistant) :is(input, select) { transition: border-color 0.15s, box-shadow 0.15s; }
 section:not(.assistant) :is(input, select):focus-visible { outline: none; border-color: var(--brand-ink); box-shadow: 0 0 0 3px var(--ring); }
-section:not(.assistant) button {
-  padding: 11px 20px; border-radius: var(--radius-sm); font-weight: 650; letter-spacing: 0.01em;
-  background: linear-gradient(180deg, color-mix(in srgb, var(--brand-solid) 86%, #fff), var(--brand-solid));
-  box-shadow: var(--shadow-1), 0 1px 0 rgba(255, 255, 255, 0.2) inset;
-  transition: transform 0.15s var(--ease), filter 0.15s;
-}
-section:not(.assistant) button:hover, section:not(.assistant) button:focus-visible { filter: brightness(1.1); transform: translateY(-1px); }
-section:not(.assistant) button:active { transform: translateY(0); }
-.result {
-  border: 1px solid color-mix(in srgb, var(--brand-ink) 28%, transparent); border-left: 4px solid var(--brand-ink);
-  border-radius: var(--radius); padding: 14px 18px;
-}
-
-/* The usage bars. */
-.bars {
-  padding: 18px 18px 10px; background: var(--surface); border: 1px solid var(--line);
-  border-radius: var(--radius); box-shadow: var(--shadow-1);
-}
-.bars .bar { background: linear-gradient(180deg, var(--brand-ink), var(--brand-solid)); border-radius: 6px 6px 0 0; transition: filter 0.2s; }
-.bars > div:hover .bar { filter: brightness(1.2); }
-
-/* Footer. */
-footer { padding: 30px 24px 44px; line-height: 1.75; }
-footer a { text-underline-offset: 3px; }
+section:not(.assistant) button { transition: transform 0.15s var(--ease), background-color 0.15s, filter 0.15s; }
+section:not(.assistant) button:active { transform: translateY(1px); }
 
 /* The assistant on a laptop: the chat, the chats list and the swarm are raised panels. */
 @media (min-width: 761px) {
   #agent-app .ns-chat { border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow-2); overflow: hidden; }
   .swarm-map, .chat-list { border-radius: var(--radius); box-shadow: var(--shadow-1); }
-  #agent-app .ns-msg.bot { border-radius: 16px 16px 16px 5px; }
-  #agent-app .ns-msg.user {
-    border-radius: 16px 16px 5px 16px;
-    background: linear-gradient(135deg, var(--brand-solid), color-mix(in srgb, var(--brand-solid) 74%, #000));
-    box-shadow: 0 2px 8px -3px rgba(0, 0, 0, 0.4);
-  }
+  #agent-app .ns-msg.bot { border-radius: var(--radius) var(--radius) var(--radius) 3px; }
+  #agent-app .ns-msg.user { border-radius: var(--radius) var(--radius) 3px var(--radius); }
 }
 
-/* The page comes in gently. */
+/* One moment of motion: the top of the page settles in once, and only for visitors who allow motion. */
 @media (prefers-reduced-motion: no-preference) {
-  @keyframes rise { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
-  header { animation: rise 0.5s var(--ease) both; }
-  .intro > * { animation: rise 0.6s var(--ease) both; }
-  .intro > :nth-child(2) { animation-delay: 0.05s; }
-  .intro > :nth-child(3) { animation-delay: 0.1s; }
-  .intro > :nth-child(4) { animation-delay: 0.15s; }
-  .card-list > .card { animation: rise 0.55s var(--ease) both; }
-  .card-list > .card:nth-child(2) { animation-delay: 0.07s; }
-  .card-list > .card:nth-child(3) { animation-delay: 0.14s; }
-  .card-list > .card:nth-child(4) { animation-delay: 0.21s; }
+  @keyframes settle { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }
+  .intro > * { animation: settle 0.7s var(--ease) both; }
+  .intro > :nth-child(2) { animation-delay: 0.06s; }
+  .intro > :nth-child(3) { animation-delay: 0.12s; }
+  .intro > :nth-child(4) { animation-delay: 0.18s; }
 }
 /* ===== end of the design core ===== */
 
-/* ===== Heatwright Home Energy: crafted and technical. A geometric sans, tight and heavy, a faint blueprint grid and a square mark. ===== */
+/* ===== Heatwright Home Energy: a spec sheet. A heavy engineering sans, a blueprint grid that fades out below the top, plates with crop marks, and a fan for a mark. ===== */
 :root {
-  --font-display: "Avenir Next", "Segoe UI Variable Display", "Trebuchet MS", "Gill Sans", system-ui, sans-serif;
-  --display-weight: 780;
-  --display-tracking: -0.025em;
-  --mark: conic-gradient(from 210deg, #86efac, #0f5132 45%, #4ade80 80%, #86efac);
-  --mark-radius: 7px;
-  --grid: color-mix(in srgb, var(--brand-ink) 10%, transparent);
+  --font-display: "Bahnschrift", "Segoe UI Variable Display", "DIN Alternate", "Avenir Next", "Helvetica Neue", Arial, sans-serif;
+  --display-weight: 800;
+  --display-tracking: -0.035em;
+  --radius: 3px;
+  --radius-sm: 2px;
+  --shadow-2: 0 0 0 1px color-mix(in srgb, var(--brand-ink) 16%, transparent), 0 30px 54px -36px rgba(8, 30, 20, 0.55);
+  --accent: #34d27b;
+  --paper: #eef2ef; --surface: #ffffff; --surface-2: #f3f6f4; --line: #c9d6ce;
+  --ink: #12201a; --muted: #4f6258; --tint: #e1f0e7; --grid: rgba(15, 74, 47, 0.09);
+  --brand: #0f4a2f; --brand-ink: #0c6b3d; --brand-solid: #0c6b3d;
+  --btn-bg: #0f4a2f; --btn-fg: #ffffff;
 }
-body::before {
-  content: ""; position: fixed; inset: 0; z-index: -1; pointer-events: none;
-  background-image: linear-gradient(var(--grid) 1px, transparent 1px), linear-gradient(90deg, var(--grid) 1px, transparent 1px);
-  background-size: 36px 36px;
-  -webkit-mask-image: linear-gradient(#000, transparent 52%); mask-image: linear-gradient(#000, transparent 52%);
+:root[data-theme="dark"] {
+  --paper: #0a110e; --surface: #111b16; --surface-2: #172620; --line: #26392f;
+  --ink: #e8f3ec; --muted: #91a99a; --tint: #10291c; --grid: rgba(74, 222, 128, 0.085);
+  --brand: #0d3a25; --brand-ink: #4ade80; --brand-solid: #15803d;
+  --btn-bg: #4ade80; --btn-fg: #06210f;
 }
-.eyebrow { border-radius: 6px; font-weight: 750; }
-.card { border-radius: 12px; }
-main section > h2::after { width: 56px; height: 4px; border-radius: 1px; }
+body {
+  background:
+    linear-gradient(to bottom, transparent 0, var(--paper) 560px) 0 0 / 100% 560px no-repeat,
+    repeating-linear-gradient(90deg, var(--grid) 0 1px, transparent 1px 32px) 0 0 / 100% 560px no-repeat,
+    repeating-linear-gradient(0deg, var(--grid) 0 1px, transparent 1px 32px) 0 0 / 100% 560px no-repeat,
+    var(--paper);
+}
+main { padding-top: 0; }
+section { margin-top: 76px; }
+
+/* Header: a solid bar, a bright line under it, and a fan that spins up when you point at the name. */
+header { padding: 14px 28px; background: var(--brand); border-bottom: 3px solid var(--accent); }
+.brand { display: inline-flex; align-items: center; gap: 11px; font-family: var(--font-display); font-weight: 800; font-size: 1.3em; letter-spacing: -0.02em; }
+.brand span { font-weight: 400; opacity: 0.85; letter-spacing: 0; }
+.brand::before {
+  content: ""; flex: none; width: 24px; height: 24px; border-radius: 50%; box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.55);
+  background:
+    radial-gradient(circle, var(--brand) 0 24%, transparent 26%),
+    conic-gradient(#fff 0 18%, transparent 0 25%, #fff 0 43%, transparent 0 50%, #fff 0 68%, transparent 0 75%, #fff 0 93%, transparent 0);
+  transition: transform 0.9s var(--ease);
+}
+.brand:hover::before { transform: rotate(270deg); }
+header nav { gap: 4px 8px; }
+header nav a { padding: 5px 11px; border-bottom: 2px solid transparent; text-decoration: none; transition: border-color 0.15s, background 0.15s; }
+header nav a:hover, header nav a:focus-visible { text-decoration: none; border-bottom-color: var(--accent); background: rgba(255, 255, 255, 0.1); }
+
+/* The top of the page. */
+.intro { position: relative; isolation: isolate; overflow-x: clip; padding-bottom: 12px; }
+.eyebrow { display: inline-block; margin: 52px 0 18px; padding: 4px 11px; border: 1px solid var(--brand-ink); border-radius: 2px; color: var(--brand-ink); font-size: 0.85em; font-weight: 700; letter-spacing: 0.01em; text-transform: none; background: color-mix(in srgb, var(--paper) 70%, transparent); }
+h1 { max-width: 15em; margin: 0 0 24px; font-size: clamp(2.3em, 6.2vw, 4.3em); line-height: 0.98; }
+h2 { display: flex; align-items: baseline; gap: 0.45em; margin: 0 0 18px; font-size: 2em; line-height: 1.05; }
+h2::before { content: ""; flex: none; width: 0.42em; height: 0.42em; background: var(--brand-ink); transform: translateY(-0.04em); }
+main section > h2::after { display: none; }
+h3 { font-family: var(--font-display); font-weight: 800; letter-spacing: -0.02em; }
+.note { max-width: 56ch; padding: 13px 16px; border: 1px solid var(--line); border-left: 4px solid var(--brand-ink); border-radius: 0; background: color-mix(in srgb, var(--surface) 88%, transparent); font-size: 0.93em; }
+@media (min-width: 900px) {
+  .intro::after {
+    content: ""; position: absolute; z-index: -1; right: -70px; top: 0; width: 460px; height: 460px; border-radius: 50%; pointer-events: none;
+    background: repeating-radial-gradient(circle, transparent 0 26px, color-mix(in srgb, var(--brand-ink) 40%, transparent) 26px 28px);
+    -webkit-mask-image: radial-gradient(circle, #000 12%, transparent 68%); mask-image: radial-gradient(circle, #000 12%, transparent 68%);
+  }
+}
+
+/* Products as plates, with crop marks at two corners that open up when pointed at. */
+.card-list { grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; }
+.card { position: relative; display: flex; flex-direction: column; gap: 4px; padding: 26px 24px 24px; border-radius: 2px; background: var(--surface); }
+.card::before, .card::after { content: ""; position: absolute; width: 14px; height: 14px; border: 0 solid var(--brand-ink); pointer-events: none; transition: width 0.25s var(--ease), height 0.25s var(--ease); }
+.card::before { top: -1px; left: -1px; border-width: 3px 0 0 3px; }
+.card::after { right: -1px; bottom: -1px; border-width: 0 3px 3px 0; }
+.card:hover::before, .card:hover::after { width: 30px; height: 30px; }
+.card h3 { margin: 0 0 12px; font-size: 1.35em; line-height: 1.15; }
+.card .strong { margin: 0; padding-top: 12px; border-top: 1px solid var(--line); color: var(--brand-ink); font-size: 1.05em; font-weight: 700; font-variant-numeric: tabular-nums; }
+.card.current { border-color: var(--brand-ink); background: color-mix(in srgb, var(--brand-ink) 7%, var(--surface)); }
+.card.current::before, .card.current::after { width: 30px; height: 30px; }
+#product-notes { color: var(--muted); font-size: 0.93em; }
+
+/* Forms: a spec form with a bar down the side, square fields, and a solid button. */
+section:not(.assistant) > form { max-width: 580px; gap: 8px; padding: 28px 28px 22px; background: var(--surface); border: 1px solid var(--line); border-left: 4px solid var(--brand-ink); border-radius: 0; }
+section:not(.assistant) label { margin-top: 6px; font-size: 0.88em; font-weight: 700; }
+section:not(.assistant) :is(input, select) { padding: 11px 12px; border-radius: 0; border-bottom: 2px solid var(--brand-ink); background: var(--surface-2); }
+section:not(.assistant) button:not([role="tab"]) { padding: 12px 22px; border-radius: 0; background: var(--btn-bg); color: var(--btn-fg); font-family: var(--font-display); font-weight: 800; letter-spacing: 0; }
+section:not(.assistant) button:not([role="tab"]):hover, section:not(.assistant) button:not([role="tab"]):focus-visible { filter: none; background: color-mix(in srgb, var(--btn-bg) 84%, var(--ink)); }
+.result { padding: 16px 20px; border: 1px solid var(--line); border-left: 4px solid var(--brand-ink); border-radius: 0; background: var(--surface); }
+#partner-list { list-style: none; padding: 0; }
+#partner-list li { padding: 12px 0; border-bottom: 1px solid var(--line); }
+#partner-list a { display: block; font-family: var(--font-display); font-size: 1.15em; font-weight: 800; }
+#partner-list span { color: var(--muted); }
+
+/* The assistant. */
+.assistant > p { max-width: 68ch; }
+.assistant > p:first-of-type { font-size: 1.1em; }
+.assistant-note { padding-left: 14px; border-left: 2px solid var(--line); }
+footer { padding: 34px 24px 48px; line-height: 1.75; }
