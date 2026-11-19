@@ -9,6 +9,7 @@ import { DevLog } from "./js/dev-log.js";
 import { SwarmGraph } from "./js/swarm-graph.js";
 import { PromptHints } from "./js/prompt-hints.js";
 import { LiveChat } from "./js/live-chat.js";
+import { OpenUi } from "./js/openui.js";
 import { LlmProtocol } from "./js/llm-protocol.js";
 import { PartnerApproval } from "./js/partner-approval.js";
 import { VoiceInput } from "./js/voice-input.js";
@@ -97,6 +98,12 @@ export class AssistantMount {
         LiveChat.attach(document, booted.engine, booted.trace);
       } catch (error) {
         console.error("Live progress is off", error);
+      }
+      // Figures the assistant writes as an openui block become stat tiles, tables and charts.
+      try {
+        OpenUi.attach(document);
+      } catch (error) {
+        console.error("Drawing figures is off", error);
       }
       try {
         LlmProtocol.attachPicker(document, window);

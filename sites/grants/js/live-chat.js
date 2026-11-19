@@ -13,6 +13,7 @@
 //
 // Nothing here changes what is sent or what the agents do, and the chat works without it.
 // This file is the same on all three sites.
+import { OpenUi } from "./openui.js";
 
 /**
  * The progress block and the streamed answer.
@@ -205,7 +206,17 @@ export class LiveChat {
       this.bubble.setAttribute("aria-hidden", "true");
       this.msgs.append(this.bubble);
     }
-    this.bubble.textContent = shown;
+    if (OpenUi.hasBlock(shown)) {
+      // An openui block (js/openui.js) is drawn as far as it has been written.
+      try {
+        OpenUi.fill(this.doc, this.bubble, shown);
+      } catch (error) {
+        console.error("Could not draw the answer as it is written", error);
+        this.bubble.textContent = shown;
+      }
+    } else {
+      this.bubble.textContent = shown;
+    }
     this.scroll();
   }
 

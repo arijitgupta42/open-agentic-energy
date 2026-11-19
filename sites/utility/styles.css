@@ -120,6 +120,8 @@ footer { border-top: 1px solid var(--line); padding: 18px 24px; font-size: 0.85e
    list margins inside each bubble. These rules only touch the chat, never the page. */
 #agent-app .ns-msgs { gap: 8px; padding: 10px 12px; }
 #agent-app .ns-msg { font-size: 14px; line-height: 1.45; padding: 7px 11px; max-width: 88%; }
+/* An answer with figures (js/openui.js) gets the full width, for its charts. */
+#agent-app .ns-msg:has(.ou-root) { max-width: 100%; }
 #agent-app .ns-msg > :first-child { margin-top: 0; }
 #agent-app .ns-msg > :last-child { margin-bottom: 0; }
 #agent-app .ns-msg p { margin: 0 0 0.45em; }
