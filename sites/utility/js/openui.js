@@ -1175,7 +1175,7 @@ export class OpenUi {
 .ou-table-caption{padding:8px 10px 2px;font-weight:700}
 .ou-scroll{overflow-x:auto;max-width:100%}
 .ou-table{width:100%;border-collapse:collapse;font-size:.94em}
-.ou-table th,.ou-table td{padding:6px 10px;border-bottom:1px solid var(--ou-line);text-align:left;vertical-align:top}
+.ou-table th,.ou-table td{padding:10px 14px!important;border-bottom:1px solid var(--ou-line);text-align:left;vertical-align:top}
 .ou-table th{font-size:.74em;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--ou-muted);background:var(--ou-soft);white-space:nowrap}
 .ou-table tbody tr:last-child td{border-bottom:0}
 .ou-table tbody tr:hover td{background:var(--ou-soft)}

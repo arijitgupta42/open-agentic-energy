@@ -338,3 +338,8 @@ test("Every site's prompt lists the components the reader accepts, and is the sa
   }
   assert.equal(texts.size, 1, "figure_rules differs between sites. Keep it the same on all three.");
 });
+
+test("A table's padding and number alignment are firm, because the page's own table rules name an id", () => {
+  assert.match(OpenUi.CSS, /\.ou-table th,\.ou-table td\{padding:10px 14px!important/);
+  assert.match(OpenUi.CSS, /\.ou-table \.ou-num\{text-align:right!important/);
+});

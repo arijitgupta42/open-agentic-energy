@@ -76,8 +76,8 @@ body[data-view]:not([data-view="page"]) #agent-app { flex: 1 1 0; min-height: 0;
 
 /* The line over the chat: the chat list button, the status and the demo notice. */
 .m-toolbar, .m-backdrop { display: none; }
-body[data-view="ask"] .m-toolbar { display: flex; align-items: center; gap: 10px; padding: 6px 12px; border-bottom: 1px solid var(--line); }
-body[data-view="ask"] .m-toolbar .m-chats { margin: 0; min-height: 40px; padding: 0 14px; border-radius: 999px; background: var(--surface-2); color: var(--ink); border: 1px solid var(--line); font-size: 0.9em; }
+body[data-view="ask"] .m-toolbar { display: flex; align-items: center; gap: 10px; padding: 3px 12px; border-bottom: 1px solid var(--line); }
+body[data-view="ask"] .m-toolbar .m-chats { margin: 0; min-height: 36px; padding: 0 14px; border-radius: 999px; background: var(--surface-2); color: var(--ink); border: 1px solid var(--line); font-size: 0.9em; }
 body[data-view="ask"] .m-toolbar .m-chats:focus-visible { outline: 2px solid var(--brand-ink); outline-offset: 2px; }
 body:has(#chat-side[hidden]) .m-toolbar .m-chats { display: none; }
 body[data-view="ask"] .m-demo { margin-left: auto; font-size: 0.78em; color: var(--muted); }
@@ -94,11 +94,11 @@ body[data-view="ask"] .assistant-panels > .swarm-map,
 body[data-view="ask"] [data-ns-slot="agents"],
 body[data-view="ask"] [data-ns-slot="settings"],
 body[data-view="ask"] #voice-input { display: none; }
-body[data-view] #agent-app .ns-header { flex-wrap: nowrap; align-items: center; padding: 6px 12px; gap: 8px; }
+body[data-view] #agent-app .ns-header { flex-wrap: nowrap; align-items: center; padding: 3px 12px; gap: 8px; }
 body[data-view] #agent-app .ns-title { flex: 1 1 auto; min-width: 0; font-size: 0.95em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 body[data-view] #agent-app .ns-title > * { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
 body[data-view] #agent-app .ns-llmbadge { flex: none; font-size: 11px; padding: 3px 8px; }
-body[data-view] #agent-app .ns-devtoggle { flex: none; min-height: 36px; padding: 4px 10px; }
+body[data-view] #agent-app .ns-devtoggle { flex: none; min-height: 34px; padding: 3px 10px; }
 #agent-app .ns-msg { max-width: 96%; }
 
 /* Swarm: the map, then the developer log when it is on. */
