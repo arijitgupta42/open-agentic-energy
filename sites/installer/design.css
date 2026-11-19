@@ -47,9 +47,16 @@ section:not(.assistant) button:active { transform: translateY(1px); }
   #agent-app:has(.chat-side:not([hidden])):has(.swarm-map[hidden]) { --row-left: 216px; }
 }
 
+/* The logos drawn in SVG (js/brand-logos.js): in the chat header, in a tooltip and in the swarm graph. */
+.brand-logo { display: inline-block; flex: none; width: 1.05em; height: 1.05em; margin-right: 0.4em; vertical-align: -0.18em; color: var(--brand-ink); overflow: visible; }
+.swarm-logo { color: #fff; pointer-events: none; }
+.swarm-site-label .swarm-logo { color: var(--site); }
+.swarm-tip-head .brand-logo { width: 0.95em; height: 0.95em; margin: 0 0.25em 0 0; vertical-align: -0.12em; }
+
 /* One moment of motion: the top of the page settles in once, and only for visitors who allow motion. */
 @media (prefers-reduced-motion: no-preference) {
   @keyframes settle { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }
+  .swarm-node[data-state="running"] .brand-logo-spin { animation: swarm-spin 2.4s linear infinite; transform-box: fill-box; transform-origin: center; }
   .intro > * { animation: settle 0.7s var(--ease) both; }
   .intro > :nth-child(2) { animation-delay: 0.06s; }
   .intro > :nth-child(3) { animation-delay: 0.12s; }

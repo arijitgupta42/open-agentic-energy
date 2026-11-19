@@ -11,6 +11,7 @@
 // the fixed map in js/swarm-map.js, so no partner site is contacted to draw it.
 //
 // This file is the same on all three sites.
+import { BrandLogos } from "./brand-logos.js";
 import { AnswerPath } from "./answer-path.js";
 import { SwarmMap } from "./swarm-map.js";
 
@@ -55,7 +56,7 @@ export class SwarmGraph {
       for (const agent of agents) {
         const key = SwarmMap.key(agent.network, agent.name);
         if (agent.front) {
-          nodes.set(key, {...agent, key, icon: site.icon, x: middle, y: y + 47, r: 14});
+          nodes.set(key, {...agent, key, logo: site.logo, x: middle, y: y + 47, r: 14});
         } else {
           const place = specialists.indexOf(agent) - (specialists.length - 1) / 2;
           nodes.set(key, {...agent, key, x: middle + place * step, y: y + 88, r: 11});
@@ -454,7 +455,7 @@ export class SwarmGraph {
     const agent = SwarmMap.agent(key);
     const site = SwarmMap.site(agent.network);
     const rows = [];
-    const result = {title: agent.name, subtitle: `${site.icon} ${site.name}`, rows};
+    const result = {title: agent.name, subtitle: site.name, logo: site.logo, rows};
     const record = act.agents.get(key);
     if (!record || !record.runs) {
       rows.push({label: "", text: agent.does});
@@ -707,7 +708,11 @@ export class SwarmGraph {
       boxes.append(group);
       const label = this.svg("g", {class: "swarm-site-label", style: `--site: ${site.glow}`});
       const status = this.svg("text", {x: site.x + site.width - 10, y: site.y + 19, class: "swarm-site-status", "text-anchor": "end"});
-      label.append(this.svg("text", {x: site.x + 12, y: site.y + 19, class: "swarm-site-name"}, `${site.icon} ${site.name}`), status);
+      label.append(
+        BrandLogos.place(this.doc, site.logo, site.x + 19, site.y + 15, 6.5),
+        this.svg("text", {x: site.x + 32, y: site.y + 19, class: "swarm-site-name"}, site.name),
+        status,
+      );
       labels.append(label);
       this.siteEls.set(site.network, {group, label, status});
     }
@@ -737,7 +742,7 @@ export class SwarmGraph {
         this.svg("circle", {cx: node.x, cy: node.y, r: node.r, class: "swarm-node-lit", fill: `url(#swarm-orb-${node.network})`}),
       );
       if (node.front) {
-        group.append(this.svg("text", {x: node.x, y: node.y + 5, class: "swarm-node-icon", "text-anchor": "middle", "aria-hidden": "true"}, node.icon));
+        group.append(BrandLogos.place(this.doc, node.logo, node.x, node.y, 7.5));
       } else {
         group.append(this.svg("text", {x: node.x, y: node.y + node.r + 14, class: "swarm-node-label", "text-anchor": "middle", "aria-hidden": "true"}, node.label));
       }
@@ -1004,7 +1009,11 @@ export class SwarmGraph {
     const turn = index >= 0 ? this.turns[index] : null;
     const lines = node ? SwarmGraph.agentLines(node.key, this.act, turn, this.own) : SwarmGraph.edgeLines(edge, this.act, turn);
     const head = this.html("p", "swarm-tip-head");
-    head.append(this.html("strong", "", lines.title), " ", this.html("span", "", lines.subtitle));
+    head.append(this.html("strong", "", lines.title), " ");
+    if (lines.logo) {
+      head.append(BrandLogos.build(this.doc, lines.logo));
+    }
+    head.append(this.html("span", "", lines.subtitle));
     this.tip.replaceChildren(head);
     for (const row of lines.rows) {
       const line = this.html("p", `swarm-tip-row${row.tone ? ` swarm-tip-${row.tone}` : ""}`);
