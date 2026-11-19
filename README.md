@@ -135,7 +135,7 @@ knows as a network of agents, and lets another site run that network on request.
 
 ## Compliance with the hackathon rules
 
-**Last checked: 19 November 2026**, on `production` after `fix/page-csp`, against the
+**Last checked: 19 November 2026**, on `production` after `fix/openui-named-values`, against the
 [official rules](https://cognizant-agenticweb.devpost.com/rules) and
 [updates](https://cognizant-agenticweb.devpost.com/updates) as read that day, and the
 specification as it stood when the submission period opened.
@@ -152,7 +152,7 @@ How it was checked:
 - `npm run conformance:live -- --env production`: 72 checks on the hosted sites (CORS,
   manifests, networks, bridge, each page's Content-Security-Policy), all passing.
 - `check_partner.mjs` on all five cross-site calls from their real callers, all passing.
-- `npm test` (301 tests) and `npm run test:e2e` (18 browser workflows), all passing. Four
+- `npm test` (304 tests) and `npm run test:e2e` (18 browser workflows), all passing. Four
   of the workflows also fail on any Content-Security-Policy violation, and check that a
   policy is in force.
 - The browser checks with a live key, recorded on issues #4 to #8, all closed.
@@ -245,7 +245,7 @@ rules and updates pages again and compare the specification with upstream.
 
 ## Tests
 
-`npm test` runs 301 tests with no LLM. They load the real runtime and page code against a
+`npm test` runs 304 tests with no LLM. They load the real runtime and page code against a
 scripted model, and check the MCP servers against amounts worked out by hand.
 
 `npm run test:e2e` runs 18 user workflows in Chromium with
@@ -303,7 +303,7 @@ Only the browser workflow tests need `npm install` (e2e, a development dependenc
 
 ```shell
 npm run build      # write the published network files
-npm test           # 301 tests: real runtime and page code, scripted model, no LLM, plus the MCP servers
+npm test           # 304 tests: real runtime and page code, scripted model, no LLM, plus the MCP servers
 npm run test:e2e   # 18 user workflows in a real browser, on a scripted model (docs/development.md)
 npm run check      # generated files, runtime copies and conformance checks
 npm run serve      # serve the three sites, each with its /mcp

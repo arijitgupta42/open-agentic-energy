@@ -133,6 +133,36 @@ test("A choice written without quotes, such as row or good, is read as that word
   assert.match(OpenUi.parse('root = Stack([a], sideways)\na = Text("x")').errors[0], /sideways is not written/);
 });
 
+test("A block whose first statement is not called root, with values given by name, is still drawn", () => {
+  // As a model wrote it on the live site: the first statement named summary, and detail= by name.
+  const source = [
+    'summary = Stack([fit, grant, running], "row")',
+    'fit = Stat("Indicative fitting cost", "£9,200–£11,200", detail="8 kW air-source heat pump; survey needed")',
+    'grant = Stat("Potential grant", "£5,000", detail="Eligibility not confirmed")',
+    'running = Stat("Estimated running cost", "£1,617.79", "per year", detail="Heat Pump Saver")',
+  ].join("\n");
+  assert.equal(OpenUi.looksLike(source), true, "The chat must recognise the block, so it gets drawn.");
+  for (const partial of [false, true]) {
+    const {root, errors} = OpenUi.parse(source, partial);
+    assert.deepEqual(errors, []);
+    assert.equal(root.type, "Stack");
+    assert.equal(root.props.direction, "row");
+    assert.deepEqual(root.props.children.map((child) => child.props.detail), ["8 kW air-source heat pump; survey needed", "Eligibility not confirmed", "Heat Pump Saver"]);
+    assert.deepEqual(root.props.children[2].props, {label: "Estimated running cost", value: "£1,617.79", unit: "per year", detail: "Heat Pump Saver"});
+  }
+  // A name the component does not have, a value given twice, or one named before one by
+  // position is wrong; the rest still stands.
+  const wrong = OpenUi.parse('root = Stack([a, b, c])\na = Stat("A", 1, shade="good")\nb = Stat("B", 2, label="again")\nc = Stat(label="C", 3)');
+  assert.match(wrong.errors.join(" | "), /Stat has no value called shade/);
+  assert.match(wrong.errors.join(" | "), /Stat label is given twice/);
+  assert.match(wrong.errors.join(" | "), /c: a value by position comes after one by name/);
+  assert.equal(wrong.root.props.children.filter((child) => child.type === "Error").length, 3);
+  // root still wins when it is not first, and a block of other code is not taken for one.
+  assert.equal(OpenUi.parse('a = Text("x")\nroot = Stack([a])').root.type, "Stack");
+  assert.equal(OpenUi.looksLike("const x = Math.max(1, 2)"), false);
+  assert.equal(OpenUi.looksLike("total = sum(values)"), false);
+});
+
 test("A wrong part is replaced by a note and the rest still stands", () => {
   const {root, errors} = OpenUi.parse([
     "root = Stack([ok, bad, odd, short])",
@@ -151,7 +181,8 @@ test("A wrong part is replaced by a note and the rest still stands", () => {
 
 test("A cycle, a missing root, too many values and code-like text are refused", () => {
   assert.equal(OpenUi.parse("root = Stack([root])").root.props.children[0].type, "Error");
-  assert.match(OpenUi.parse('a = Text("x")').errors[0], /no root statement/);
+  assert.match(OpenUi.parse("").errors[0], /no root statement/);
+  assert.equal(OpenUi.parse('a = Text("x")').root.type, "Text", "Without a root statement, the first one is the root.");
   assert.match(OpenUi.parse('root = Text("x", "body", 3)').errors[0], /takes at most 2 values/);
   assert.match(OpenUi.parse('root = @Run("x")').errors.join(" "), /unexpected "@"/);
   assert.match(OpenUi.parse("root = Text(\"x\")\nalert(1)").errors[0], /Not a statement/);
@@ -256,8 +287,8 @@ test("A line chart draws a line and dots, and a pie shows each share", () => {
   assert.equal(whole.all((n) => n.className === "ou-ring").length, 1);
 });
 
-test("A block with no root, or a root that is wrong, is not drawn, so its text stays", () => {
-  assert.equal(OpenUi.draw(doc, 'a = Text("x")'), null);
+test("A block with no statement, or a root that is wrong, is not drawn, so its text stays", () => {
+  assert.equal(OpenUi.draw(doc, "  "), null);
   assert.equal(OpenUi.draw(doc, 'root = Gauge(1)'), null);
 });
 
