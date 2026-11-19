@@ -14,6 +14,7 @@
 import { readFile } from "node:fs/promises";
 import path from "node:path";
 import { AgentNetwork, validateNetwork } from "../tools/agentify-website/runtime/kernel.js";
+import { SiteHeaders } from "./site-headers.mjs";
 import { Sites } from "./sites.mjs";
 import { SyncRuntime } from "./sync-runtime.mjs";
 
@@ -218,13 +219,18 @@ class Conformance {
         this.report(ok, "Spec 3.3, 3.4", `${file} is public with CORS (${note})`);
       }
       let pageOk = false;
+      let policy = "";
       try {
         const response = await fetch(`${origin}/`);
+        policy = response.headers.get("content-security-policy") || "";
         pageOk = response.ok && (await response.text()).includes('id="agent-app"');
       } catch (error) {
         // Reported below as a failure.
       }
       this.report(pageOk, "Rules: public URL", "the page loads and holds the assistant");
+      const scripts = SiteHeaders.directives(policy).get("script-src") || [];
+      this.report(scripts.length === 1 && scripts[0] === "'self'" && !policy.includes("'unsafe-eval'"), "Spec 4",
+        `the page sends a Content-Security-Policy that runs scripts only from the site (${policy ? `script-src ${scripts.join(" ")}` : "none sent"})`);
       let bridgeOk = false;
       try {
         const response = await fetch(`${origin}/bridge/action-bridge.html`);

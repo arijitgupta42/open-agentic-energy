@@ -135,7 +135,7 @@ knows as a network of agents, and lets another site run that network on request.
 
 ## Compliance with the hackathon rules
 
-**Last checked: 19 November 2026**, at commit `0ebb319` on `production`, against the
+**Last checked: 19 November 2026**, on `production` after `fix/page-csp`, against the
 [official rules](https://cognizant-agenticweb.devpost.com/rules) and
 [updates](https://cognizant-agenticweb.devpost.com/updates) as read that day, and the
 specification as it stood when the submission period opened.
@@ -144,16 +144,17 @@ specification as it stood when the submission period opened.
 URL, and every check in section 6 of the specification. Stage one of judging is a pass
 or fail on exactly those. What remains is outside the code: the video and the Devpost
 entry. Two MUSTs in specification section 3.1 are met only in part because of how the
-reference runtime works, and one SHOULD in section 4 (a Content Security Policy) is not
-met yet. They are listed below rather than hidden.
+reference runtime works. They are listed below rather than hidden.
 
 How it was checked:
 
 - `npm run check`: 54 conformance checks on the built files, all passing.
-- `npm run conformance:live -- --env production`: 69 checks on the hosted sites (CORS,
-  manifests, networks, bridge), all passing.
+- `npm run conformance:live -- --env production`: 72 checks on the hosted sites (CORS,
+  manifests, networks, bridge, each page's Content-Security-Policy), all passing.
 - `check_partner.mjs` on all five cross-site calls from their real callers, all passing.
-- `npm test` (293 tests) and `npm run test:e2e` (18 browser workflows), all passing.
+- `npm test` (301 tests) and `npm run test:e2e` (18 browser workflows), all passing. Four
+  of the workflows also fail on any Content-Security-Policy violation, and check that a
+  policy is in force.
 - The browser checks with a live key, recorded on issues #4 to #8, all closed.
 - The Devpost rules page and updates page, read again on 19 November 2026. The only
   update is an office-hour notice, with no change to the rules.
@@ -200,16 +201,22 @@ confirmation dialog first. After the visitor allows a partner, that partner's ag
 reach its own `/mcp` without a second card. Spec section 5 scopes a remembered approval
 to the destination origin for the session, so this is within the rules.
 
+Every page sends a Content-Security-Policy (spec section 4): scripts and workers only
+from the site, no eval, no plugins, requests only to the site, `https:` (the visitor's
+model provider and the partners) and loopback, frames only from the partners in
+`allowed_peers`, and no framing by other sites. Styles allow inline, because the
+reference runtime adds a `<style>` element. It is in each site's `_headers`, and
+`npm run serve` sends the same headers.
+
 ### Met only in part
 
-The first two come from the reference runtime, which the rules ask us to build on and
-which this project does not edit. The third is ours to fix.
+Both come from the reference runtime, which the rules ask us to build on and which this
+project does not edit.
 
 | Spec | What it asks | Where we stand |
 | --- | --- | --- |
 | 3.1, MUST | Show the destination and arguments before a write | Irreversible actions do. Writes the visitor can undo on the page (show a comparison, show an estimate, record answers) run without a preview |
 | 3.1, MUST | Finite limits on elapsed time | Steps, calls and concurrency are bounded. A partner that accepts the connection and never answers leaves the chat waiting until the page is reloaded |
-| 4, SHOULD | A restrictive Content Security Policy | No page loads a third-party script, and the runtime's coded-tool worker has a strict CSP. The pages themselves send no CSP header yet |
 
 The full mapping, including what needs a browser to check, is in
 [docs/hackathon/conformance_checklist.md](docs/hackathon/conformance_checklist.md).
@@ -217,7 +224,7 @@ The full mapping, including what needs a browser to check, is in
 ### Keeping this section current
 
 Every pull request updates this section before it is merged into `dev`: the date, the
-commit, and any row the change affects. A change that adds a gap, closes one or changes
+branch, and any row the change affects. A change that adds a gap, closes one or changes
 a count changes the table in the same pull request. Before submitting, read the Devpost
 rules and updates pages again and compare the specification with upstream.
 
@@ -238,7 +245,7 @@ rules and updates pages again and compare the specification with upstream.
 
 ## Tests
 
-`npm test` runs 293 tests with no LLM. They load the real runtime and page code against a
+`npm test` runs 301 tests with no LLM. They load the real runtime and page code against a
 scripted model, and check the MCP servers against amounts worked out by hand.
 
 `npm run test:e2e` runs 18 user workflows in Chromium with
@@ -296,7 +303,7 @@ Only the browser workflow tests need `npm install` (e2e, a development dependenc
 
 ```shell
 npm run build      # write the published network files
-npm test           # 293 tests: real runtime and page code, scripted model, no LLM, plus the MCP servers
+npm test           # 301 tests: real runtime and page code, scripted model, no LLM, plus the MCP servers
 npm run test:e2e   # 18 user workflows in a real browser, on a scripted model (docs/development.md)
 npm run check      # generated files, runtime copies and conformance checks
 npm run serve      # serve the three sites, each with its /mcp

@@ -1,6 +1,13 @@
 # Headers for Netlify, Cloudflare Pages and other hosts that read a _headers file.
 # Other agent sites read these public files from the browser, so they need CORS.
 # Do not add the CORS header to anything else. See docs/deployment.md.
+# The pages get a Content-Security-Policy (spec 4): scripts only from this site, no eval,
+# no plugins, and requests only to this site, https (any model provider the visitor
+# picks, and partner sites) and loopback. Inline styles stay allowed: the runtime adds
+# a <style> element. frame-src names the partners in allowed_peers, as the runtime
+# loads each partner's bridge in a hidden frame; npm run origins rewrites them. The
+# bridge may be framed by any caller, so it sets no frame-ancestors
+# (references/bundle_and_hosting.md).
 /agent-manifest.json
   Access-Control-Allow-Origin: *
 /fernbrook_grants.network.json
@@ -15,3 +22,11 @@
   Access-Control-Allow-Origin: *
 /runtime/sandbox-worker.js
   Content-Security-Policy: default-src 'none'; script-src blob:; connect-src 'none'; worker-src 'none'
+/
+  Content-Security-Policy: default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self' https: http://localhost:* http://127.0.0.1:*; worker-src 'self'; frame-src 'self' http://localhost:8081; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'self'
+/index.html
+  Content-Security-Policy: default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self' https: http://localhost:* http://127.0.0.1:*; worker-src 'self'; frame-src 'self' http://localhost:8081; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'self'
+/bridge/action-bridge.html
+  Content-Security-Policy: default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self' https: http://localhost:* http://127.0.0.1:*; worker-src 'self'; frame-src 'self' http://localhost:8081; object-src 'none'; base-uri 'self'; form-action 'self'
+/bridge/action-bridge
+  Content-Security-Policy: default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self' https: http://localhost:* http://127.0.0.1:*; worker-src 'self'; frame-src 'self' http://localhost:8081; object-src 'none'; base-uri 'self'; form-action 'self'

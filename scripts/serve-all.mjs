@@ -18,6 +18,7 @@ import { spawn } from "node:child_process";
 import http from "node:http";
 import path from "node:path";
 import { MCP_PATH, MCP_SERVERS } from "../server/sites.mjs";
+import { SiteHeaders } from "./site-headers.mjs";
 import { Sites } from "./sites.mjs";
 
 /**
@@ -54,7 +55,11 @@ class ServeAll {
       const args = [script, Sites.dir(site), "--host", listen, "--port", String(internal), "--open-as", url.hostname];
       // Its own banner names the internal port, so only its errors are shown.
       children.push(spawn(process.execPath, args, {stdio: ["ignore", "ignore", "inherit"]}));
-      const front = http.createServer(ServeAll.route.bind(null, site, listen, internal, url.origin));
+      const {rules, widened} = SiteHeaders.forOrigins(await SiteHeaders.load(Sites.dir(site)), Object.values(origins));
+      if (widened && site === Sites.LIST[0]) {
+        console.log("A site runs on an IPv6 address, which a Content-Security-Policy cannot name: the pages also allow any http origin here.");
+      }
+      const front = http.createServer(ServeAll.route.bind(null, site, listen, internal, url.origin, rules));
       front.listen(Number(url.port), listen);
       fronts.push(front);
       console.log(`${site.id}: ${url.origin}/  (MCP: ${url.origin}${MCP_PATH})`);
@@ -65,16 +70,18 @@ class ServeAll {
   }
 
   /**
-   * Answer one request: /mcp here, anything else from the static server.
+   * Answer one request: /mcp here, anything else from the static server, with the
+   * headers the site's _headers file gives its path, as the host sends them.
    *
    * :param site: An entry of Sites.LIST.
    * :param listen: The host both servers listen on.
    * :param internal: The static server's port.
    * :param origin: The site's public origin, for the MCP request URL.
+   * :param rules: The site's _headers rules, from SiteHeaders.forOrigins().
    * :param req: The incoming request.
    * :param res: The response.
    */
-  static route(site, listen, internal, origin, req, res) {
+  static route(site, listen, internal, origin, rules, req, res) {
     const pathname = new URL(req.url, origin).pathname;
     if (pathname === MCP_PATH) {
       ServeAll.mcp(MCP_SERVERS[site.id], origin, req, res).catch((error) => {
@@ -84,7 +91,9 @@ class ServeAll {
       return;
     }
     const upstream = http.request({host: listen, port: internal, method: req.method, path: req.url, headers: req.headers}, (reply) => {
-      res.writeHead(reply.statusCode, reply.headers);
+      // The static server already sends CORS and the worker's policy; the rest comes from _headers.
+      const extra = Object.entries(SiteHeaders.forPath(rules, pathname)).filter(([name]) => !(name in reply.headers));
+      res.writeHead(reply.statusCode, {...reply.headers, ...Object.fromEntries(extra)});
       reply.pipe(res);
     });
     upstream.on("error", () => {
