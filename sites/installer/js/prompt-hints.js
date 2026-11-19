@@ -230,7 +230,9 @@ export class PromptHints {
       }
     }
     this.hint.hidden = !showing;
-    this.hint.textContent = showing ? "Press Tab to use this suggestion" : "";
+    // A touch screen has no Tab key: the line is a button to tap.
+    const touch = Boolean(this.doc.defaultView?.matchMedia?.("(pointer: coarse)")?.matches);
+    this.hint.textContent = showing ? (touch ? "Tap to use this suggestion" : "Press Tab to use this suggestion") : "";
     this.hint.title = showing ? this.suggestion : "";
   }
 

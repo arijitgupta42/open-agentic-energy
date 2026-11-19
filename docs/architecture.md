@@ -74,6 +74,19 @@ host (Cloudflare Worker, or scripts/serve-all.mjs locally)
   `--ink`, `--line`, `--brand-ink`, `--brand-solid` and so on), with a dark set under
   `:root[data-theme="dark"]`. The chat's `--ns-*` variables follow them, and the figures
   use the same variables with their own palette.
+- **The phone layout** (`js/mobile.js` and `mobile.css`, the same on every site). It is the
+  same page, runtime and rules as on a laptop (rule 5): `mobile.css` is linked with
+  `media="(max-width: 760px)"`, so a laptop never loads it, and the script only decides which
+  screen is on show. On a phone the page opens on the chat, full height with its input above
+  the keyboard (`--m-vh` follows `visualViewport`), and a tab bar at the bottom goes to the
+  site's own page (named by `data-m-label` on `<main>`), `Swarm` (the map, and the developer
+  log when it is on) and `Settings` (what goes to the AI provider, and the AI model settings,
+  where the key is entered). A "Chats" button opens this visit's chats as a sheet from the
+  bottom. The confirmation dialogs are sheets too, buttons are at least 44px tall and fields
+  16px so a phone does not zoom. A status line stays on show while the assistant is loading or
+  could not load, so the chat is never silently empty (rule 9), and a "Fictional demo" notice
+  stays over the chat (rule 10). Charts are sized from the chat's width and a table keeps its
+  first column in view as it scrolls. Without the script, the page is the stacked desktop page.
 - **The MCP server** (`server/`) answers `/mcp` on each site's own origin with read-only
   tools over that site's public data. It imports the page's own data and rules modules,
   so a page, its assistant and its MCP tools give the same answers (CLAUDE.md rule 5).
