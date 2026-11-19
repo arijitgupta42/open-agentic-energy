@@ -74,15 +74,16 @@ host (Cloudflare Worker, or scripts/serve-all.mjs locally)
   `--ink`, `--line`, `--brand-ink`, `--brand-solid` and so on), with a dark set under
   `:root[data-theme="dark"]`. The chat's `--ns-*` variables follow them, and the figures
   use the same variables with their own palette.
-- **The design** (`design.css` on each site, linked after `styles.css`). A shared core, the same
-  text on all three sites (a test keeps it so), gives depth and rhythm: a gradient header with a
-  mark, type scale, panels and cards that lift, forms with clear focus rings, raised chat
-  panels and a gentle entrance. After it, each site has its own character through a few
-  variables and rules: Emberwick is warm and editorial (a serif, an ember mark and glow),
-  Heatwright crafted and technical (a heavy geometric sans, a blueprint grid, a square mark)
-  and Fernbrook formal and public-spirited (a book serif, ruled headings, cards with a coloured
-  head, a leaf mark). It uses system fonts only and loads nothing from another host (rule 8).
-  `styles.css` keeps the colours and layout; `mobile.css` loads after the design on phones.
+- **The design** (`design.css` on each site, linked after `styles.css`). A small shared core, the same
+  text on all three sites (a test keeps it so), holds the mechanics: focus rings, form and button
+  behaviour, raised chat panels, and one entrance for the top of the page. After it, each site has
+  its own identity, built as a different kind of document. Emberwick is a utility statement (a
+  serif, a glowing line under the header, an account summary laid out like a receipt, tariffs as
+  rate cards). Heatwright is a spec sheet (an engineering sans, a blueprint grid that fades out,
+  plates with crop marks, a fan for a mark). Fernbrook is a public form (a humanist sans over a
+  book serif, schemes as notices with a spine, a seal and a leaf, buttons that press down). It
+  uses system fonts only and loads nothing from another host (rule 8). `styles.css` keeps the
+  base colours and layout; `mobile.css` loads after the design on phones.
 - **The phone layout** (`js/mobile.js` and `mobile.css`, the same on every site). It is the
   same page, runtime and rules as on a laptop (rule 5): `mobile.css` is linked with
   `media="(max-width: 760px)"`, so a laptop never loads it, and the script only decides which
