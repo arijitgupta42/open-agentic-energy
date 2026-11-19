@@ -2,6 +2,7 @@
 :root { --brand: #0f5132; --tint: #e9f5ee; --ink: #1f2328; --paper: #fbfaf8; --line: #d0d7de; --muted: #59636e; --surface: #ffffff; --surface-2: #f6f8fa; --brand-ink: #0f5132; --brand-solid: #0f5132; color-scheme: light; }
 :root[data-theme="dark"] { --tint: #0f2a1d; --ink: #e6edf3; --paper: #0d1117; --line: #30363d; --muted: #9da7b3; --surface: #161b22; --surface-2: #1c2330; --brand-ink: #4ade80; --brand-solid: #15803d; color-scheme: dark; }
 * { box-sizing: border-box; }
+:root { --chat-h: clamp(720px, 88vh, 920px); }
 body { margin: 0; font: 16px/1.55 system-ui, sans-serif; color: var(--ink); background: var(--paper); }
 header { display: flex; flex-wrap: wrap; gap: 12px 24px; align-items: center; justify-content: space-between; padding: 14px 24px; background: var(--brand); }
 header a { color: #fff; text-decoration: none; }
@@ -66,12 +67,12 @@ footer { border-top: 1px solid var(--line); padding: 18px 24px; font-size: 0.85e
   gap: 16px;
   /* Wider than the text above, up to 1320px, so the chat list, the chat and the swarm
      fit side by side. On a narrow screen the side margins come to 0. */
-  margin: 16px calc(50% - min(660px, 50vw - 24px)) 0;
+  margin: 16px calc(50% - min(760px, 50vw - 24px)) 0;
 }
 
 /* Set the height once the runtime has mounted the chat, so a failed load leaves no
    empty box. */
-#agent-app.ns-composed-app [data-ns-slot="chat"] { height: 720px; }
+#agent-app.ns-composed-app [data-ns-slot="chat"] { height: var(--chat-h); }
 /* The runtime gives the chat no background of its own. Keep --ns-msgbg different from
    --ns-bg, or bot replies lose their bubble. */
 #agent-app .ns-chat { background: var(--ns-bg); }
@@ -346,9 +347,9 @@ body > dialog button { margin-right: 8px; }
 
 /* Chats (js/chat-sessions.js): a column to the left of the chat. It is shown once the
    assistant has loaded. */
-.assistant-panels:has(> .chat-side:not([hidden])) { grid-template-columns: 200px minmax(0, 1fr) 400px; }
+.assistant-panels:has(> .chat-side:not([hidden])) { grid-template-columns: 176px minmax(0, 1fr) 360px; }
 .assistant-panels:has(> .chat-side:not([hidden])):has(> .swarm-map[hidden]) { grid-template-columns: 200px minmax(0, 1fr); }
-.chat-side { display: flex; flex-direction: column; gap: 12px; min-width: 0; align-self: start; max-height: 720px; }
+.chat-side { display: flex; flex-direction: column; gap: 12px; min-width: 0; align-self: start; max-height: var(--chat-h); }
 .chat-side[hidden] { display: none; }
 .chat-list { display: flex; flex-direction: column; gap: 8px; min-width: 0; min-height: 0; padding: 10px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); }
 .chat-list[hidden] { display: none; }
