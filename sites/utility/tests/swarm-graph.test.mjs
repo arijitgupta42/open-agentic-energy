@@ -124,8 +124,8 @@ function latest(trace) {
   return {turn, act: SwarmGraph.activity(turn)};
 }
 
-test("the three sites carry the same swarm-map.js, swarm-graph.js and dev-log.js", async () => {
-  for (const file of ["js/swarm-map.js", "js/swarm-graph.js", "js/dev-log.js"]) {
+test("the three sites carry the same swarm-map.js, swarm-graph.js, dev-log.js and brand-logos.js", async () => {
+  for (const file of ["js/swarm-map.js", "js/swarm-graph.js", "js/dev-log.js", "js/brand-logos.js"]) {
     const utility = await read("utility", file);
     assert.equal(await read("installer", file) === utility, true, `Copy sites/utility/${file} to sites/installer/js/.`);
     assert.equal(await read("grants", file) === utility, true, `Copy sites/utility/${file} to sites/grants/js/.`);
@@ -236,7 +236,8 @@ test("a finished answer gives each agent its request, tools, model, reply and ca
   assert.equal([...act.agents.values()].filter((record) => record.runs).length, turn.counts.agents - 1, "The scheme agent ran twice but is one agent.");
   const usage = SwarmGraph.agentLines("emberwick_energy/usage_analyst", act, turn, OWN);
   assert.equal(usage.title, "usage_analyst");
-  assert.equal(usage.subtitle, "⚡ Emberwick Energy");
+  assert.equal(usage.subtitle, "Emberwick Energy");
+  assert.equal(usage.logo, "ember");
   assert.deepEqual(usage.rows.map((row) => `${row.label}|${row.text}`), [
     "From retrofit_planner (in parallel)|“Running cost with a heat pump?”",
     "Used|heat_pump_running_cost",

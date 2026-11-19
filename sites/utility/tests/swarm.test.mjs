@@ -112,14 +112,15 @@ test("Fernbrook: one AAOSA agent per scheme, and the front agent runs Determine 
   }
 });
 
-test("each site has its own icon in the chat's agent map", async () => {
-  // runtime/ui.js splitBrand: the map shows a manifest brand's first character as the
-  // site's icon when it is past U+2000, and the same 🧭 for every site otherwise.
+test("each site's brand starts with its own character, which the page swaps for the logo", async () => {
+  // runtime/ui.js splitBrand shows a manifest brand's first character as the site's icon
+  // when it is past U+2000, and the same compass for every site otherwise. js/brand-logos.js
+  // swaps that character for the site's logo in the page.
   const icons = [];
   for (const site of Object.keys(NETWORKS)) {
     const manifest = JSON.parse(await readFile(new URL(`../../${site}/agent-manifest.json`, import.meta.url), "utf8"));
     const [first, ...rest] = Array.from(manifest.brand);
-    assert.ok(first.codePointAt(0) > 0x2000, `${site}: brand must start with its icon, such as "⚡ Name".`);
+    assert.ok(first.codePointAt(0) > 0x2000, `${site}: brand must start with its character, such as "● Name".`);
     assert.equal(rest[0], " ", `${site}: one space after the icon, so the label reads cleanly.`);
     icons.push(first);
   }

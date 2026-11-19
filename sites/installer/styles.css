@@ -265,7 +265,6 @@ body > dialog button { margin-right: 8px; }
 .swarm-node[data-state="error"] .swarm-node-dot { stroke: #f87171; stroke-width: 2.5; }
 .swarm-node-label { font-size: 10.5px; fill: #b6c2d4; }
 .swarm-node:is([data-state="ok"], [data-state="running"]) .swarm-node-label { fill: #fff; font-weight: 600; }
-.swarm-node-icon { font-size: 14px; }
 .swarm-node-count { font-size: 9.5px; font-weight: 700; fill: #fff; }
 /* Once an answer is on show, what took no part steps back. */
 .swarm-map[data-turn="yes"] .swarm-node[data-state="idle"] { opacity: 0.55; }

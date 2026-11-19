@@ -49,7 +49,9 @@ test("4. Without a key the page says how to set one up, and shows Emberwick's ow
   await app.open("/");
   await expect(screen.getByText("Assistant needs your AI provider key. Add it in AI model settings below.")).toBeVisible();
   // The swarm graph is drawn before any key is set, with this site first.
-  expect((await browser.locator(".swarm-site-name").allTextContents())[0]).toBe("⚡ Emberwick Energy");
+  expect((await browser.locator(".swarm-site-name").allTextContents())[0]).toBe("Emberwick Energy");
+  // The title in the chat header shows the ember logo, not an emoji.
+  await expect(browser.locator(".ns-title .brand-logo-ember")).toHaveCount(1);
   await expect(browser.locator(".swarm-node")).toHaveCount(11);
   // The page itself still works.
   await screen.getByRole("button", "Compare Green Flex").tap();
@@ -68,10 +70,14 @@ test("5. The swarm answers a heat pump question from all three sites, after the 
   await expect(answer).toContainText("8 kW air-source heat pump, £9,200 to £11,200");
   await expect(answer).toContainText("Fernbrook Heat Pump Grant: £5,000");
   await expect(answer).toContainText("Heat Pump Saver, £145.92 less per year");
-  // Each site has its own icon in the swarm graph.
+  // Each site has its own logo in the swarm graph: an ember, a fan and a leaf beside the site's name.
   const map = (await browser.locator(".swarm-site-name").allTextContents()).join(" ");
-  for (const icon of ["⚡ Emberwick", "🔧 Heatwright", "🌱 Fernbrook"]) {
-    expect(map).toContain(icon);
+  for (const name of ["Emberwick", "Heatwright", "Fernbrook"]) {
+    expect(map).toContain(name);
+  }
+  for (const kind of ["ember", "fan", "leaf"]) {
+    await expect(browser.locator(`.swarm-site-label .brand-logo-${kind}`)).toHaveCount(1);
+    await expect(browser.locator(`.swarm-front .brand-logo-${kind}`)).toHaveCount(1);
   }
   // The swarm graph beside the chat: agents on all three sites worked on the answer.
   const swarm = browser.locator("#swarm-map");

@@ -3,6 +3,7 @@
 // It is the agentify-website skill's templates/site.js with this site's greeting,
 // dialog words and review details filled in.
 import { AnswerPath } from "./js/answer-path.js";
+import { BrandLogos } from "./js/brand-logos.js";
 import { ChatBox } from "./js/chat-box.js";
 import { ChatSessions } from "./js/chat-sessions.js";
 import { DevLog } from "./js/dev-log.js";
@@ -92,6 +93,12 @@ export class AssistantMount {
         AssistantMount.hints = PromptHints.attach(document, AssistantMount.HINTS);
       } catch (error) {
         console.error("Suggestions are off", error);
+      }
+      // The logo of each site replaces the plain character its brand text starts with.
+      try {
+        BrandLogos.watch(document.querySelector("#agent-app"));
+      } catch (error) {
+        console.error("Site logos are off", error);
       }
       // Steps and the answer as it is written, while the runtime works.
       try {
