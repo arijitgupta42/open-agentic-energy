@@ -104,18 +104,17 @@ Partner tools ask another site's assistant after the visitor agrees on a card th
             # Every site, the same: how the front agent shows figures (js/openui.js draws the
             # block). The component list must match OpenUi.LIBRARY; sites/*/tests/openui.test.mjs checks it.
             "figure_rules": """
-FIGURES: Show figures after a one-line answer, as one fenced openui block of OpenUI Lang: a statement per line, name = Component(values), values by position ("text", numbers, [lists], names of other statements). The first is root. Components:
-Stack(children, direction?) Card(title, children) Text(content, style?) Callout(text, tone?) Stat(label, value, unit?, detail?, tone?) Table(columns, rows, caption?) Series(name, values) BarChart(title, labels, series, unit?) LineChart(title, labels, series, unit?) PieChart(title, labels, values, unit?).
-direction: column, row. style: body, heading, muted. tone: info, good, warn; for Stat neutral, good, bad. A Table row has one value per column; a Series one value per label.
-Use only figures from tool results or this chat.
+FIGURES: After one line of answer, give figures as a fenced openui block (OpenUI Lang): one statement per line, name = Component(values) by position, the first is root. Order: Stat tiles in a row Stack, a chart, a Table. Components:
+Stack(children, direction?) Text(content, style?) Callout(text, tone?) Stat(label, value, unit?, detail?, tone?, trend?) Meter(label, value, max, unit?, tone?) Table(columns, rows, caption?) Series(name, values) BarChart(title, labels, series, unit?) LineChart(title, labels, series, unit?) PieChart(title, labels, values, unit?).
+direction column|row; style body|heading|muted; tone info|good|warn, for Stat and Meter neutral|good|bad; trend numbers. A Table row has one value per column; a Series one value per label. Pie for shares, line over time, bars to compare.
 """,
 
             # The runtime already adds guidance on when to use render_cruse and forms.
             # This text adds a short-Markdown default, the shape of a choice and a form, and the
             # rule for irreversible actions. Figures go in an openui block (figure_rules above).
             "cruse_rules": """
-PRESENTATION: Reply in short Markdown. Use render_cruse {"version":1,"components":[...]}, each with an id, only for a choice (options: title, value, optional subtitle) or a form (a JSON Schema "object" with titled properties and required, plus submitLabel; default only for values you know).
-Do not ask the visitor to confirm an irreversible action, in chat or with a confirm component: the browser asks them when you call the tool. Ask only when a price or fee they agreed to has changed.
+PRESENTATION: Reply in short Markdown. Use render_cruse {"version":1,"components":[...]} only for a choice (options: title, value, optional subtitle) or a form (a JSON Schema "object" with titled properties and required, plus submitLabel; default only for values you know).
+Do not ask the visitor to confirm an irreversible action, in chat or with a confirm component: the browser asks when you call the tool. Ask only when a price or fee they agreed to has changed.
 """
         }
     },

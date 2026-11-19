@@ -2,7 +2,8 @@
 //
 // The assistant can answer with an "openui" block: a few lines of OpenUI Lang, the
 // compact format of the open source OpenUI project (github.com/thesysdev/openui, MIT).
-// This file reads that format and draws stat tiles, tables, charts and callouts from it.
+// This file reads that format and draws stat tiles, meters, tables, bar, line and donut
+// charts and callouts from it.
 // It is our own small reader and renderer: no OpenUI code is copied and nothing is loaded
 // from another site, so the page keeps its rules (no dependencies, no third-party
 // scripts). It speaks the same statement syntax, so the assistant can be told to write
@@ -35,9 +36,9 @@ export class OpenUi {
    */
   static LIBRARY = {
     Stack: {params: [["children", "nodes"], ["direction?", "enum:column|row"]]},
-    Card: {params: [["title", "string"], ["children", "nodes"]]},
     Text: {params: [["content", "string"], ["style?", "enum:body|heading|muted"]]},
-    Stat: {params: [["label", "string"], ["value", "value"], ["unit?", "string"], ["detail?", "string"], ["tone?", "enum:neutral|good|bad"]]},
+    Stat: {params: [["label", "string"], ["value", "value"], ["unit?", "string"], ["detail?", "string"], ["tone?", "enum:neutral|good|bad"], ["trend?", "numbers"]]},
+    Meter: {params: [["label", "string"], ["value", "number"], ["max", "number"], ["unit?", "string"], ["tone?", "enum:neutral|good|bad"]]},
     Table: {params: [["columns", "strings"], ["rows", "rows"], ["caption?", "string"]]},
     Series: {params: [["name", "string"], ["values", "numbers"]]},
     BarChart: {params: [["title", "string"], ["labels", "strings"], ["series", "series"], ["unit?", "string"]]},
@@ -49,8 +50,11 @@ export class OpenUi {
   /** Limits, so a runaway answer cannot build a huge page. */
   static LIMITS = {text: 400, items: 120, children: 24, nodes: 150, depth: 8, columns: 12, rows: 200, series: 8};
 
-  /** Series colours: the site's own colour first, then colours that stay apart. */
-  static COLORS = ["var(--ns-primary, #9a3412)", "#0f766e", "#4f46e5", "#b45309", "#be185d", "#0369a1", "#4d7c0f", "#6b7280"];
+  /**
+   * The width, in drawing units, that charts are made at. attach() sets it from the chat,
+   * so a chart in a narrow chat keeps its text a readable size instead of shrinking.
+   */
+  static WIDTH = 640;
 
   /** Line dashes, so series differ by more than colour. */
   static DASHES = ["", "7 4", "2 4", "10 4 2 4", "", "7 4", "2 4", "10 4 2 4"];
@@ -417,6 +421,12 @@ export class OpenUi {
         return "Every Table row needs one value for each column.";
       }
     }
+    if (type === "Stat" && props.trend && props.trend.length < 2) {
+      return "Stat trend needs at least two numbers.";
+    }
+    if (type === "Meter" && (props.max <= 0 || props.value < 0)) {
+      return "Meter needs a value of at least 0 and a max above 0.";
+    }
     if (type === "BarChart" || type === "LineChart") {
       if (!props.labels.length) {
         return `${type} needs at least one label.`;
@@ -534,12 +544,11 @@ export class OpenUi {
    *
    * :param doc: The document.
    * :param source: The OpenUI Lang text.
-   * :param options: {partial} true while the text is still arriving; {source} true to
-   *     add a folded copy of the text.
+   * :param options: {partial} true while the text is still arriving.
    * :return: The element, or null when there is nothing to draw (no root, or it is wrong).
    */
   static draw(doc, source, options = {}) {
-    const {root, errors} = OpenUi.parse(source, Boolean(options.partial));
+    const {root} = OpenUi.parse(source, Boolean(options.partial));
     if (!root || root.type === "Error") {
       return null;
     }
@@ -547,18 +556,6 @@ export class OpenUi {
     wrap.className = "ou-root";
     wrap.setAttribute("data-openui", options.partial ? "drawing" : "done");
     wrap.append(OpenUi.render(doc, root));
-    if (options.source) {
-      const details = doc.createElement("details");
-      details.className = "ou-source";
-      const summary = doc.createElement("summary");
-      summary.textContent = errors.length ? `Show what the assistant wrote (${errors.length} part${errors.length === 1 ? "" : "s"} not drawn)` : "Show what the assistant wrote";
-      const pre = doc.createElement("pre");
-      pre.textContent = String(source).trim();
-      // So attach() does not draw this copy again.
-      pre.setAttribute("data-openui", "source");
-      details.append(summary, pre);
-      wrap.append(details);
-    }
     return wrap;
   }
 
@@ -584,6 +581,26 @@ export class OpenUi {
   }
 
   /**
+   * Make an element with a class and text.
+   *
+   * :param doc: The document.
+   * :param tag: The tag.
+   * :param className: The class, or nothing.
+   * :param text: The text, or undefined for none.
+   * :return: The element.
+   */
+  static make(doc, tag, className, text) {
+    const el = doc.createElement(tag);
+    if (className) {
+      el.className = className;
+    }
+    if (text !== undefined) {
+      el.textContent = String(text);
+    }
+    return el;
+  }
+
+  /**
    * Draw one node.
    *
    * :param doc: The document.
@@ -591,16 +608,7 @@ export class OpenUi {
    * :return: The element.
    */
   static render(doc, node) {
-    const make = (tag, className, text) => {
-      const el = doc.createElement(tag);
-      if (className) {
-        el.className = className;
-      }
-      if (text !== undefined) {
-        el.textContent = String(text);
-      }
-      return el;
-    };
+    const make = (tag, className, text) => OpenUi.make(doc, tag, className, text);
     const props = node.props || {};
     if (node.type === "Pending") {
       const bar = make("div", "ou-pending");
@@ -618,26 +626,22 @@ export class OpenUi {
       stack.append(...children(props.children));
       return stack;
     }
-    if (node.type === "Card") {
-      const card = make("section", "ou-card");
-      card.append(make("h4", "ou-card-title", props.title), ...children(props.children));
-      return card;
-    }
     if (node.type === "Text") {
       const style = props.style || "body";
       return make(style === "heading" ? "h4" : "p", `ou-text ou-text-${style}`, props.content);
     }
     if (node.type === "Stat") {
-      const stat = make("div", `ou-stat ou-tone-${props.tone || "neutral"}`);
-      const value = make("div", "ou-stat-value", OpenUi.withUnit(props.value, props.unit));
-      stat.append(make("div", "ou-stat-label", props.label), value);
-      if (props.detail) {
-        stat.append(make("div", "ou-stat-detail", props.detail));
-      }
-      return stat;
+      return OpenUi.renderStat(doc, props);
+    }
+    if (node.type === "Meter") {
+      return OpenUi.renderMeter(doc, props);
     }
     if (node.type === "Callout") {
-      const note = make("p", `ou-callout ou-callout-${props.tone || "info"}`, props.text);
+      const tone = props.tone || "info";
+      const note = make("p", `ou-callout ou-callout-${tone}`);
+      const icon = make("span", "ou-callout-icon", {info: "i", good: "✓", warn: "!"}[tone]);
+      icon.setAttribute("aria-hidden", "true");
+      note.append(icon, make("span", "ou-callout-text", props.text));
       note.setAttribute("role", "note");
       return note;
     }
@@ -672,6 +676,16 @@ export class OpenUi {
   }
 
   /**
+   * Whether a unit is a currency sign or the like, which goes before the number.
+   *
+   * :param unit: The unit.
+   * :return: True for one symbol such as £.
+   */
+  static sign(unit) {
+    return /^[^\p{L}\p{N}\s]$/u.test(String(unit || ""));
+  }
+
+  /**
    * A value with its unit: a currency sign before it (£120), any other unit after (820 kWh).
    *
    * :param value: A number or text.
@@ -684,7 +698,7 @@ export class OpenUi {
     if (!unit) {
       return text;
     }
-    if (!/^[^\p{L}\p{N}\s]$/u.test(unit)) {
+    if (!OpenUi.sign(unit)) {
       return `${text} ${unit}`;
     }
     // A currency sign goes after the minus: -£145.92.
@@ -692,7 +706,89 @@ export class OpenUi {
   }
 
   /**
-   * A table. Columns holding only numbers line up on the right.
+   * A big figure in a tile, with its label, a note in a coloured pill, and an optional
+   * small trend line under it.
+   *
+   * :param doc: The document.
+   * :param props: label, value, unit, detail, tone and trend.
+   * :return: The element.
+   */
+  static renderStat(doc, props) {
+    const tone = props.tone || "neutral";
+    const stat = OpenUi.make(doc, "div", `ou-stat ou-tone-${tone}`);
+    const value = OpenUi.make(doc, "div", "ou-stat-value");
+    if (typeof props.value === "number" && props.unit && !OpenUi.sign(props.unit)) {
+      value.append(OpenUi.make(doc, "span", "ou-stat-num", OpenUi.format(props.value)), OpenUi.make(doc, "span", "ou-stat-unit", ` ${props.unit}`));
+    } else {
+      value.append(OpenUi.make(doc, "span", "ou-stat-num", OpenUi.withUnit(props.value, props.unit)));
+    }
+    stat.append(OpenUi.make(doc, "div", "ou-stat-label", props.label), value);
+    if (props.detail) {
+      stat.append(OpenUi.make(doc, "div", "ou-pill", props.detail));
+    }
+    if (props.trend) {
+      stat.append(OpenUi.spark(doc, props.trend));
+    }
+    return stat;
+  }
+
+  /**
+   * A small line with a soft fill under it, for a tile. It is for the eye only: the label
+   * says where it starts and ends.
+   *
+   * :param doc: The document.
+   * :param values: At least two numbers.
+   * :return: The SVG element.
+   */
+  static spark(doc, values) {
+    const W = 120;
+    const H = 34;
+    const pad = 3;
+    const low = Math.min(...values);
+    const high = Math.max(...values);
+    const span = high - low || 1;
+    const points = values.map((v, i) => [pad + ((W - 2 * pad) * i) / (values.length - 1), pad + ((H - 2 * pad) * (high - v)) / span]);
+    const line = points.map((p) => p.map((n) => Number(n.toFixed(1))).join(",")).join(" ");
+    const svg = OpenUi.svg(doc, "svg", {viewBox: `0 0 ${W} ${H}`, role: "img", class: "ou-spark",
+      "aria-label": `Trend from ${OpenUi.format(values[0])} to ${OpenUi.format(values[values.length - 1])}`});
+    svg.append(OpenUi.svg(doc, "polygon", {points: `${line} ${W - pad},${H} ${pad},${H}`, class: "ou-spark-area"}));
+    svg.append(OpenUi.svg(doc, "polyline", {points: line, class: "ou-spark-line"}));
+    const last = points[points.length - 1];
+    svg.append(OpenUi.svg(doc, "circle", {cx: last[0], cy: last[1], r: 2.6, class: "ou-spark-dot"}));
+    return svg;
+  }
+
+  /**
+   * A bar that fills as far as a value goes towards a limit, such as a grant against a
+   * cost.
+   *
+   * :param doc: The document.
+   * :param props: label, value, max, unit and tone.
+   * :return: The element.
+   */
+  static renderMeter(doc, props) {
+    const share = Math.min(Math.max(props.value / props.max, 0), 1);
+    const meter = OpenUi.make(doc, "div", `ou-meter ou-tone-${props.tone || "neutral"}`);
+    const head = OpenUi.make(doc, "div", "ou-meter-head");
+    const percent = OpenUi.format(Math.round((props.value / props.max) * 1000) / 10);
+    head.append(OpenUi.make(doc, "span", "ou-meter-label", props.label),
+      OpenUi.make(doc, "span", "ou-meter-value", `${OpenUi.withUnit(props.value, props.unit)} of ${OpenUi.withUnit(props.max, props.unit)} (${percent}%)`));
+    const track = OpenUi.make(doc, "div", "ou-meter-track");
+    track.setAttribute("role", "meter");
+    track.setAttribute("aria-label", props.label);
+    track.setAttribute("aria-valuemin", "0");
+    track.setAttribute("aria-valuemax", String(props.max));
+    track.setAttribute("aria-valuenow", String(props.value));
+    const fill = OpenUi.make(doc, "div", "ou-meter-fill");
+    fill.style.width = `${Math.round(share * 1000) / 10}%`;
+    track.append(fill);
+    meter.append(head, track);
+    return meter;
+  }
+
+  /**
+   * A table in a rounded frame. Number columns line up on the right, the first column is
+   * bold, and a row that starts with "Total" stands out.
    *
    * :param doc: The document.
    * :param columns: The column names.
@@ -701,41 +797,34 @@ export class OpenUi {
    * :return: The element.
    */
   static renderTable(doc, columns, rows, caption) {
-    const scroll = doc.createElement("div");
-    scroll.className = "ou-scroll";
-    const table = doc.createElement("table");
-    table.className = "ou-table";
+    const frame = OpenUi.make(doc, "div", "ou-table-frame");
     if (caption) {
-      const cap = doc.createElement("caption");
-      cap.textContent = caption;
-      table.append(cap);
+      frame.append(OpenUi.make(doc, "div", "ou-table-caption", caption));
     }
+    const scroll = OpenUi.make(doc, "div", "ou-scroll");
+    const table = OpenUi.make(doc, "table", "ou-table");
     const numeric = columns.map((_, index) => rows.length > 0
       && rows.every((row) => typeof row[index] === "number" || row[index] === null));
     const head = doc.createElement("tr");
     columns.forEach((name, index) => {
-      const th = doc.createElement("th");
+      const th = OpenUi.make(doc, "th", numeric[index] ? "ou-num" : "", name);
       th.setAttribute("scope", "col");
-      th.textContent = name;
-      th.className = numeric[index] ? "ou-num" : "";
       head.append(th);
     });
     const thead = doc.createElement("thead");
     thead.append(head);
     const tbody = doc.createElement("tbody");
     for (const row of rows) {
-      const tr = doc.createElement("tr");
+      const tr = OpenUi.make(doc, "tr", /^total\b/i.test(String(row[0] ?? "")) ? "ou-total" : "");
       row.forEach((cell, index) => {
-        const td = doc.createElement("td");
-        td.textContent = OpenUi.format(cell);
-        td.className = numeric[index] ? "ou-num" : "";
-        tr.append(td);
+        tr.append(OpenUi.make(doc, "td", numeric[index] ? "ou-num" : (index === 0 ? "ou-first" : ""), OpenUi.format(cell)));
       });
       tbody.append(tr);
     }
     table.append(thead, tbody);
     scroll.append(table);
-    return scroll;
+    frame.append(scroll);
+    return frame;
   }
 
   /**
@@ -783,20 +872,29 @@ export class OpenUi {
   }
 
   /**
-   * A legend: a colour key and a name for each series or slice.
+   * The colour of the series or slice at a place in the list. The palette is in the
+   * stylesheet, with its own shades for the dark theme.
+   *
+   * :param index: The place.
+   * :return: A CSS colour.
+   */
+  static color(index) {
+    return `var(--ou-c${index % 8})`;
+  }
+
+  /**
+   * A legend: a colour key and a name for each series.
    *
    * :param doc: The document.
    * :param names: The names.
    * :return: The element.
    */
   static legend(doc, names) {
-    const legend = doc.createElement("div");
-    legend.className = "ou-legend";
+    const legend = OpenUi.make(doc, "div", "ou-legend");
     names.forEach((name, index) => {
-      const item = doc.createElement("span");
-      const key = doc.createElement("span");
-      key.className = "ou-key";
-      key.style.background = OpenUi.COLORS[index % OpenUi.COLORS.length];
+      const item = OpenUi.make(doc, "span", "ou-chip");
+      const key = OpenUi.make(doc, "span", "ou-key");
+      key.style.background = OpenUi.color(index);
       item.append(key, doc.createTextNode(name));
       legend.append(item);
     });
@@ -804,8 +902,19 @@ export class OpenUi {
   }
 
   /**
-   * A bar or line chart, with its numbers in a table underneath for anyone who cannot
-   * see the picture.
+   * A shortened label.
+   *
+   * :param label: The text.
+   * :param size: The most characters to keep.
+   * :return: The text, with … when it was cut.
+   */
+  static clip(label, size) {
+    return label.length > size ? `${label.slice(0, size - 1)}…` : label;
+  }
+
+  /**
+   * A bar or line chart in a framed card, with its numbers in a table underneath for
+   * anyone who cannot see the picture. Bars lie down when the names are long and few.
    *
    * :param doc: The document.
    * :param kind: "bar" or "line".
@@ -815,75 +924,152 @@ export class OpenUi {
   static renderChart(doc, kind, props) {
     const {title, labels, unit} = props;
     const series = props.series.filter((s) => s.type === "Series");
-    const W = 640;
-    const H = 300;
-    const left = 62;
-    const top = 14;
-    const plotW = W - left - 14;
-    const plotH = H - top - 40;
     const all = series.flatMap((s) => s.props.values);
     const ticks = OpenUi.ticks(Math.min(0, ...all), Math.max(0, ...all));
-    const low = ticks[0];
-    const high = ticks[ticks.length - 1];
-    const y = (v) => top + plotH * (high - v) / (high - low);
-    const figure = doc.createElement("figure");
-    figure.className = "ou-chart";
-    const caption = doc.createElement("figcaption");
-    caption.textContent = unit ? `${title} (${unit})` : title;
-    const svg = OpenUi.svg(doc, "svg", {viewBox: `0 0 ${W} ${H}`, role: "img", "aria-label": `${kind === "line" ? "Line" : "Bar"} chart: ${title}. The numbers are in the table below it.`});
-    for (const tick of ticks) {
-      svg.append(OpenUi.svg(doc, "line", {x1: left, x2: W - 14, y1: y(tick), y2: y(tick), class: tick === 0 ? "ou-axis" : "ou-grid"}));
-      svg.append(OpenUi.svg(doc, "text", {x: left - 8, y: y(tick) + 4, "text-anchor": "end", class: "ou-tick"}, OpenUi.withUnit(tick, unit, true)));
-    }
-    const slot = plotW / labels.length;
-    const every = Math.ceil(labels.length / 12);
-    labels.forEach((label, index) => {
-      if (index % every === 0) {
-        const text = label.length > 12 ? `${label.slice(0, 11)}…` : label;
-        svg.append(OpenUi.svg(doc, "text", {x: left + slot * (index + 0.5), y: H - 16, "text-anchor": "middle", class: "ou-tick"}, text));
-      }
-    });
-    series.forEach((s, index) => {
-      const color = OpenUi.COLORS[index % OpenUi.COLORS.length];
-      const points = s.props.values.map((v, i) => [left + slot * (i + 0.5), y(v)]);
-      const mark = (v, i) => `${labels[i]}, ${s.props.name}: ${OpenUi.withUnit(v, unit)}`;
-      if (kind === "line") {
-        const line = OpenUi.svg(doc, "polyline", {points: points.map((p) => p.join(",")).join(" "), class: "ou-line", "stroke-dasharray": OpenUi.DASHES[index]});
-        line.style.stroke = color;
-        svg.append(line);
-        s.props.values.forEach((v, i) => {
-          const dot = OpenUi.svg(doc, "circle", {cx: points[i][0], cy: points[i][1], r: 3.5, class: "ou-dot"});
-          dot.style.fill = color;
-          dot.append(OpenUi.svg(doc, "title", {}, mark(v, i)));
-          svg.append(dot);
-        });
-      } else {
-        const bar = (slot * 0.8) / series.length;
-        s.props.values.forEach((v, i) => {
-          const x = left + slot * i + slot * 0.1 + bar * index;
-          const rect = OpenUi.svg(doc, "rect", {x, y: Math.min(y(v), y(0)), width: Math.max(bar - 1, 1), height: Math.abs(y(v) - y(0)), class: "ou-bar"});
-          rect.style.fill = color;
-          rect.append(OpenUi.svg(doc, "title", {}, mark(v, i)));
-          svg.append(rect);
-        });
-      }
-    });
-    figure.append(caption, svg);
+    const horizontal = kind === "bar" && labels.length <= 10 && Math.max(...labels.map((l) => l.length)) >= 9;
+    const figure = OpenUi.make(doc, "figure", "ou-chart");
+    figure.append(OpenUi.make(doc, "figcaption", "ou-chart-title", unit ? `${title} (${unit})` : title));
+    const name = `${kind === "line" ? "Line" : "Bar"} chart: ${title}. The numbers are in the table below it.`;
+    const svg = horizontal ? OpenUi.drawRows(doc, labels, series, ticks, unit, name) : OpenUi.drawColumns(doc, kind, labels, series, ticks, unit, name);
+    figure.append(svg);
     if (series.length > 1) {
       figure.append(OpenUi.legend(doc, series.map((s) => s.props.name)));
     }
-    const data = doc.createElement("details");
-    data.className = "ou-data";
-    const summary = doc.createElement("summary");
-    summary.textContent = "View the numbers";
-    data.append(summary, OpenUi.renderTable(doc, ["", ...series.map((s) => (unit ? `${s.props.name} (${unit})` : s.props.name))],
-      labels.map((label, i) => [label, ...series.map((s) => s.props.values[i])])));
+    const data = OpenUi.make(doc, "details", "ou-data");
+    data.append(OpenUi.make(doc, "summary", "", "View the numbers"),
+      OpenUi.renderTable(doc, ["", ...series.map((s) => (unit ? `${s.props.name} (${unit})` : s.props.name))],
+        labels.map((label, i) => [label, ...series.map((s) => s.props.values[i])])));
     figure.append(data);
     return figure;
   }
 
   /**
-   * A donut chart, with each slice named in a list beside it.
+   * Bars standing up, or a line, over the labels. Few bars carry their value above them.
+   *
+   * :param doc: The document.
+   * :param kind: "bar" or "line".
+   * :param labels: The labels along the bottom.
+   * :param series: The Series nodes.
+   * :param ticks: The axis values.
+   * :param unit: The unit.
+   * :param name: The picture's accessible name.
+   * :return: The SVG element.
+   */
+  static drawColumns(doc, kind, labels, series, ticks, unit, name) {
+    const W = OpenUi.WIDTH;
+    const H = Math.round(Math.min(Math.max(W * 0.42, 190), 250));
+    const left = 62;
+    const top = 18;
+    const plotW = W - left - 16;
+    const plotH = H - top - 32;
+    const low = ticks[0];
+    const high = ticks[ticks.length - 1];
+    const y = (v) => top + (plotH * (high - v)) / (high - low);
+    const svg = OpenUi.svg(doc, "svg", {viewBox: `0 0 ${W} ${H}`, role: "img", "aria-label": name, class: "ou-svg"});
+    for (const tick of ticks) {
+      svg.append(OpenUi.svg(doc, "line", {x1: left, x2: W - 16, y1: y(tick), y2: y(tick), class: tick === 0 ? "ou-axis" : "ou-grid"}));
+      svg.append(OpenUi.svg(doc, "text", {x: left - 8, y: y(tick) + 4, "text-anchor": "end", class: "ou-tick"}, OpenUi.withUnit(tick, unit, true)));
+    }
+    const slot = plotW / labels.length;
+    const every = Math.ceil(labels.length / Math.max(4, Math.floor(plotW / 44)));
+    labels.forEach((label, index) => {
+      if (index % every === 0) {
+        svg.append(OpenUi.svg(doc, "text", {x: left + slot * (index + 0.5), y: H - 11, "text-anchor": "middle", class: "ou-tick"}, OpenUi.clip(label, 12)));
+      }
+    });
+    const showValues = kind === "bar" ? labels.length * series.length <= 12 : labels.length <= 6 && series.length <= 2;
+    series.forEach((s, index) => {
+      const color = OpenUi.color(index);
+      const values = s.props.values;
+      const mark = (v, i) => `${labels[i]}, ${s.props.name}: ${OpenUi.withUnit(v, unit)}`;
+      const tag = (el, v, i) => {
+        el.append(OpenUi.svg(doc, "title", {}, mark(v, i)));
+        return el;
+      };
+      if (kind === "line") {
+        const points = values.map((v, i) => [left + slot * (i + 0.5), y(v)]);
+        const path = points.map((p) => p.map((n) => Number(n.toFixed(1))).join(",")).join(" ");
+        const area = OpenUi.svg(doc, "polygon", {points: `${path} ${points[points.length - 1][0]},${y(0)} ${points[0][0]},${y(0)}`, class: "ou-area"});
+        area.style.fill = color;
+        svg.append(area);
+        const line = OpenUi.svg(doc, "polyline", {points: path, class: "ou-line", "stroke-dasharray": OpenUi.DASHES[index]});
+        line.style.stroke = color;
+        svg.append(line);
+        values.forEach((v, i) => {
+          const dot = tag(OpenUi.svg(doc, "circle", {cx: points[i][0], cy: points[i][1], r: 4, class: "ou-dot"}), v, i);
+          dot.style.fill = color;
+          svg.append(dot);
+          if (showValues) {
+            const text = OpenUi.svg(doc, "text", {x: points[i][0], y: points[i][1] - 10, "text-anchor": "middle", class: "ou-value"}, OpenUi.withUnit(v, unit, true));
+            text.style.fill = color;
+            svg.append(text);
+          }
+        });
+      } else {
+        const bar = Math.min((slot * 0.78) / series.length, 46);
+        const group = bar * series.length;
+        values.forEach((v, i) => {
+          const x = left + slot * (i + 0.5) - group / 2 + bar * index;
+          const rect = tag(OpenUi.svg(doc, "rect", {x, y: Math.min(y(v), y(0)), width: Math.max(bar - 2, 1), height: Math.max(Math.abs(y(v) - y(0)), 1), rx: 3, class: "ou-bar"}), v, i);
+          rect.style.fill = color;
+          svg.append(rect);
+          if (showValues) {
+            svg.append(OpenUi.svg(doc, "text", {x: x + (bar - 2) / 2, y: v >= 0 ? y(v) - 6 : y(v) + 14, "text-anchor": "middle", class: "ou-value"}, OpenUi.withUnit(v, unit, true)));
+          }
+        });
+      }
+    });
+    return svg;
+  }
+
+  /**
+   * Bars lying down, one row for each label: easier to read when the names are long, as
+   * for tariffs. Each bar carries its value at its end.
+   *
+   * :param doc: The document.
+   * :param labels: The row names.
+   * :param series: The Series nodes.
+   * :param ticks: The axis values.
+   * :param unit: The unit.
+   * :param name: The picture's accessible name.
+   * :return: The SVG element.
+   */
+  static drawRows(doc, labels, series, ticks, unit, name) {
+    const W = OpenUi.WIDTH;
+    const left = Math.min(W * 0.38, 12 + Math.max(...labels.map((l) => Math.min(l.length, 24))) * 6.6);
+    const right = 64;
+    const top = 8;
+    const barH = Math.min(18, 44 / series.length);
+    const rowH = barH * series.length + 12;
+    const H = top + rowH * labels.length + 26;
+    const plotW = W - left - right;
+    const low = ticks[0];
+    const high = ticks[ticks.length - 1];
+    const x = (v) => left + (plotW * (v - low)) / (high - low);
+    const svg = OpenUi.svg(doc, "svg", {viewBox: `0 0 ${W} ${H}`, role: "img", "aria-label": name, class: "ou-svg"});
+    for (const tick of ticks) {
+      svg.append(OpenUi.svg(doc, "line", {x1: x(tick), x2: x(tick), y1: top, y2: H - 22, class: tick === 0 ? "ou-axis" : "ou-grid"}));
+      svg.append(OpenUi.svg(doc, "text", {x: x(tick), y: H - 6, "text-anchor": "middle", class: "ou-tick"}, OpenUi.withUnit(tick, unit, true)));
+    }
+    labels.forEach((label, row) => {
+      const mid = top + rowH * row + rowH / 2;
+      svg.append(OpenUi.svg(doc, "text", {x: left - 10, y: mid + 4, "text-anchor": "end", class: "ou-tick ou-rowlabel"}, OpenUi.clip(label, Math.floor((left - 14) / 6.4))));
+      series.forEach((s, index) => {
+        const v = s.props.values[row];
+        const y = mid - (barH * series.length) / 2 + barH * index;
+        const rect = OpenUi.svg(doc, "rect", {x: Math.min(x(v), x(0)), y, width: Math.max(Math.abs(x(v) - x(0)), 1), height: barH - 3, rx: 3, class: "ou-bar"});
+        rect.style.fill = OpenUi.color(index);
+        rect.append(OpenUi.svg(doc, "title", {}, `${label}, ${s.props.name}: ${OpenUi.withUnit(v, unit)}`));
+        svg.append(rect);
+        svg.append(OpenUi.svg(doc, "text", {x: v >= 0 ? x(v) + 6 : x(v) - 6, y: y + (barH - 3) / 2 + 4, "text-anchor": v >= 0 ? "start" : "end", class: "ou-value"}, OpenUi.withUnit(v, unit, true)));
+      });
+    });
+    return svg;
+  }
+
+  /**
+   * A donut chart with the total in its middle, and each slice named in a list beside
+   * it with its value, its share and a thin bar.
    *
    * :param doc: The document.
    * :param props: title, labels, values and unit.
@@ -892,14 +1078,12 @@ export class OpenUi {
   static renderPie(doc, props) {
     const {title, labels, values, unit} = props;
     const total = values.reduce((sum, v) => sum + v, 0);
-    const figure = doc.createElement("figure");
-    figure.className = "ou-chart ou-pie";
-    const caption = doc.createElement("figcaption");
-    caption.textContent = unit ? `${title} (${unit})` : title;
-    const svg = OpenUi.svg(doc, "svg", {viewBox: "0 0 200 200", role: "img", "aria-label": `Donut chart: ${title}. The numbers are in the list beside it.`});
+    const figure = OpenUi.make(doc, "figure", "ou-chart ou-pie");
+    figure.append(OpenUi.make(doc, "figcaption", "ou-chart-title", unit ? `${title} (${unit})` : title));
+    const svg = OpenUi.svg(doc, "svg", {viewBox: "0 0 200 200", role: "img", class: "ou-svg", "aria-label": `Donut chart: ${title}. The numbers are in the list beside it.`});
     const centre = 100;
-    const outer = 92;
-    const inner = 54;
+    const outer = 94;
+    const inner = 58;
     const point = (angle, radius) => [centre + radius * Math.sin(angle), centre - radius * Math.cos(angle)];
     let start = 0;
     values.forEach((v, index) => {
@@ -907,11 +1091,10 @@ export class OpenUi {
         return;
       }
       const sweep = (v / total) * Math.PI * 2;
-      const color = OpenUi.COLORS[index % OpenUi.COLORS.length];
       let shape;
       if (sweep >= Math.PI * 2 - 1e-6) {
         shape = OpenUi.svg(doc, "circle", {cx: centre, cy: centre, r: (outer + inner) / 2, "stroke-width": outer - inner, class: "ou-ring"});
-        shape.style.stroke = color;
+        shape.style.stroke = OpenUi.color(index);
       } else {
         const [x1, y1] = point(start, outer);
         const [x2, y2] = point(start + sweep, outer);
@@ -919,72 +1102,112 @@ export class OpenUi {
         const [x4, y4] = point(start, inner);
         const large = sweep > Math.PI ? 1 : 0;
         shape = OpenUi.svg(doc, "path", {d: `M${x1} ${y1} A${outer} ${outer} 0 ${large} 1 ${x2} ${y2} L${x3} ${y3} A${inner} ${inner} 0 ${large} 0 ${x4} ${y4} Z`, class: "ou-slice"});
-        shape.style.fill = color;
+        shape.style.fill = OpenUi.color(index);
       }
       shape.append(OpenUi.svg(doc, "title", {}, `${labels[index]}: ${OpenUi.withUnit(v, unit)}`));
       svg.append(shape);
       start += sweep;
     });
-    const list = doc.createElement("ul");
-    list.className = "ou-slices";
+    svg.append(OpenUi.svg(doc, "text", {x: centre, y: centre + 2, "text-anchor": "middle", class: "ou-donut-total"}, OpenUi.withUnit(total, unit, true)));
+    svg.append(OpenUi.svg(doc, "text", {x: centre, y: centre + 18, "text-anchor": "middle", class: "ou-tick"}, "Total"));
+    const list = OpenUi.make(doc, "ul", "ou-slices");
     labels.forEach((label, index) => {
-      const item = doc.createElement("li");
-      const key = doc.createElement("span");
-      key.className = "ou-key";
-      key.style.background = OpenUi.COLORS[index % OpenUi.COLORS.length];
       const share = Math.round((values[index] / total) * 1000) / 10;
-      item.append(key, doc.createTextNode(`${label}: ${OpenUi.withUnit(values[index], unit)} (${OpenUi.format(share)}%)`));
+      const item = OpenUi.make(doc, "li", "ou-slice-row");
+      const key = OpenUi.make(doc, "span", "ou-key");
+      key.style.background = OpenUi.color(index);
+      const head = OpenUi.make(doc, "span", "ou-slice-head");
+      head.append(key, doc.createTextNode(`${label}: ${OpenUi.withUnit(values[index], unit)} (${OpenUi.format(share)}%)`));
+      const track = OpenUi.make(doc, "span", "ou-slice-track");
+      const fill = OpenUi.make(doc, "span", "ou-slice-fill");
+      fill.style.width = `${share}%`;
+      fill.style.background = OpenUi.color(index);
+      track.append(fill);
+      item.append(head, track);
       list.append(item);
     });
-    const body = doc.createElement("div");
-    body.className = "ou-pie-body";
+    const body = OpenUi.make(doc, "div", "ou-pie-body");
     body.append(svg, list);
-    figure.append(caption, body);
+    figure.append(body);
     return figure;
   }
 
   // ---- In the page -----------------------------------------------------------------------
 
-  /** The look of the blocks. It uses the chat's own colours, so each site keeps its own. */
+  /**
+   * The look of the blocks. It uses the page's own colours (--surface, --ink, --line and
+   * so on, with the chat's --ns-* as a fallback), so each site and each theme keeps its
+   * own look. The data-theme="dark" rules give the palette its lighter shades.
+   */
   static CSS = `
-.ou-root{display:flex;flex-direction:column;gap:10px;margin:8px 0;white-space:normal;line-height:1.45;min-width:0}
+.ou-root{--ou-c0:var(--ns-primary,#9a3412);--ou-c1:#0f766e;--ou-c2:#4f46e5;--ou-c3:#b45309;--ou-c4:#be185d;--ou-c5:#0369a1;--ou-c6:#4d7c0f;--ou-c7:#6b7280;--ou-good:#1a7f37;--ou-bad:#b42318;--ou-warn:#b45309;--ou-info:var(--ns-primary,#9a3412);--ou-surface:var(--surface,var(--ns-bg,#fff));--ou-soft:var(--surface-2,var(--ns-msgbg,#f6f8fa));--ou-line:var(--line,var(--ns-border,#d0d7de));--ou-ink:var(--ink,var(--ns-fg,#1f2328));--ou-muted:var(--muted,var(--ns-muted,#59636e))}
+:root[data-theme="dark"] .ou-root{--ou-c0:var(--brand-ink,#fb923c);--ou-c1:#2dd4bf;--ou-c2:#a5b4fc;--ou-c3:#fbbf24;--ou-c4:#f472b6;--ou-c5:#38bdf8;--ou-c6:#a3e635;--ou-c7:#94a3b8;--ou-good:#4ade80;--ou-bad:#f87171;--ou-warn:#fbbf24;--ou-info:var(--brand-ink,#fb923c)}
+.ou-root{display:flex;flex-direction:column;gap:9px;margin:6px 0;white-space:normal;line-height:1.35;min-width:0;font-size:.92em;color:var(--ou-ink)}
 .ou-live-text{white-space:pre-wrap}
-.ou-stack{display:flex;gap:10px;min-width:0}.ou-column{flex-direction:column}.ou-row{flex-direction:row;flex-wrap:wrap}
-.ou-row>*{flex:1 1 150px;min-width:0}
-.ou-card{border:1px solid var(--ns-border,#d0d7de);border-radius:10px;padding:10px 12px;display:flex;flex-direction:column;gap:8px;background:var(--ns-bg,#fff)}
-.ou-card-title,.ou-text-heading{margin:0;font-size:1em;font-weight:700}
-.ou-text{margin:0}.ou-text-muted{color:var(--ns-muted,#59636e);font-size:.92em}
-.ou-stat{border:1px solid var(--ns-border,#d0d7de);border-left:4px solid var(--ns-muted,#59636e);border-radius:8px;padding:8px 12px;background:var(--ns-bg,#fff)}
-.ou-stat.ou-tone-good{border-left-color:#1a7f37}.ou-stat.ou-tone-bad{border-left-color:#b42318}
-.ou-stat-label{font-size:.85em;color:var(--ns-muted,#59636e)}
-.ou-stat-value{font-size:1.6em;font-weight:700;line-height:1.2;overflow-wrap:anywhere}
-.ou-stat-detail{font-size:.85em;margin-top:2px}
-.ou-tone-good .ou-stat-detail{color:#1a7f37}.ou-tone-bad .ou-stat-detail{color:#b42318}
-.ou-callout{margin:0;padding:8px 12px;border-radius:8px;border:1px solid var(--ns-border,#d0d7de);border-left-width:4px;background:var(--ns-msgbg,#f6f8fa)}
-.ou-callout-good{border-left-color:#1a7f37}.ou-callout-warn{border-left-color:#b45309}.ou-callout-info{border-left-color:var(--ns-primary,#9a3412)}
+.ou-stack{display:flex;gap:8px;min-width:0}.ou-column{flex-direction:column}
+.ou-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(128px,1fr))}
+.ou-row>*{min-width:0}
+.ou-text-heading{margin:0;font-size:1.05em;font-weight:700;letter-spacing:.005em}
+.ou-text{margin:0}.ou-text-muted{color:var(--ou-muted);font-size:.9em}
+.ou-stat{position:relative;overflow:hidden;border:1px solid var(--ou-line);border-radius:12px;padding:9px 12px;background:var(--ou-surface);box-shadow:0 1px 2px rgba(0,0,0,.08);display:flex;flex-direction:column;gap:2px;color:var(--ou-muted)}
+.ou-stat::before{content:"";position:absolute;left:0;top:0;bottom:0;width:4px;background:currentColor;opacity:.9}
+.ou-stat.ou-tone-good{color:var(--ou-good)}.ou-stat.ou-tone-bad{color:var(--ou-bad)}
+.ou-stat-label{font-size:.72em;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--ou-muted)}
+.ou-stat-value{color:var(--ou-ink);line-height:1.1;overflow-wrap:anywhere}
+.ou-stat-num{font-size:1.65em;font-weight:750;font-variant-numeric:tabular-nums;letter-spacing:-.01em}
+.ou-stat-unit{font-size:.95em;font-weight:600;color:var(--ou-muted)}
+.ou-pill{align-self:flex-start;margin-top:2px;padding:1px 8px;border-radius:999px;font-size:.74em;font-weight:600;color:var(--ou-ink);background:var(--ou-soft)}
+.ou-tone-good .ou-pill{color:var(--ou-good);background:color-mix(in srgb,var(--ou-good) 14%,transparent)}
+.ou-tone-bad .ou-pill{color:var(--ou-bad);background:color-mix(in srgb,var(--ou-bad) 14%,transparent)}
+.ou-root .ou-spark{display:block;width:100%;height:26px;min-width:0;margin-top:3px;color:inherit}
+.ou-spark-line{fill:none;stroke:currentColor;stroke-width:2;stroke-linejoin:round;stroke-linecap:round}.ou-spark-area{fill:currentColor;opacity:.14}.ou-spark-dot{fill:currentColor}
+.ou-meter{display:flex;flex-direction:column;gap:6px;color:var(--ou-c0)}
+.ou-meter.ou-tone-good{color:var(--ou-good)}.ou-meter.ou-tone-bad{color:var(--ou-bad)}
+.ou-meter-head{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;font-size:.9em;color:var(--ou-ink)}
+.ou-meter-label{font-weight:600}.ou-meter-value{color:var(--ou-muted);font-variant-numeric:tabular-nums}
+.ou-meter-track{height:10px;border-radius:999px;background:var(--ou-soft);box-shadow:inset 0 0 0 1px var(--ou-line);overflow:hidden}
+.ou-meter-fill{height:100%;border-radius:999px;background:currentColor}
+.ou-callout{margin:0;display:flex;gap:8px;align-items:flex-start;padding:7px 11px;border-radius:10px;border:1px solid var(--ou-line);background:var(--ou-soft);color:var(--ou-info)}
+.ou-callout-good{color:var(--ou-good)}.ou-callout-warn{color:var(--ou-warn)}
+.ou-callout-icon{flex:none;width:20px;height:20px;border-radius:50%;background:currentColor;display:grid;place-items:center;font-size:12px;font-weight:800;line-height:1}
+.ou-callout-icon{color:var(--ou-surface)}
+.ou-callout-text{color:var(--ou-ink)}
+.ou-table-frame{border:1px solid var(--ou-line);border-radius:12px;overflow:hidden;background:var(--ou-surface);box-shadow:0 1px 2px rgba(0,0,0,.08)}
+.ou-table-caption{padding:8px 10px 2px;font-weight:700}
 .ou-scroll{overflow-x:auto;max-width:100%}
-.ou-table{width:100%;border-collapse:collapse;font-size:.9em}
-.ou-table caption{text-align:left;font-weight:700;padding-bottom:4px}
-.ou-table th,.ou-table td{padding:6px 8px;border-bottom:1px solid var(--ns-border,#d0d7de);text-align:left;vertical-align:top}
-.ou-table th{background:var(--ns-msgbg,#f6f8fa)}.ou-table .ou-num{text-align:right!important;font-variant-numeric:tabular-nums}
-.ou-chart{margin:0;display:flex;flex-direction:column;gap:6px}
-.ou-chart figcaption{font-weight:700}
-.ou-chart svg{display:block;width:100%;height:auto;min-width:280px}
-.ou-grid{stroke:var(--ns-border,#d0d7de);stroke-width:1}.ou-axis{stroke:var(--ns-muted,#59636e);stroke-width:1.2}
-.ou-tick{font-size:11px;fill:var(--ns-muted,#59636e)}
-.ou-line{fill:none;stroke-width:2.5;stroke-linejoin:round}.ou-dot{stroke:var(--ns-bg,#fff);stroke-width:1}
-.ou-ring{fill:none}
-.ou-legend{display:flex;gap:12px;flex-wrap:wrap;font-size:.85em}
-.ou-key{display:inline-block;width:10px;height:10px;margin-right:6px;border-radius:2px}
-.ou-pie-body{display:flex;gap:16px;align-items:center;flex-wrap:wrap}
-.ou-pie-body svg{width:180px;min-width:0}
-.ou-slices{list-style:none;margin:0;padding:0;font-size:.9em;display:flex;flex-direction:column;gap:4px}
-.ou-data summary,.ou-source summary{cursor:pointer;font-size:.85em;color:var(--ns-muted,#59636e)}
-.ou-source pre{white-space:pre-wrap;overflow-wrap:anywhere;font-size:.8em;padding:8px;background:var(--ns-msgbg,#f6f8fa);border-radius:6px}
-.ou-error{margin:0;font-size:.9em;color:#b42318}
-.ou-pending{height:56px;border-radius:8px;background:var(--ns-msgbg,#f6f8fa);animation:ou-pulse 1.2s ease-in-out infinite}
+.ou-table{width:100%;border-collapse:collapse;font-size:.94em}
+.ou-table th,.ou-table td{padding:6px 10px;border-bottom:1px solid var(--ou-line);text-align:left;vertical-align:top}
+.ou-table th{font-size:.74em;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--ou-muted);background:var(--ou-soft);white-space:nowrap}
+.ou-table tbody tr:last-child td{border-bottom:0}
+.ou-table tbody tr:hover td{background:var(--ou-soft)}
+.ou-table .ou-first{font-weight:650}
+.ou-table .ou-num{text-align:right!important;font-variant-numeric:tabular-nums;white-space:nowrap}
+.ou-table tr.ou-total td{font-weight:750;border-top:2px solid var(--ou-line);background:var(--ou-soft)}
+.ou-chart{margin:0;display:flex;flex-direction:column;gap:6px;border:1px solid var(--ou-line);border-radius:12px;padding:10px 12px;background:var(--ou-surface);box-shadow:0 1px 2px rgba(0,0,0,.08);min-width:0}
+.ou-chart-title{font-weight:700}
+.ou-svg{display:block;width:100%;height:auto;min-width:280px;overflow:visible}
+.ou-grid{stroke:var(--ou-line);stroke-width:1;stroke-dasharray:3 4}.ou-axis{stroke:var(--ou-muted);stroke-width:1.2}
+.ou-tick{font-size:11px;fill:var(--ou-muted)}.ou-rowlabel{fill:var(--ou-ink);font-size:12px}
+.ou-value{font-size:11px;font-weight:700;fill:var(--ou-ink)}
+.ou-bar{opacity:.92;transition:opacity .15s}.ou-bar:hover{opacity:1}
+.ou-line{fill:none;stroke-width:2.5;stroke-linejoin:round;stroke-linecap:round}.ou-area{opacity:.12}
+.ou-dot{stroke:var(--ou-surface);stroke-width:1.5}.ou-dot:hover{r:6}
+.ou-ring{fill:none}.ou-slice,.ou-ring{stroke:var(--ou-surface);stroke-width:2;transition:opacity .15s}.ou-ring{stroke-width:36}
+.ou-donut-total{font-size:19px;font-weight:750;fill:var(--ou-ink)}
+.ou-legend{display:flex;gap:8px;flex-wrap:wrap;font-size:.82em}
+.ou-chip{display:inline-flex;align-items:center;padding:2px 10px;border-radius:999px;background:var(--ou-soft);border:1px solid var(--ou-line)}
+.ou-key{display:inline-block;width:10px;height:10px;margin-right:6px;border-radius:3px;flex:none}
+.ou-pie-body{display:flex;gap:14px;align-items:center;flex-wrap:wrap}
+.ou-pie-body .ou-svg{width:140px;min-width:0;flex:none}
+.ou-slices{list-style:none;margin:0;padding:0;font-size:.9em;display:flex;flex-direction:column;gap:7px;flex:1 1 160px;min-width:0}
+.ou-slice-row{display:flex;flex-direction:column;gap:4px}.ou-slice-head{display:flex;align-items:center}
+.ou-slice-track{height:6px;border-radius:999px;background:var(--ou-soft);overflow:hidden}.ou-slice-fill{display:block;height:100%;border-radius:999px}
+.ou-data summary{cursor:pointer;font-size:.82em;color:var(--ou-muted)}
+.ou-data .ou-table-frame{margin-top:8px;box-shadow:none}
+.ou-error{margin:0;font-size:.9em;color:var(--ou-bad)}
+.ou-pending{height:52px;border-radius:12px;background:var(--ou-soft);animation:ou-pulse 1.2s ease-in-out infinite}
 @keyframes ou-pulse{50%{opacity:.45}}
-@media (prefers-reduced-motion:reduce){.ou-pending{animation:none}}
+@media (prefers-reduced-motion:reduce){.ou-pending{animation:none}.ou-bar,.ou-slice{transition:none}}
 `;
 
   /**
@@ -1017,6 +1240,10 @@ export class OpenUi {
       return null;
     }
     OpenUi.ensureStyle(doc);
+    // A chart gets about the width the chat gives it, less the bubble's and frame's padding.
+    if (msgs.clientWidth > 0) {
+      OpenUi.WIDTH = Math.min(Math.max(Math.round(msgs.clientWidth - 80), 300), 640);
+    }
     const scan = (node) => {
       if (!node || node.nodeType !== 1) {
         return;
@@ -1028,7 +1255,7 @@ export class OpenUi {
         }
         pre.setAttribute("data-openui", "seen");
         try {
-          const drawn = OpenUi.draw(doc, pre.textContent, {source: true});
+          const drawn = OpenUi.draw(doc, pre.textContent);
           if (drawn) {
             pre.replaceWith(drawn);
           }

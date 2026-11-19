@@ -52,8 +52,10 @@ host (Cloudflare Worker, or scripts/serve-all.mjs locally)
   and other figures by writing one fenced `openui` block in OpenUI Lang, the compact
   statement format of the open source [OpenUI](https://github.com/thesysdev/openui)
   project (MIT): `root = Stack([cost, chart])`, `cost = Stat("Yearly cost", 1180, "£")`.
-  The page reads it with its own small parser and draws stat tiles, tables, bar, line and
-  pie charts and callouts from DOM and SVG made in the page. No OpenUI code is copied or
+  The page reads it with its own small parser and draws stat tiles (with an optional trend line), meters, tables, bar, line and
+  donut charts and callouts from DOM and SVG made in the page. Bars lie down when their
+  names are long and few, and charts are sized to the chat's width so their text stays
+  readable on a laptop. No OpenUI code is copied or
   loaded, so the page keeps its rules: no dependencies, no third-party scripts. Every
   value is checked against `OpenUi.LIBRARY` and the limits in `OpenUi.LIMITS`; the model
   never supplies markup, so it cannot run code or restyle the page. A block that cannot be
@@ -62,9 +64,16 @@ host (Cloudflare Worker, or scripts/serve-all.mjs locally)
   made to stream), and each chart carries its numbers in a table for anyone who cannot see
   the picture. The prompt (`figure_rules` in each `.hocon`, the same text on every site)
   lists the same components; `tests/openui.test.mjs` fails when they differ. The numbers in
-  a block are the model's words, so the prompt says to use only figures from tool results
-  (CLAUDE.md rule 4). Tables and charts from `render_cruse` still work, but the prompt no
+  a block are the model's words; the grounding rules say facts come only from tool results
+  (CLAUDE.md rule 4), and the page does not check a number against them. Tables and charts from `render_cruse` still work, but the prompt no
   longer describes them.
+- **Themes** (`js/theme.js`, the same on every site). Every page is dark by default: its
+  `<html>` carries `data-theme="dark"`, so it is dark before any script runs. A switch in
+  the header flips it to light and back, and the choice is kept in this browser's local
+  storage for that site only. `styles.css` takes its colours from variables (`--surface`,
+  `--ink`, `--line`, `--brand-ink`, `--brand-solid` and so on), with a dark set under
+  `:root[data-theme="dark"]`. The chat's `--ns-*` variables follow them, and the figures
+  use the same variables with their own palette.
 - **The MCP server** (`server/`) answers `/mcp` on each site's own origin with read-only
   tools over that site's public data. It imports the page's own data and rules modules,
   so a page, its assistant and its MCP tools give the same answers (CLAUDE.md rule 5).

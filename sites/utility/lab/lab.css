@@ -1,13 +1,14 @@
 /* The Safety checks page. The site's own styles.css gives the page and the chat their look. */
-.notice { background: #fffbeb; border: 1px solid #f59e0b; border-radius: 8px; padding: 10px 14px; }
+.notice { background: var(--notice-bg, #fffbeb); border: 1px solid #f59e0b; border-radius: 8px; padding: 10px 14px; }
 .lab-tabs { display: flex; flex-wrap: wrap; gap: 8px; margin: 18px 0 0; }
-.lab-tabs button { margin: 0; background: #fff; color: var(--ink); border: 1px solid var(--line); }
+.lab-tabs button { margin: 0; background: var(--surface); color: var(--ink); border: 1px solid var(--line); }
 .lab-tabs button[aria-selected="true"] { background: var(--brand); color: #fff; border-color: var(--brand); }
 .lab-case { border: 1px solid var(--line); border-radius: 10px; padding: 14px 18px; margin-top: 10px; }
 .lab-case h2 { margin-top: 4px; }
-.lab-result { border-left: 4px solid var(--brand); background: #fff7ed; padding: 8px 14px; border-radius: 6px; }
+.lab-result { border-left: 4px solid var(--brand); background: var(--tint); padding: 8px 14px; border-radius: 6px; }
 .lab-result h3 { margin: 4px 0 6px; }
 .lab-result ul { margin: 0 0 6px; padding-left: 1.2em; }
 .lab-result li { margin: 4px 0; }
 .lab-result .stop { font-weight: 600; }
 .lab-result code { overflow-wrap: anywhere; }
+:root[data-theme="dark"] { --notice-bg: #2a2410; }

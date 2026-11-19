@@ -196,18 +196,19 @@ test("A stat, a table and a callout are drawn from text, never from markup", () 
     'c = Callout("<b>careful</b>", "warn")',
     's = Stat("Yearly cost", 1180, "£", "£120 less", "good")',
     't = Table(["Month", "kWh"], [["Jan", 820], ["Feb", 640.5]], "Gas")',
-  ].join("\n"), {source: true});
+  ].join("\n"));
   assert.equal(drawn.attributes["data-openui"], "done");
   const value = drawn.all((n) => n.className === "ou-stat-value")[0];
   assert.equal(value.textContent, "£1,180");
   assert.ok(drawn.all((n) => n.className === "ou-stat ou-tone-good").length === 1);
   const cells = drawn.all(tag("td")).map((n) => [n.textContent, n.className]);
-  assert.deepEqual(cells, [["Jan", ""], ["820", "ou-num"], ["Feb", ""], ["640.5", "ou-num"]]);
+  assert.deepEqual(cells, [["Jan", "ou-first"], ["820", "ou-num"], ["Feb", "ou-first"], ["640.5", "ou-num"]]);
   assert.equal(drawn.all(tag("th")).length, 2);
-  assert.equal(drawn.all(tag("caption"))[0].textContent, "Gas");
-  assert.equal(drawn.all((n) => n.className === "ou-callout ou-callout-warn")[0].textContent, "<b>careful</b>");
-  assert.match(drawn.all(tag("summary"))[0].textContent, /Show what the assistant wrote/);
-  assert.equal(drawn.all(tag("pre"))[0].attributes["data-openui"], "source");
+  assert.equal(drawn.all((n) => n.className === "ou-table-caption")[0].textContent, "Gas");
+  assert.equal(drawn.all((n) => n.className === "ou-callout-text")[0].textContent, "<b>careful</b>");
+  // Nothing of the assistant's own text is offered back: only what it drew.
+  assert.equal(drawn.all(tag("pre")).length, 0);
+  assert.equal(drawn.all(tag("summary")).length, 0);
 });
 
 test("A bar chart has one bar for each value and its numbers in a table", () => {
@@ -222,6 +223,9 @@ test("A bar chart has one bar for each value and its numbers in a table", () => 
   assert.equal(drawn.all(tag("svg"))[0].attributes.role, "img");
   assert.equal(drawn.all(tag("details")).length, 1);
   assert.deepEqual(drawn.all(tag("td")).map((n) => n.textContent), ["Jan", "820", "Feb", "640", "Mar", "500"]);
+  // Three bars with short names stand up, and each carries its value.
+  assert.equal(drawn.all((n) => n.className.includes("ou-rowlabel")).length, 0);
+  assert.deepEqual(drawn.all((n) => n.className === "ou-value").map((n) => n.textContent), ["820 kWh", "640 kWh", "500 kWh"]);
 });
 
 test("A line chart draws a line and dots, and a pie shows each share", () => {
@@ -232,6 +236,8 @@ test("A line chart draws a line and dots, and a pie shows each share", () => {
   const pie = OpenUi.draw(doc, 'root = PieChart("Mix", ["Gas", "Power"], [1, 3], "kWh")');
   assert.equal(pie.all((n) => n.className === "ou-slice").length, 2);
   assert.deepEqual(pie.all(tag("li")).map((n) => n.textContent), ["Gas: 1 kWh (25%)", "Power: 3 kWh (75%)"]);
+  assert.equal(pie.all((n) => n.className === "ou-donut-total")[0].textContent, "4 kWh");
+  assert.deepEqual(pie.all((n) => n.className === "ou-slice-fill").map((n) => n.style.width), ["25%", "75%"]);
   const whole = OpenUi.draw(doc, 'root = PieChart("All", ["Gas", "Power"], [0, 3])');
   assert.equal(whole.all((n) => n.className === "ou-ring").length, 1);
 });
@@ -255,6 +261,43 @@ test("The live bubble draws an openui block as it is written, and leaves plain t
   live.restart();
   live.delta("Plain words");
   assert.equal(msgs.children[0].textContent, "Plain words");
+});
+
+test("Long names lie the bars down, one row each, with the value at the end of each bar", () => {
+  const drawn = OpenUi.draw(doc, 'root = BarChart("Yearly cost", ["Standard Variable", "Fixed 12 Month", "Green Flex"], [Series("Cost", [1320, 1250, 1180])], "£")');
+  assert.equal(drawn.all((n) => n.className.includes("ou-rowlabel")).length, 3);
+  const widths = drawn.all((n) => n.className === "ou-bar").map((bar) => Number(bar.attributes.width));
+  assert.ok(widths[0] > widths[1] && widths[1] > widths[2]);
+  assert.ok(Math.abs(widths[0] / widths[2] - 1320 / 1180) < 0.01);
+  assert.deepEqual(drawn.all((n) => n.className === "ou-value").map((n) => n.textContent), ["£1,320", "£1,250", "£1,180"]);
+});
+
+test("A stat shows a unit after the number, a note in a pill, and a trend as a small line", () => {
+  const drawn = OpenUi.draw(doc, 'root = Stat("Gas", 11770, "kWh", "Down on last year", "good", [900, 800, 700])');
+  assert.equal(drawn.all((n) => n.className === "ou-stat-num")[0].textContent, "11,770");
+  assert.equal(drawn.all((n) => n.className === "ou-stat-unit")[0].textContent, " kWh");
+  assert.equal(drawn.all((n) => n.className === "ou-pill")[0].textContent, "Down on last year");
+  assert.equal(drawn.all((n) => n.className === "ou-spark")[0].attributes["aria-label"], "Trend from 900 to 700");
+  assert.equal(drawn.all((n) => n.className === "ou-spark-line")[0].attributes.points.split(" ").length, 3);
+  assert.match(OpenUi.parse('root = Stat("Gas", 1, "kWh", "x", "good", [5])').errors[0], /at least two numbers/);
+});
+
+test("A meter fills as far as the value goes towards its limit, and is checked", () => {
+  const drawn = OpenUi.draw(doc, 'root = Meter("Grant towards fitting", 5000, 11200, "£")');
+  assert.equal(drawn.all((n) => n.className === "ou-meter-value")[0].textContent, "£5,000 of £11,200 (44.6%)");
+  assert.equal(drawn.all((n) => n.className === "ou-meter-fill")[0].style.width, "44.6%");
+  const track = drawn.all((n) => n.className === "ou-meter-track")[0];
+  assert.deepEqual([track.attributes.role, track.attributes["aria-valuenow"], track.attributes["aria-valuemax"]], ["meter", "5000", "11200"]);
+  // Past its limit the bar stops at full, and the text still says the real number.
+  const over = OpenUi.draw(doc, 'root = Meter("Used", 150, 100)');
+  assert.equal(over.all((n) => n.className === "ou-meter-fill")[0].style.width, "100%");
+  assert.match(over.all((n) => n.className === "ou-meter-value")[0].textContent, /150 of 100 \(150%\)/);
+  assert.match(OpenUi.parse('root = Meter("Used", 1, 0)').errors[0], /max above 0/);
+});
+
+test("A table row that starts with Total stands out", () => {
+  const drawn = OpenUi.draw(doc, 'root = Table(["Item", "£"], [["Fitting", 9200], ["Total", 9200]])');
+  assert.deepEqual(drawn.all(tag("tr")).map((n) => n.className), ["", "", "ou-total"]);
 });
 
 /**
