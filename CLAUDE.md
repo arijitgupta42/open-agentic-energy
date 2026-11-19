@@ -42,6 +42,29 @@ After any change to a `.hocon`, an `agent-manifest.json`, a `site-actions.js` or
 code, run `npm run build && npm test && npm run check`. All three must pass before a
 commit.
 
+## Branches and releases
+
+`dev` is the default branch and carries the `local` origins. `production` carries the
+production origins and is what is deployed. Every change follows the same path:
+
+1. **Branch from `dev`.** Name it `feat/<name>`, `fix/<name>` or `docs/<name>`. Commit
+   there, never straight to `dev` or `production`, and name the issue in the message when
+   there is one. Run the build, tests and check above before each commit.
+2. **Merge the branch into `dev`** with `git merge --no-ff`, then push `dev`.
+3. **Merge `dev` into `production`.** Run `npm run origins -- production`, `npm test` and
+   `node scripts/check-conformance.mjs --production`, commit what the origins step
+   changed, then push `production`.
+4. **Deploy** when a site, `runtime/`, `server/` or `deploy/` file changed: the three
+   Workers with `npx.cmd wrangler@4 deploy --config deploy/cloudflare/<site>.jsonc`, then
+   `npm run conformance:live -- --env production`. A change to docs only needs no deploy.
+
+Do steps 2 to 4 once the branch is finished, as the normal end of a change: they are not
+a separate question to ask each time. Never merge `production` back into `dev`.
+
+The build writes generated files with LF endings, so they can show as modified when only
+their line endings differ. Leave those out of the commit, and stash them before a branch
+switch that would otherwise refuse.
+
 ## Rules for working in this repository
 
 1. **Follow the skill.** `tools/agentify-website/SKILL.md` and its `references/` are the
