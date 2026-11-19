@@ -21,9 +21,17 @@ server (`server/`), so the host must run a little code: the Cloudflare Worker in
 5. **No `X-Frame-Options` and no `frame-ancestors` policy on `bridge/`**, because calling
    sites load `bridge/action-bridge.html` in a hidden frame.
 6. **Dot-folders served**, for `.well-known/`.
+7. **A Content-Security-Policy on each page** (`/`, `/lab/` and the bridge, with and
+   without `.html`), as spec section 4 recommends: scripts and workers only from the
+   site, no eval, no plugins, styles from the site plus inline (the runtime adds a
+   `<style>` element), requests to the site, any `https:` origin (the visitor's model
+   provider and the partners) and loopback, and frames only from the partners in
+   `allowed_peers`, whose bridges the runtime loads. The pages may be framed only by
+   their own site; the bridge by anyone.
 
-Each site has a `_headers` file with points 3 and 4, in the format Netlify and Cloudflare
-Pages read. For Apache, `tools/agentify-website/references/bundle_and_hosting.md` has the
+Each site has a `_headers` file with points 3, 4 and 7, in the format Netlify and
+Cloudflare Pages read, and `npm run serve` sends the same headers from it.
+`npm run origins` rewrites the partner origins in it. For Apache, `tools/agentify-website/references/bundle_and_hosting.md` has the
 `.htaccess` equivalent.
 
 ## Hosts

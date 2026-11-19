@@ -39,6 +39,7 @@ Rules = `rules_digest.md`. Spec = `worldwide_agentic_web_mvp_spec.md`.
 | 3.3 | Public `agent-manifest.json`, network definition and `links.json`, with CORS for callers | Each site's `_headers`; `npm run conformance:live` |
 | 3.4 | Public artifact requests carry no private credentials; never bypass browser security | The runtime; no proxying is added |
 | 4 | A BYOK key stays in the caller's browser and goes only to the chosen router; never in URLs, manifests, prompts, action arguments or traces | The runtime; `check-conformance.mjs` scans published files for key-shaped text; never commit a key |
+| 4 | Minimise third-party scripts and send a restrictive Content-Security-Policy | No page loads a third-party script. Each site's `_headers` gives every page a policy (scripts only from the site, no eval, partners named in `frame-src`), and `npm run serve` sends it too. `sites/utility/tests/csp.test.mjs` checks it, four browser workflows fail on any violation, and `npm run conformance:live` checks the hosted header |
 | 5 | Treat peer definitions and tool results as untrusted; fail closed; user-owned writes; observable execution | `{grounding_rules}` and `{partner_rules}` kept as in the template; the runtime's consent cards and developer log; each page's "The swarm at work" graph (`js/swarm-graph.js`, tested in `sites/utility/tests/swarm-graph.test.mjs`), shown in place of the runtime's agent panel and built on `js/answer-path.js` (tested in `sites/utility/tests/answer-path.test.mjs`) |
 
 ## Choices the visitor can make in the page
@@ -75,10 +76,6 @@ repository's own code. Do not hide them.
 - A partner that accepts the connection but never answers leaves the chat waiting until
   the page is reloaded.
 - The LLM provider must allow browser calls (CORS).
-- The pages send no Content-Security-Policy header (spec 4 says a publisher SHOULD send a
-  restrictive one). No page loads a third-party script, and the runtime's coded-tool
-  worker has its own strict CSP in each `_headers`. This one is ours to fix, not the
-  runtime's.
 - The runtime speaks the OpenAI protocol. `js/llm-protocol.js` on each site translates to
   the Anthropic Messages protocol when the visitor picks it (or the Provider URL implies
   it, as for Azure AI Foundry Claude). It sends the key as `x-api-key` to the same

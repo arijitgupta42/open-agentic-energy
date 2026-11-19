@@ -4,6 +4,7 @@
 import { test } from "@e2e-dev/web";
 import { expect } from "e2e";
 import { TEST_KEY, useScriptedRouter } from "./scripted-router.mjs";
+import { expectNoCspViolations } from "./csp.mjs";
 
 const PARTNERS = ["localhost:8081", "localhost:8082"];
 const QUESTION = "I'm thinking about a heat pump for my 95 square metre semi-detached house. What would it cost to fit and to run, and is there a grant?";
@@ -107,6 +108,8 @@ test("5. The swarm answers a heat pump question from all three sites, after the 
   for (const request of routerCalls) {
     expect(request.headers.authorization).toBe(`Bearer ${TEST_KEY}`);
   }
+  // The page's Content-Security-Policy let the runtime, both partners and the router through.
+  await expectNoCspViolations(browser);
 });
 
 test("6. A declined partner is never contacted, and the answer says the visitor declined", async ({ app, screen, browser }) => {
@@ -138,4 +141,5 @@ test("7. A tariff switch through the assistant waits for the page's own dialog",
   await dialog.getByRole("button", "Switch tariff").tap();
   await expect(screen.getByText(/^Switch succeeded: EW-SW-0001\./)).toBeVisible();
   await expect(screen.getByText(/Switched from Standard Variable to Fixed 12 Month/)).toContainText("EW-SW-0001");
+  await expectNoCspViolations(browser);
 });
