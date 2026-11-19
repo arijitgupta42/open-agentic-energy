@@ -24,18 +24,18 @@ export class SwarmMap {
   ];
 
   /**
-   * Every agent: its network, its name there, a short label for the graph and one line
-   * on its job. The front agent of each network is the one other sites reach.
+   * Every agent: its network, its name there, a short label for the graph and one plain
+   * line on its job, which the tooltip shows. The front agent of each network is the one other sites reach.
    */
   static AGENTS = [
-    {network: "emberwick_energy", name: "emberwick_assistant", label: "Assistant", front: true, does: "Front agent: answers the customer and hands work to the specialists."},
+    {network: "emberwick_energy", name: "emberwick_assistant", label: "Assistant", front: true, does: "Answers you and hands work to the specialists."},
     {network: "emberwick_energy", name: "tariff_advisor", label: "Tariffs", does: "Works out which tariff suits this account."},
     {network: "emberwick_energy", name: "usage_analyst", label: "Usage", does: "Reads the account's usage, month by month."},
     {network: "emberwick_energy", name: "retrofit_planner", label: "Retrofit", does: "Plans a heat pump or solar upgrade with the installer and grants partners."},
-    {network: "heatwright_installers", name: "heatwright_assistant", label: "Assistant", front: true, does: "Front agent: answers for the installer and hands work to its engineers."},
+    {network: "heatwright_installers", name: "heatwright_assistant", label: "Assistant", front: true, does: "Answers for the installer and hands work to its engineers."},
     {network: "heatwright_installers", name: "heat_pump_engineer", label: "Heat pump", does: "Sizes and prices an air-source heat pump for one home."},
     {network: "heatwright_installers", name: "solar_designer", label: "Solar", does: "Picks and prices a solar panel system for one home."},
-    {network: "fernbrook_grants", name: "fernbrook_assistant", label: "Assistant", front: true, does: "Front agent: asks each scheme's agent whether it fits (AAOSA), then combines the replies."},
+    {network: "fernbrook_grants", name: "fernbrook_assistant", label: "Assistant", front: true, does: "Asks each grant scheme whether you fit, then puts the answers together."},
     {network: "fernbrook_grants", name: "heat_pump_grant_agent", label: "Heat pump grant", does: "Knows the heat pump grant scheme and checks eligibility."},
     {network: "fernbrook_grants", name: "solar_starter_agent", label: "Solar Starter", does: "Knows the Solar Starter scheme and checks eligibility."},
     {network: "fernbrook_grants", name: "warm_walls_agent", label: "Warm Walls", does: "Knows the Warm Walls insulation scheme and checks eligibility."},

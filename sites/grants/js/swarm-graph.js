@@ -25,12 +25,6 @@ export class SwarmGraph {
   /** Each site's box: its height, and the space between two boxes. */
   static BOX = {height: 126, gap: 12, top: 4};
 
-  /** The most requests or problems one tooltip lists. */
-  static MAX_ROWS = 2;
-
-  /** The longest request or reply a tooltip quotes, in characters. */
-  static MAX_QUOTE = 90;
-
   /** How bad each status is. The worst one wins when an agent or a call has several. */
   static RANK = {ok: 0, asking: 1, running: 2, refused: 3, error: 4};
 
@@ -363,31 +357,6 @@ export class SwarmGraph {
   }
 
   /**
-   * Cut a text to MAX_QUOTE characters and put it in quotation marks.
-   *
-   * :param text: The text.
-   * :return: The quote, ending in "…" when it was cut.
-   */
-  static quote(text) {
-    const value = String(text || "").trim();
-    return `“${value.length > SwarmGraph.MAX_QUOTE ? `${value.slice(0, SwarmGraph.MAX_QUOTE - 1)}…` : value}”`;
-  }
-
-  /**
-   * List names once each, with how often each came up, such as "check_scheme ×2".
-   *
-   * :param names: The names, with repeats.
-   * :return: The list as text.
-   */
-  static tally(names) {
-    const counts = new Map();
-    for (const name of names) {
-      counts.set(name, (counts.get(name) || 0) + 1);
-    }
-    return [...counts].map(([name, count]) => (count > 1 ? `${name} ×${count}` : name)).join(", ");
-  }
-
-  /**
    * Say in a few words how the visitor answered a partner's consent card.
    *
    * :param sentence: AnswerPath's consent sentence, or "".
@@ -433,91 +402,65 @@ export class SwarmGraph {
   }
 
   /**
-   * Write what one agent did for an answer, as the few lines of its tooltip: who asked
-   * it what, the tools it used, who it asked in turn, its reply, and one line of facts.
+   * Write what one agent is and did for an answer, in a line or two a visitor can read:
+   * its job, and whether it took part. Requests, replies, tools, models and timings are
+   * for the developer log, not here.
    *
    * :param key: The agent's key.
    * :param act: The answer's activity.
    * :param turn: The answer's turn, or null before the first message.
    * :param own: This page's network name.
-   * :return: {title, subtitle, rows}. Each row has label, text and, for a problem,
-   *   tone "bad".
+   * :return: {title, subtitle, logo, rows}. Each row has label (always empty), text and,
+   *   for a problem, tone "bad".
    */
   static agentLines(key, act, turn, own) {
     const agent = SwarmMap.agent(key);
     const site = SwarmMap.site(agent.network);
-    const rows = [];
-    const result = {title: agent.name, subtitle: site.name, logo: site.logo, rows};
+    const rows = [{label: "", text: agent.does}];
+    const result = {title: agent.label, subtitle: site.name, logo: site.logo, rows};
+    if (!turn) {
+      return result;
+    }
     const record = act.agents.get(key);
     if (!record || !record.runs) {
-      rows.push({label: "", text: agent.does});
       const call = [...act.edges.entries()].find(([edgeKey, edge]) => edgeKey.endsWith(`>${key}`) && edge.status !== "ok");
-      if (!turn) {
-        return result;
-      }
       if (call && call[1].status === "asking") {
-        rows.push({label: "Waiting", text: "for your answer in the chat. Nothing has been sent."});
+        rows.push({label: "", text: "Waiting for your OK before this site is contacted."});
       } else if (call && call[1].status === "running") {
-        rows.push({label: "Starting", text: "its network is loading from its site."});
+        rows.push({label: "", text: "Getting ready."});
       } else if (call) {
-        rows.push({label: "Did not run", text: call[1].why || "Its call was stopped.", tone: "bad"});
+        rows.push(SwarmGraph.stopped(call[1].why));
       } else {
         rows.push({label: "", text: "Not needed for this answer."});
       }
       return result;
     }
-    // One row per caller and request: an AAOSA Determine and Fulfill share theirs.
-    const asks = [];
-    for (const ask of record.asks) {
-      let same = asks.find((item) => item.from === ask.from && item.text === ask.text);
-      if (!same) {
-        same = {from: ask.from, text: ask.text, modes: [], parallel: 0};
-        asks.push(same);
-      }
-      if (ask.mode && !same.modes.includes(ask.mode)) {
-        same.modes.push(ask.mode);
-      }
-      same.parallel = ask.parallel || same.parallel;
-    }
-    for (const ask of asks.slice(0, SwarmGraph.MAX_ROWS)) {
-      const how = [ask.modes.length ? `AAOSA ${ask.modes.join(" + ")}` : "", ask.parallel ? "in parallel" : ""].filter(Boolean).join(", ");
-      const who = ask.from ? `From ${SwarmGraph.short(ask.from)}` : "You asked";
-      rows.push({label: how ? `${who} (${how})` : who, text: ask.text ? SwarmGraph.quote(ask.text) : "(no request text)"});
-    }
-    const tools = [...record.actions, ...record.mcp];
-    if (tools.length) {
-      rows.push({label: "Used", text: SwarmGraph.tally(tools.map((tool) => tool.name))});
-    }
-    for (const tool of tools.filter((item) => item.status !== "ok" && item.status !== "running").slice(0, SwarmGraph.MAX_ROWS)) {
-      rows.push({label: tool.name, text: tool.why || "stopped", tone: "bad"});
-    }
-    if (record.called.length) {
-      rows.push({label: "Asked", text: record.called.map(SwarmGraph.short).join(", ")});
-    }
-    if (record.replied) {
-      rows.push({label: "Replied", text: SwarmGraph.quote(record.replied)});
-    }
-    const facts = [];
     if (record.status === "running") {
-      facts.push("working now");
-    }
-    if (agent.network !== own) {
-      facts.push(["ran in your browser", SwarmGraph.consentWords(act.sites.get(agent.network)?.consent || "")].filter(Boolean).join(", "));
-    }
-    if (record.modelCalls) {
-      facts.push(record.modelCalls === 1 ? "1 model call" : `${record.modelCalls} model calls`);
-    }
-    if (record.durationMs >= 50) {
-      facts.push(`${(record.durationMs / 1000).toFixed(1)} s`);
-    }
-    if (facts.length) {
-      rows.push({label: "", text: facts.join(" · "), tone: "quiet"});
+      rows.push({label: "", text: "Working on it now."});
+    } else if (record.status === "error" || record.status === "refused") {
+      rows.push({label: "", text: "Could not finish its part.", tone: "bad"});
+    } else {
+      const how = agent.network === own ? "" : SwarmGraph.consentWords(act.sites.get(agent.network)?.consent || "");
+      rows.push({label: "", text: how ? `Helped with this answer (${how}).` : "Helped with this answer."});
     }
     return result;
   }
 
   /**
-   * Write what one call did for an answer, as the few lines of its tooltip.
+   * Say in a plain line why a call did not go ahead.
+   *
+   * :param why: The reason the trace gives, or "".
+   * :return: A row.
+   */
+  static stopped(why) {
+    if (SwarmGraph.consentWords(why || "") === "you declined") {
+      return {label: "", text: "You chose not to contact this site."};
+    }
+    return {label: "", text: "This did not go ahead.", tone: "bad"};
+  }
+
+  /**
+   * Write what one call is and did for an answer, in a line a visitor can read.
    *
    * :param edge: An edge from layout().
    * :param act: The answer's activity.
@@ -526,7 +469,9 @@ export class SwarmGraph {
    */
   static edgeLines(edge, act, turn) {
     const rows = [];
-    const result = {title: `${SwarmGraph.short(edge.from)} → ${SwarmGraph.short(edge.to)}`, subtitle: edge.partner ? "to another site" : "", rows};
+    const to = SwarmMap.agent(edge.to);
+    const title = `${SwarmMap.agent(edge.from).label} → ${edge.partner ? SwarmMap.site(to.network).name : to.label}`;
+    const result = {title, subtitle: edge.partner ? "to another site" : "", rows};
     const record = act.edges.get(edge.key);
     if (!record) {
       if (edge.partner) {
@@ -537,34 +482,15 @@ export class SwarmGraph {
       }
       return result;
     }
-    if (record.request) {
-      rows.push({label: "Sent", text: SwarmGraph.quote(record.request)});
-    }
-    const stopped = record.status === "refused" || record.status === "error";
-    if (stopped) {
-      rows.push({label: "Stopped", text: record.why || "The call did not run.", tone: "bad"});
-    }
-    const facts = [];
     if (record.status === "asking") {
-      facts.push("waiting for your answer, nothing sent");
-    }
-    if (record.status === "running") {
-      facts.push("working now");
-    }
-    if (record.count > 1) {
-      facts.push(`used ${record.count} times`);
-    }
-    if (record.modes.length) {
-      facts.push(`AAOSA ${record.modes.join(" + ")}`);
-    }
-    if (record.parallel) {
-      facts.push("in parallel");
-    }
-    if (edge.partner && !stopped && record.why) {
-      facts.push(SwarmGraph.consentWords(record.why));
-    }
-    if (facts.length) {
-      rows.push({label: "", text: facts.join(" · "), tone: "quiet"});
+      rows.push({label: "", text: "Waiting for your OK. Nothing has been sent."});
+    } else if (record.status === "running") {
+      rows.push({label: "", text: "Working on it now."});
+    } else if (record.status === "refused" || record.status === "error") {
+      rows.push(SwarmGraph.stopped(record.why));
+    } else {
+      const how = edge.partner ? SwarmGraph.consentWords(record.why) : "";
+      rows.push({label: "", text: how ? `Used for this answer (${how}).` : "Used for this answer."});
     }
     return result;
   }

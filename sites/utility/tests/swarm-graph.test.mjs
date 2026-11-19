@@ -212,7 +212,7 @@ test("while the consent card waits, the partner shows as asking, not as working"
   assert.equal(SwarmGraph.siteStatus("heatwright_installers", OWN, act), "partner · ran here");
   assert.equal(SwarmGraph.siteStatus(OWN, OWN, act), "this site");
   const lines = SwarmGraph.agentLines("fernbrook_grants/fernbrook_assistant", act, turn, OWN);
-  assert.deepEqual(lines.rows.at(-1), {label: "Waiting", text: "for your answer in the chat. Nothing has been sent."});
+  assert.deepEqual(lines.rows.at(-1), {label: "", text: "Waiting for your OK before this site is contacted."});
 });
 
 test("a declined partner shows as stopped, with the visitor's decision", () => {
@@ -226,45 +226,53 @@ test("a declined partner shows as stopped, with the visitor's decision", () => {
   assert.equal(SwarmGraph.siteStatus("fernbrook_grants", OWN, act), "partner · declined");
   assert.equal(act.agents.has("fernbrook_grants/fernbrook_assistant"), false, "A declined partner's agent never ran.");
   const lines = SwarmGraph.agentLines("fernbrook_grants/fernbrook_assistant", act, turn, OWN);
-  assert.deepEqual(lines.rows.at(-1), {label: "Did not run", text: `You declined contact with ${GRANTS}.`, tone: "bad"});
+  assert.deepEqual(lines.rows.at(-1), {label: "", text: "You chose not to contact this site."});
 });
 
-test("a finished answer gives each agent its request, tools, model, reply and calls", () => {
+test("a finished answer gives each agent a plain tooltip: its job and whether it took part", () => {
   const trace = new TraceBus();
   finish(trace, recordHeatPump(trace, "allowed"));
   const {turn, act} = latest(trace);
   assert.equal([...act.agents.values()].filter((record) => record.runs).length, turn.counts.agents - 1, "The scheme agent ran twice but is one agent.");
   const usage = SwarmGraph.agentLines("emberwick_energy/usage_analyst", act, turn, OWN);
-  assert.equal(usage.title, "usage_analyst");
+  assert.equal(usage.title, "Usage", "A visitor sees the agent's short label, not its identifier.");
   assert.equal(usage.subtitle, "Emberwick Energy");
   assert.equal(usage.logo, "ember");
-  assert.deepEqual(usage.rows.map((row) => `${row.label}|${row.text}`), [
-    "From retrofit_planner (in parallel)|“Running cost with a heat pump?”",
-    "Used|heat_pump_running_cost",
-    "Replied|“About 3,900 kWh a year.”",
-    "|1 model call",
+  assert.deepEqual(usage.rows, [
+    {label: "", text: "Reads the account's usage, month by month."},
+    {label: "", text: "Helped with this answer."},
   ]);
-  assert.ok(usage.rows.length <= 5, "A tooltip stays a few lines long.");
   const front = SwarmGraph.agentLines("emberwick_energy/emberwick_assistant", act, turn, OWN).rows;
-  assert.deepEqual(front[0], {label: "You asked", text: `“${QUESTION}”`});
-  assert.ok(front.some((row) => row.label === "Asked" && row.text === "retrofit_planner"));
-  assert.ok(front.some((row) => row.label === "Replied" && row.text === "“Plan: an 8 kW pump.”"));
+  assert.deepEqual(front.at(-1), {label: "", text: "Helped with this answer."});
   const scheme = act.agents.get("fernbrook_grants/heat_pump_grant_agent");
   assert.equal(scheme.runs, 2);
   assert.deepEqual(scheme.asks.map((ask) => ask.mode), ["Determine", "Fulfill"]);
-  // One row for both AAOSA calls, since they carry the same request.
-  assert.equal(SwarmGraph.agentLines("fernbrook_grants/heat_pump_grant_agent", act, turn, OWN).rows[0].label, "From fernbrook_assistant (AAOSA Determine + Fulfill)");
   assert.deepEqual(act.edges.get("fernbrook_grants/fernbrook_assistant>fernbrook_grants/heat_pump_grant_agent").modes, ["Determine", "Fulfill"]);
   const partner = SwarmGraph.agentLines("heatwright_installers/heatwright_assistant", act, turn, OWN).rows;
-  assert.deepEqual(partner.at(-1), {label: "", text: "ran in your browser, you allowed it · 1 model call", tone: "quiet"});
+  assert.deepEqual(partner.at(-1), {label: "", text: "Helped with this answer (you allowed it)."});
   const call = SwarmGraph.edgeLines(SwarmGraph.layout().edges.find((edge) => edge.key === "emberwick_energy/retrofit_planner>heatwright_installers/heatwright_assistant"), act, turn);
-  assert.equal(call.title, "retrofit_planner → heatwright_assistant");
-  assert.deepEqual(call.rows, [
-    {label: "Sent", text: "“Heat pump estimate for a 95 m2 semi?”"},
-    {label: "", text: "in parallel · you allowed it", tone: "quiet"},
-  ]);
+  assert.equal(call.title, "Retrofit → Heatwright Home Energy");
+  assert.deepEqual(call.rows, [{label: "", text: "Used for this answer (you allowed it)."}]);
   const unused = SwarmGraph.agentLines("emberwick_energy/tariff_advisor", act, turn, OWN).rows;
   assert.deepEqual(unused.at(-1), {label: "", text: "Not needed for this answer."});
+});
+
+test("a tooltip holds nothing technical: no identifiers, tools, models, timings, requests or replies", () => {
+  const trace = new TraceBus();
+  finish(trace, recordHeatPump(trace, "allowed"));
+  const {turn, act} = latest(trace);
+  const tips = [
+    ...SwarmMap.AGENTS.map((agent) => SwarmGraph.agentLines(SwarmMap.key(agent.network, agent.name), act, turn, OWN)),
+    ...SwarmGraph.layout().edges.map((edge) => SwarmGraph.edgeLines(edge, act, turn)),
+  ];
+  for (const tip of tips) {
+    const words = [tip.title, tip.subtitle, ...tip.rows.map((row) => `${row.label} ${row.text}`)].join(" ");
+    assert.doesNotMatch(words, /_|AAOSA|Determine|Fulfill|model call|\d s\b|heat_pump_running_cost|check_scheme|openai|“/, `A tooltip is too technical: ${words}`);
+    assert.ok(tip.rows.length <= 2, `A tooltip stays to a line or two: ${words}`);
+    for (const row of tip.rows) {
+      assert.equal(row.label, "", "A tooltip row is one plain sentence, with no label.");
+    }
+  }
 });
 
 test("a tooltip never shows the runtime's own notes, only what the agent did", () => {
@@ -295,14 +303,12 @@ test("a tooltip never shows the runtime's own notes, only what the agent did", (
   }
 });
 
-test("no tooltip ever holds a key, and a long request is cut", () => {
+test("no tooltip ever holds a key, and the panel summary counts what ran", () => {
   const trace = new TraceBus();
   finish(trace, recordHeatPump(trace, "allowed"));
   const {turn, act} = latest(trace);
   const text = JSON.stringify(SwarmMap.AGENTS.map((agent) => SwarmGraph.agentLines(SwarmMap.key(agent.network, agent.name), act, turn, OWN)));
   assert.doesNotMatch(text, /sk-|Bearer |BYOK/);
-  assert.equal(SwarmGraph.quote("x".repeat(200)).length, SwarmGraph.MAX_QUOTE + 2);
-  assert.equal(SwarmGraph.tally(["a", "b", "a"]), "a ×2, b");
   assert.equal(SwarmGraph.brief(turn, act).replace(/ · [\d.]+ s$/, ""), "6 agents · 3 sites · 1 tool · 7 model calls");
 });
 
