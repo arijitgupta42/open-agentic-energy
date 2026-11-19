@@ -163,6 +163,27 @@ test("A block whose first statement is not called root, with values given by nam
   assert.equal(OpenUi.looksLike("total = sum(values)"), false);
 });
 
+test("A block that is one component call, with no name, is drawn as the root", () => {
+  // As a model wrote it on the live site: one Stack, no "root =", no other statements.
+  const source = 'Stack([Stat("Indicative fitted price","£9,200–£11,200","excluding grants"),Stat("Potential grant","£5,000","eligibility to be checked")],"row")';
+  assert.equal(OpenUi.looksLike(source), true, "The chat must recognise the block, so it gets drawn.");
+  for (const partial of [false, true]) {
+    const {root, errors} = OpenUi.parse(source, partial);
+    assert.deepEqual(errors, []);
+    assert.equal(root.type, "Stack");
+    assert.deepEqual(root.props.children.map((child) => child.props.value), ["£9,200–£11,200", "£5,000"]);
+  }
+  // Over several lines, the bare call can use statements written after it.
+  const later = OpenUi.parse('Stack([a])\na = Text("x")');
+  assert.deepEqual(later.errors, []);
+  assert.equal(later.root.props.children[0].type, "Text");
+  // A second bare call, or a bare call that is not a component, is still not a statement.
+  assert.match(OpenUi.parse('Text("a")\nText("b")').errors[0], /Not a statement/);
+  assert.match(OpenUi.parse('alert(1)').errors[0], /Not a statement/);
+  assert.equal(OpenUi.looksLike("print(1)"), false);
+  assert.equal(OpenUi.looksLike("Stack is a word"), false);
+});
+
 test("A wrong part is replaced by a note and the rest still stands", () => {
   const {root, errors} = OpenUi.parse([
     "root = Stack([ok, bad, odd, short])",
