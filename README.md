@@ -135,7 +135,7 @@ knows as a network of agents, and lets another site run that network on request.
 
 ## Compliance with the hackathon rules
 
-**Last checked: 19 November 2026**, on `production` after `fix/openui-bare-root-and-dark-form`, against the
+**Last checked: 19 November 2026**, on `production` after `fix/consent-declined-and-width`, against the
 [official rules](https://cognizant-agenticweb.devpost.com/rules) and
 [updates](https://cognizant-agenticweb.devpost.com/updates) as read that day, and the
 specification as it stood when the submission period opened.
@@ -281,7 +281,8 @@ all run, with no key:
 18. Figures fit a phone's screen.
 19. Every element the chat can show (replies, figures, forms, choices, consent cards,
     badges, the developer log, dialogs) is readable on all three sites in both themes:
-    each piece of text is measured against what is behind it (WCAG 4.5:1).
+    each piece of text is measured against what is behind it (WCAG 4.5:1). Every consent
+    card is one width on every site, and a declined one reads in red.
 
 ## Known limits
 

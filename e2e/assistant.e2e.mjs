@@ -121,6 +121,9 @@ test("6. A declined partner is never contacted, and the answer says the visitor 
   const answer = screen.getByText(/^Plan: /);
   await expect(answer).toContainText("£9,200 to £11,200");
   await expect(answer).toContainText("The user declined to contact localhost:8082");
+  // Each card carries its answer, so "✕ Declined" reads in red and "✓ Allowed" in green.
+  await expect(browser.locator('#ns-msgs .ns-consent[data-decision="decline"] .ns-consent-done')).toHaveText("✕ Declined");
+  await expect(browser.locator('#ns-msgs .ns-consent[data-decision="allow"] .ns-consent-done')).toHaveText("✓ Allowed");
   // The graph shows the grants site as declined, and its agents never ran.
   await expect(browser.locator('.swarm-node[data-state="refused"][aria-label^="fernbrook_assistant,"]')).toHaveCount(1);
   expect((await browser.locator(".swarm-site-status").allTextContents()).join(" | ")).toContain("partner · declined");
