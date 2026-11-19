@@ -63,6 +63,52 @@ export class SwarmMap {
   ];
 
   /**
+   * What each site action and MCP tool does, as a plain phrase that starts with a verb:
+   * "read the account". The names are as AnswerPath gives them, without "website_" or
+   * "mcp_". sites/utility/tests/swarm-graph.test.mjs checks every tool has words.
+   */
+  static TOOLS = {
+    get_account_state: "read the account",
+    compare_tariff: "show a tariff comparison on the page",
+    switch_tariff: "switch the tariff",
+    list_tariffs: "look up the tariffs",
+    estimate_yearly_costs: "work out yearly costs",
+    estimate_heat_pump_running_cost: "work out heat pump running costs",
+    get_installer_state: "read the installer's page",
+    estimate: "work out an estimate",
+    set_estimate: "put an estimate on the page",
+    request_survey: "book a survey",
+    list_products: "look up the products",
+    get_grants_state: "read the grants page",
+    list_grants: "look up the grants",
+    check_eligibility: "check eligibility",
+    check_scheme: "check the scheme's rules",
+    set_eligibility_answers: "fill in the eligibility answers",
+    start_application: "start an application",
+  };
+
+  /** Verbs whose past tense is not the verb with "ed". */
+  static PAST = {read: "read", put: "put"};
+
+  /**
+   * Say what a tool does, in plain words.
+   *
+   * :param name: The tool's name, as AnswerPath gives it.
+   * :param done: True for the past tense: "read the account", "booked a survey".
+   * :return: The phrase. A tool not in TOOLS reads "use" and its name in words.
+   */
+  static toolWords(name, done = false) {
+    const plain = String(name || "").replace(/^(website_|mcp_)/, "");
+    const words = Object.hasOwn(SwarmMap.TOOLS, plain) ? SwarmMap.TOOLS[plain] : `use ${plain.replace(/_/g, " ")}`;
+    if (!done) {
+      return words;
+    }
+    const [verb, ...rest] = words.split(" ");
+    const past = Object.hasOwn(SwarmMap.PAST, verb) ? SwarmMap.PAST[verb] : `${verb}${verb.endsWith("e") ? "d" : "ed"}`;
+    return [past, ...rest].join(" ");
+  }
+
+  /**
    * Name an agent across the swarm.
    *
    * :param network: The agent's network name.

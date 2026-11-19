@@ -63,7 +63,7 @@ function recordHeatPump(trace, grants) {
   const toGrants = trace.start("tool", {parent: planner, origin: PAGE, tool: "fernbrook_grants", toolKind: "remote network", args: {request: "Which grants pay towards a heat pump?"}});
   const usage = trace.start("agent", {parent: toUsage, origin: PAGE, agent: "usage_analyst", network: OWN});
   model(trace, usage, PAGE);
-  const cost = trace.start("tool", {parent: usage, origin: PAGE, tool: "mcp_heat_pump_running_cost", toolKind: "MCP", args: {floorArea: 95}});
+  const cost = trace.start("tool", {parent: usage, origin: PAGE, tool: "mcp_estimate_heat_pump_running_cost", toolKind: "MCP", args: {floorArea: 95}});
   trace.end(cost, {resultPreview: "{}"});
   trace.end(usage, {});
   trace.end(toUsage, {resultPreview: "About 3,900 kWh a year."});
@@ -213,6 +213,8 @@ test("while the consent card waits, the partner shows as asking, not as working"
   assert.equal(SwarmGraph.siteStatus(OWN, OWN, act), "this site");
   const lines = SwarmGraph.agentLines("fernbrook_grants/fernbrook_assistant", act, turn, OWN);
   assert.deepEqual(lines.rows.at(-1), {label: "", text: "Waiting for your OK before this site is contacted."});
+  const planner = SwarmGraph.agentLines("emberwick_energy/retrofit_planner", act, turn, OWN);
+  assert.deepEqual(planner.rows.at(-1), {label: "", text: "Working on it now: so far it asked Usage and Heatwright Home Energy."});
 });
 
 test("a declined partner shows as stopped, with the visitor's decision", () => {
@@ -227,9 +229,11 @@ test("a declined partner shows as stopped, with the visitor's decision", () => {
   assert.equal(act.agents.has("fernbrook_grants/fernbrook_assistant"), false, "A declined partner's agent never ran.");
   const lines = SwarmGraph.agentLines("fernbrook_grants/fernbrook_assistant", act, turn, OWN);
   assert.deepEqual(lines.rows.at(-1), {label: "", text: "You chose not to contact this site."});
+  const call = SwarmGraph.edgeLines(SwarmGraph.layout().edges.find((item) => item.key === "emberwick_energy/retrofit_planner>fernbrook_grants/fernbrook_assistant"), act, turn);
+  assert.equal(call.rows.at(-1).text, "Not sent: “Which grants pay towards a heat pump?”");
 });
 
-test("a finished answer gives each agent a plain tooltip: its job and whether it took part", () => {
+test("a finished answer gives each agent a plain tooltip: its job, who asked it what, and what it did", () => {
   const trace = new TraceBus();
   finish(trace, recordHeatPump(trace, "allowed"));
   const {turn, act} = latest(trace);
@@ -240,24 +244,63 @@ test("a finished answer gives each agent a plain tooltip: its job and whether it
   assert.equal(usage.logo, "ember");
   assert.deepEqual(usage.rows, [
     {label: "", text: "Reads the account's usage, month by month."},
-    {label: "", text: "Helped with this answer."},
+    {label: "", text: "Retrofit asked: “Running cost with a heat pump?”"},
+    {label: "", text: "For this answer it worked out heat pump running costs."},
   ]);
   const front = SwarmGraph.agentLines("emberwick_energy/emberwick_assistant", act, turn, OWN).rows;
-  assert.deepEqual(front.at(-1), {label: "", text: "Helped with this answer."});
+  assert.deepEqual(front.slice(1), [
+    {label: "", text: "Took your question."},
+    {label: "", text: "For this answer it asked Retrofit and wrote the reply you see."},
+  ]);
+  const planner = SwarmGraph.agentLines("emberwick_energy/retrofit_planner", act, turn, OWN).rows;
+  assert.deepEqual(planner.at(-1), {label: "", text: "For this answer it asked Usage, Heatwright Home Energy and Fernbrook Retrofit Grants."});
+  const grant = SwarmGraph.agentLines("fernbrook_grants/heat_pump_grant_agent", act, turn, OWN).rows;
+  assert.deepEqual(grant.slice(1), [
+    {label: "", text: "Assistant asked: “A grant towards a heat pump?”"},
+    {label: "", text: "For this answer it said whether it could help and gave its part of the answer (you allowed it)."},
+  ], "An AAOSA scheme agent's two steps read as plain words.");
   const scheme = act.agents.get("fernbrook_grants/heat_pump_grant_agent");
   assert.equal(scheme.runs, 2);
   assert.deepEqual(scheme.asks.map((ask) => ask.mode), ["Determine", "Fulfill"]);
   assert.deepEqual(act.edges.get("fernbrook_grants/fernbrook_assistant>fernbrook_grants/heat_pump_grant_agent").modes, ["Determine", "Fulfill"]);
   const partner = SwarmGraph.agentLines("heatwright_installers/heatwright_assistant", act, turn, OWN).rows;
-  assert.deepEqual(partner.at(-1), {label: "", text: "Helped with this answer (you allowed it)."});
+  assert.deepEqual(partner.slice(1), [
+    {label: "", text: "Retrofit (Emberwick Energy) asked: “Heat pump estimate for a 95 m2 semi?”"},
+    {label: "", text: "It answered from what it was asked (you allowed it)."},
+  ]);
   const call = SwarmGraph.edgeLines(SwarmGraph.layout().edges.find((edge) => edge.key === "emberwick_energy/retrofit_planner>heatwright_installers/heatwright_assistant"), act, turn);
   assert.equal(call.title, "Retrofit → Heatwright Home Energy");
-  assert.deepEqual(call.rows, [{label: "", text: "Used for this answer (you allowed it)."}]);
+  assert.deepEqual(call.rows, [
+    {label: "", text: "Used for this answer (you allowed it)."},
+    {label: "", text: "Sent: “Heat pump estimate for a 95 m2 semi?”"},
+  ]);
+  const twice = SwarmGraph.edgeLines(SwarmGraph.layout().edges.find((edge) => edge.key === "fernbrook_grants/fernbrook_assistant>fernbrook_grants/heat_pump_grant_agent"), act, turn);
+  assert.equal(twice.rows[0].text, "Used twice for this answer.");
   const unused = SwarmGraph.agentLines("emberwick_energy/tariff_advisor", act, turn, OWN).rows;
   assert.deepEqual(unused.at(-1), {label: "", text: "Not needed for this answer."});
 });
 
-test("a tooltip holds nothing technical: no identifiers, tools, models, timings, requests or replies", () => {
+test("every site action and MCP tool has plain words for the tooltip, in the present and the past", async () => {
+  const files = ["utility/site-actions.js", "installer/site-actions.js", "grants/site-actions.js"].map((file) => new URL(`../../${file}`, import.meta.url));
+  files.push(...["utility", "installer", "grants"].map((site) => new URL(`../../../server/tools/${site}.mjs`, import.meta.url)));
+  const names = new Set();
+  for (const file of files) {
+    for (const [, name] of (await readFile(file, "utf8")).matchAll(/^\s+name: "([a-z_]+)",/gm)) {
+      names.add(name);
+    }
+  }
+  assert.ok(names.size >= 15, `Expected the tool names of all three sites, found ${names.size}.`);
+  for (const name of names) {
+    assert.ok(Object.hasOwn(SwarmMap.TOOLS, name), `SwarmMap.TOOLS lacks words for ${name}.`);
+  }
+  assert.equal(SwarmMap.toolWords("website_get_account_state", true), "read the account");
+  assert.equal(SwarmMap.toolWords("request_survey", true), "booked a survey");
+  assert.equal(SwarmMap.toolWords("set_estimate", true), "put an estimate on the page");
+  assert.equal(SwarmMap.toolWords("mcp_something_new", true), "used something new");
+  assert.equal(SwarmMap.toolWords("switch_tariff"), "switch the tariff");
+});
+
+test("a tooltip holds nothing technical: no identifiers, tool names, models or timings", () => {
   const trace = new TraceBus();
   finish(trace, recordHeatPump(trace, "allowed"));
   const {turn, act} = latest(trace);
@@ -267,8 +310,8 @@ test("a tooltip holds nothing technical: no identifiers, tools, models, timings,
   ];
   for (const tip of tips) {
     const words = [tip.title, tip.subtitle, ...tip.rows.map((row) => `${row.label} ${row.text}`)].join(" ");
-    assert.doesNotMatch(words, /_|AAOSA|Determine|Fulfill|model call|\d s\b|heat_pump_running_cost|check_scheme|openai|“/, `A tooltip is too technical: ${words}`);
-    assert.ok(tip.rows.length <= 2, `A tooltip stays to a line or two: ${words}`);
+    assert.doesNotMatch(words, /_|AAOSA|Determine|Fulfill|model call|\d s\b|openai|website|mcp/i, `A tooltip is too technical: ${words}`);
+    assert.ok(tip.rows.length <= 3, `A tooltip stays to three lines: ${words}`);
     for (const row of tip.rows) {
       assert.equal(row.label, "", "A tooltip row is one plain sentence, with no label.");
     }
@@ -326,6 +369,23 @@ test("the developer log shows the answer on show: an event belongs to the turn t
   assert.equal(DevLog.inTurn(NaN, first), false, "A row from before the log was watched belongs to no answer.");
   assert.equal(DevLog.inTurn(NaN, null), true);
   finish(trace, open);
+});
+
+test("the graph moves while an answer is being made, and stands still once it is done", async () => {
+  const trace = new TraceBus();
+  const open = recordHeatPump(trace, "allowed");
+  assert.equal(SwarmGraph.live(latest(trace).turn), true, "A running answer moves.");
+  finish(trace, open);
+  assert.equal(SwarmGraph.live(latest(trace).turn), false, "A finished answer stands still.");
+  assert.equal(SwarmGraph.live(null), false);
+  assert.equal(SwarmGraph.live({status: "error"}), false);
+  // Every moving swarm rule waits for data-live="yes", which apply() sets from live().
+  for (const site of ["utility", "installer", "grants"]) {
+    const css = (await read(site, "styles.css")).replace(/\r\n/g, "\n");
+    for (const rule of css.split("\n").filter((line) => /\.swarm-/.test(line) && /animation:\s*swarm-/.test(line))) {
+      assert.match(rule, /\.swarm-map\[data-live="yes"\]/, `${site}: this rule moves after the answer is done: ${rule.trim()}`);
+    }
+  }
 });
 
 test("before the first message every agent is idle and says so", () => {

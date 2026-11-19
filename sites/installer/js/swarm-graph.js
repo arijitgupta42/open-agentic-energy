@@ -296,6 +296,16 @@ export class SwarmGraph {
   }
 
   /**
+   * Whether an answer is still being made, so the graph may move.
+   *
+   * :param turn: A turn from AnswerPath.build(), or null.
+   * :return: True while it runs. A finished, failed or missing answer stands still.
+   */
+  static live(turn) {
+    return Boolean(turn) && turn.status === "running";
+  }
+
+  /**
    * Say how an agent looks for one answer.
    *
    * :param key: The agent's key.
@@ -402,9 +412,116 @@ export class SwarmGraph {
   }
 
   /**
-   * Write what one agent is and did for an answer, in a line or two a visitor can read:
-   * its job, and whether it took part. Requests, replies, tools, models and timings are
-   * for the developer log, not here.
+   * Cut a request to QUOTE characters and put it in quotation marks.
+   *
+   * :param text: The text.
+   * :return: The quote, ending in "…" when it was cut.
+   */
+  static quote(text) {
+    const value = String(text || "").replace(/\s+/g, " ").trim();
+    return `“${value.length > SwarmGraph.QUOTE ? `${value.slice(0, SwarmGraph.QUOTE - 1)}…` : value}”`;
+  }
+
+  /** The longest request a tooltip quotes, in characters. */
+  static QUOTE = 90;
+
+  /**
+   * Join phrases the way a sentence does: "a", "a and b", "a, b and c".
+   *
+   * :param parts: The phrases.
+   * :return: The text.
+   */
+  static list(parts) {
+    return parts.length < 2 ? parts.join("") : `${parts.slice(0, -1).join(", ")} and ${parts.at(-1)}`;
+  }
+
+  /**
+   * Name an agent for a tooltip: its label, and its site when that is not the site of
+   * the agent the tooltip is about.
+   *
+   * :param key: The agent's key.
+   * :param network: The network of the agent the tooltip is about.
+   * :return: Such as "Retrofit" or "Retrofit (Emberwick Energy)".
+   */
+  static who(key, network) {
+    const agent = SwarmMap.agent(key);
+    if (!agent) {
+      return "Another agent";
+    }
+    const site = SwarmMap.site(agent.network);
+    if (agent.network === network) {
+      return agent.label;
+    }
+    return agent.front ? site.name : `${agent.label} (${site.name})`;
+  }
+
+  /**
+   * Say who asked an agent what, for one answer.
+   *
+   * :param record: The agent's record in the activity.
+   * :param network: The agent's network.
+   * :return: A row, or null when nothing was asked of it.
+   */
+  static askedLine(record, network) {
+    const asks = [];
+    for (const ask of record.asks) {
+      if (!asks.some((item) => item.from === ask.from && item.text === ask.text)) {
+        asks.push(ask);
+      }
+    }
+    const first = asks[0];
+    if (!first) {
+      return null;
+    }
+    const more = asks.length > 1 ? ` (and ${asks.length - 1} more ${asks.length === 2 ? "request" : "requests"})` : "";
+    if (!first.from) {
+      return {label: "", text: `Took your question${more}.`};
+    }
+    const by = SwarmGraph.who(first.from, network);
+    return {label: "", text: first.text ? `${by} asked: ${SwarmGraph.quote(first.text)}${more}` : `Asked by ${by}${more}.`};
+  }
+
+  /**
+   * Say in plain words what an agent did for one answer: whether it could help, what it
+   * looked up or changed, whom it asked and whether it gave its part.
+   *
+   * :param record: The agent's record in the activity.
+   * :param network: The agent's network.
+   * :return: The phrases, in the order they happen, such as ["read the account"].
+   */
+  static didParts(record, network) {
+    const modes = new Set(record.asks.map((ask) => ask.mode).filter(Boolean));
+    const parts = [];
+    if (modes.has("Determine")) {
+      parts.push("said whether it could help");
+    }
+    const done = [];
+    const tried = [];
+    for (const tool of [...record.actions, ...record.mcp]) {
+      const ok = tool.status === "ok";
+      const words = ok ? SwarmMap.toolWords(tool.name, true) : `tried to ${SwarmMap.toolWords(tool.name)}, which did not go ahead`;
+      const list = ok ? done : tried;
+      if (tool.status !== "running" && !list.includes(words)) {
+        list.push(words);
+      }
+    }
+    parts.push(...done, ...tried);
+    if (record.called.length) {
+      parts.push(`asked ${SwarmGraph.list(record.called.map((key) => SwarmGraph.who(key, network)))}`);
+    }
+    if (modes.has("Fulfill")) {
+      parts.push("gave its part of the answer");
+    }
+    if (record.status === "ok" && record.asks.some((ask) => !ask.from)) {
+      parts.push("wrote the reply you see");
+    }
+    return parts;
+  }
+
+  /**
+   * Write what one agent is and did for an answer, in a few lines a visitor can read:
+   * its job, who asked it what, and what it did: what it looked up or changed and whom it
+   * asked. Identifiers, models and timings are for the developer log, not here.
    *
    * :param key: The agent's key.
    * :param act: The answer's activity.
@@ -435,13 +552,19 @@ export class SwarmGraph {
       }
       return result;
     }
+    const asked = SwarmGraph.askedLine(record, agent.network);
+    if (asked) {
+      rows.push(asked);
+    }
+    const did = SwarmGraph.list(SwarmGraph.didParts(record, agent.network));
     if (record.status === "running") {
-      rows.push({label: "", text: "Working on it now."});
+      rows.push({label: "", text: did ? `Working on it now: so far it ${did}.` : "Working on it now."});
     } else if (record.status === "error" || record.status === "refused") {
-      rows.push({label: "", text: "Could not finish its part.", tone: "bad"});
+      rows.push({label: "", text: did ? `It ${did}, but could not finish its part.` : "Could not finish its part.", tone: "bad"});
     } else {
       const how = agent.network === own ? "" : SwarmGraph.consentWords(act.sites.get(agent.network)?.consent || "");
-      rows.push({label: "", text: how ? `Helped with this answer (${how}).` : "Helped with this answer."});
+      const text = did ? `For this answer it ${did}` : "It answered from what it was asked";
+      rows.push({label: "", text: how ? `${text} (${how}).` : `${text}.`});
     }
     return result;
   }
@@ -490,7 +613,12 @@ export class SwarmGraph {
       rows.push(SwarmGraph.stopped(record.why));
     } else {
       const how = edge.partner ? SwarmGraph.consentWords(record.why) : "";
-      rows.push({label: "", text: how ? `Used for this answer (${how}).` : "Used for this answer."});
+      const used = record.count > 1 ? `Used ${record.count === 2 ? "twice" : `${record.count} times`} for this answer` : "Used for this answer";
+      rows.push({label: "", text: how ? `${used} (${how}).` : `${used}.`});
+    }
+    if (record.request) {
+      const verb = {asking: "Would send", refused: "Not sent", error: "Tried to send"}[record.status] || (edge.partner ? "Sent" : "Asked");
+      rows.push({label: "", text: `${verb}: ${SwarmGraph.quote(record.request)}`});
     }
     return result;
   }
@@ -777,6 +905,8 @@ export class SwarmGraph {
     const turn = index >= 0 ? this.turns[index] : null;
     this.act = SwarmGraph.activity(turn);
     this.root.dataset.turn = turn ? "yes" : "no";
+    // Sparks travel and rings turn only while the answer on show is still being made.
+    this.root.dataset.live = SwarmGraph.live(turn) ? "yes" : "no";
     for (const [key, {group, badge}] of this.nodeEls) {
       const state = turn ? SwarmGraph.agentState(key, this.act) : "idle";
       group.setAttribute("data-state", state);

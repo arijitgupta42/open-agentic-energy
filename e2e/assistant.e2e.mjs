@@ -86,11 +86,13 @@ test("5. The swarm answers a heat pump question from all three sites, after the 
     await expect(browser.locator(`.swarm-node[data-state="ok"][aria-label^="${agent},"]`)).toHaveCount(1);
   }
   await expect(browser.locator('.swarm-node[data-state="idle"][aria-label^="tariff_advisor,"]')).toHaveCount(1);
-  // The scheme agent's tooltip is plain: its job, and that it helped. No tool names, no AAOSA, no timings.
+  // The scheme agent's tooltip is plain: its job, who asked it what and what it did. No tool names, no AAOSA, no timings.
   await browser.locator('.swarm-node[aria-label^="heat_pump_grant_agent,"]').click();
   const tip = browser.locator("#swarm-tip");
   await expect(tip).toContainText("Heat pump grant");
-  await expect(tip).toContainText("Helped with this answer (you allowed it).");
+  await expect(tip).toContainText("asked: “");
+  await expect(tip).toContainText("said whether it could help");
+  await expect(tip).toContainText("(you allowed it).");
   await expect(tip).not.toContainText("check_scheme");
   await expect(tip).not.toContainText("AAOSA");
   await expect(tip).not.toContainText("model call");

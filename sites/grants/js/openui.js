@@ -332,6 +332,12 @@ export class OpenUi {
         }
         return nodes;
       }
+      // A choice written without quotes, such as Stack([a], row), is that word, unless a
+      // statement has the name. Models often drop the quotes around such words.
+      if (type.startsWith("enum:") && expr && expr.ref !== undefined && !statements.has(expr.ref)
+        && type.slice(5).split("|").includes(expr.ref)) {
+        return expr.ref;
+      }
       const {expr: target, path} = deref(expr, stack);
       if (type === "string") {
         if (typeof target !== "string" || target.length > limits.text) {

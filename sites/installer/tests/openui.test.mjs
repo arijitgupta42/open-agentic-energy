@@ -119,6 +119,20 @@ test("While text arrives, a half-written statement is skipped and a missing name
   assert.match(final.errors[0], /b is not written/);
 });
 
+test("A choice written without quotes, such as row or good, is read as that word", () => {
+  const source = 'root = Stack([a, b], row)\na = Stat("One", 1, "£", "less", good)\nb = Callout("Note", warn)';
+  for (const partial of [false, true]) {
+    const {root, errors} = OpenUi.parse(source, partial);
+    assert.deepEqual(errors, []);
+    assert.equal(root.props.direction, "row");
+    assert.equal(root.props.children[0].props.tone, "good");
+    assert.equal(root.props.children[1].props.tone, "warn");
+  }
+  // A statement of that name still wins, and a word that is not a choice is still wrong.
+  assert.equal(OpenUi.parse('root = Stack([a], dir)\ndir = "row"\na = Text("x")').root.props.direction, "row");
+  assert.match(OpenUi.parse('root = Stack([a], sideways)\na = Text("x")').errors[0], /sideways is not written/);
+});
+
 test("A wrong part is replaced by a note and the rest still stands", () => {
   const {root, errors} = OpenUi.parse([
     "root = Stack([ok, bad, odd, short])",
