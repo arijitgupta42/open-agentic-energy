@@ -1,0 +1,29 @@
+// Workflow 11: figures in the chat. The assistant answers with an openui block
+// (js/openui.js) and the chat draws stat tiles and a chart from it, on the scripted router
+// in scripted-router.mjs: no model and no real key. The figures come from the account
+// state the assistant read in the same turn.
+import { test } from "@e2e-dev/web";
+import { expect } from "e2e";
+import { TEST_KEY, useScriptedRouter } from "./scripted-router.mjs";
+
+test("11. A usage answer is drawn as stat tiles and a chart, with its numbers in a table", async ({ app, screen, browser }) => {
+  await useScriptedRouter(browser);
+  await app.open("/");
+  await screen.getByPlaceholder("Paste your API key").fill(TEST_KEY);
+  await screen.getByRole("button", "Save and start").tap();
+  await expect(screen.getByText("Assistant connected to this page.")).toBeVisible();
+  await screen.getByRole("textbox", "Your request").fill("Show my gas and electricity use by month.");
+  await screen.getByRole("button", "Send").tap();
+  // The yearly totals of the demo account, drawn as tiles.
+  const tiles = browser.locator("#ns-msgs .ou-root .ou-stat-value");
+  await expect(tiles).toHaveCount(2);
+  await expect(tiles.nth(0)).toHaveText("11,770 kWh");
+  await expect(tiles.nth(1)).toHaveText("2,975 kWh");
+  // A chart with two bars for each of 12 months, and no code left in the chat.
+  await expect(browser.locator("#ns-msgs .ou-root rect.ou-bar")).toHaveCount(24);
+  // The numbers are in a table for anyone who cannot see the picture.
+  await expect(browser.locator("#ns-msgs .ou-data table tbody tr")).toHaveCount(12);
+  // The only code left is the folded copy of what the assistant wrote.
+  await expect(browser.locator("#ns-msgs pre")).toHaveCount(1);
+  await expect(browser.locator("#ns-msgs details.ou-source pre")).toHaveCount(1);
+});

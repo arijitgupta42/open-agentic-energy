@@ -80,6 +80,9 @@ repository's own code. Do not hide them.
   it, as for Azure AI Foundry Claude). It sends the key as `x-api-key` to the same
   provider only; Microsoft Entra ID tokens are not supported. A visitor confirmed it works
   against a live Azure AI Foundry Claude endpoint, so Azure allows these browser calls.
+- A number in an `openui` block (figures drawn as tiles and charts) is written by the model.
+  The prompt says to use only figures from tool results, and the page does not check them
+  against the tool results.
 - Everything in each `.network.json`, including instructions, is public.
 
 ## Before submitting

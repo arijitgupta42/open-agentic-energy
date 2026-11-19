@@ -48,6 +48,23 @@ host (Cloudflare Worker, or scripts/serve-all.mjs locally)
   the page in some Chromium builds (seen in e2e's headless Chromium). It never presses
   Send and never answers a dialog or a consent card.
   It stays hidden when the browser has no speech recognition or the runtime did not boot.
+- **Figures** (`js/openui.js`, the same on every site). A front agent shows costs, usage
+  and other figures by writing one fenced `openui` block in OpenUI Lang, the compact
+  statement format of the open source [OpenUI](https://github.com/thesysdev/openui)
+  project (MIT): `root = Stack([cost, chart])`, `cost = Stat("Yearly cost", 1180, "£")`.
+  The page reads it with its own small parser and draws stat tiles, tables, bar, line and
+  pie charts and callouts from DOM and SVG made in the page. No OpenUI code is copied or
+  loaded, so the page keeps its rules: no dependencies, no third-party scripts. Every
+  value is checked against `OpenUi.LIBRARY` and the limits in `OpenUi.LIMITS`; the model
+  never supplies markup, so it cannot run code or restyle the page. A block that cannot be
+  read stays as the plain text it was; one wrong part is replaced by a short note and the
+  rest is still drawn. `js/live-chat.js` draws a block as it is written (OpenUI Lang is
+  made to stream), and each chart carries its numbers in a table for anyone who cannot see
+  the picture. The prompt (`figure_rules` in each `.hocon`, the same text on every site)
+  lists the same components; `tests/openui.test.mjs` fails when they differ. The numbers in
+  a block are the model's words, so the prompt says to use only figures from tool results
+  (CLAUDE.md rule 4). Tables and charts from `render_cruse` still work, but the prompt no
+  longer describes them.
 - **The MCP server** (`server/`) answers `/mcp` on each site's own origin with read-only
   tools over that site's public data. It imports the page's own data and rules modules,
   so a page, its assistant and its MCP tools give the same answers (CLAUDE.md rule 5).

@@ -243,6 +243,23 @@ const AGENTS = [
         const receipt = parse(results.website_switch_tariff);
         return {text: `Switch ${receipt.status}: ${find(receipt, "reference") || "no reference"}.`};
       }
+      if (/by month/i.test(input)) {
+        // A usage answer with its figures as an openui block (js/openui.js), written
+        // from the account state this turn read, as the real front agent is told to.
+        if (step === 0) {
+          return {calls: [{name: "website_get_account_state", args: {}}]};
+        }
+        const usage = find(parse(results.website_get_account_state), "usage");
+        const months = usage.months;
+        const block = [
+          "root = Stack([totals, chart])",
+          "totals = Stack([gas, power], \"row\")",
+          `gas = Stat("Gas, last 12 months", ${usage.gasKwh}, "kWh")`,
+          `power = Stat("Electricity, last 12 months", ${usage.electricityKwh}, "kWh")`,
+          `chart = BarChart("Gas and electricity by month", ${JSON.stringify(months.map((m) => m.month))}, [Series("Gas", ${JSON.stringify(months.map((m) => m.gasKwh))}), Series("Electricity", ${JSON.stringify(months.map((m) => m.electricityKwh))})], "kWh")`,
+        ].join("\n");
+        return withNext(request, `Gas use peaks in winter.\n\n\`\`\`openui\n${block}\n\`\`\``);
+      }
       if (step === 0) {
         return {calls: [{name: "retrofit_planner", args: {request: input}}]};
       }
