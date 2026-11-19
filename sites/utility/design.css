@@ -29,6 +29,10 @@ section:not(.assistant) button:active { transform: translateY(1px); }
 @media (min-width: 761px) {
   #agent-app .ns-chat { border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow-2); overflow: hidden; }
   .swarm-map, .chat-list { border-radius: var(--radius); box-shadow: var(--shadow-1); }
+  /* The settings and the developer log sit under the row of panels, so they take the row's own width. */
+  #agent-app > [data-ns-slot="settings"], #agent-app > [data-ns-slot="agents"] { margin-inline: calc(50% - min(760px, 50vw - 24px)); }
+  #agent-app > [data-ns-slot="settings"] > details { margin-top: 16px; padding: 4px 20px 16px; border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface); }
+  #agent-app > [data-ns-slot="settings"] > details > summary { padding: 10px 0; cursor: pointer; }
   #agent-app .ns-msg.bot { border-radius: var(--radius) var(--radius) var(--radius) 3px; }
   #agent-app .ns-msg.user { border-radius: var(--radius) var(--radius) 3px var(--radius); }
 }
