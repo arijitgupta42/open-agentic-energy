@@ -74,6 +74,15 @@ host (Cloudflare Worker, or scripts/serve-all.mjs locally)
   `--ink`, `--line`, `--brand-ink`, `--brand-solid` and so on), with a dark set under
   `:root[data-theme="dark"]`. The chat's `--ns-*` variables follow them, and the figures
   use the same variables with their own palette.
+- **The design** (`design.css` on each site, linked after `styles.css`). A shared core, the same
+  text on all three sites (a test keeps it so), gives depth and rhythm: a gradient header with a
+  mark, type scale, panels and cards that lift, forms with clear focus rings, raised chat
+  panels and a gentle entrance. After it, each site has its own character through a few
+  variables and rules: Emberwick is warm and editorial (a serif, an ember mark and glow),
+  Heatwright crafted and technical (a heavy geometric sans, a blueprint grid, a square mark)
+  and Fernbrook formal and public-spirited (a book serif, ruled headings, cards with a coloured
+  head, a leaf mark). It uses system fonts only and loads nothing from another host (rule 8).
+  `styles.css` keeps the colours and layout; `mobile.css` loads after the design on phones.
 - **The phone layout** (`js/mobile.js` and `mobile.css`, the same on every site). It is the
   same page, runtime and rules as on a laptop (rule 5): `mobile.css` is linked with
   `media="(max-width: 760px)"`, so a laptop never loads it, and the script only decides which
