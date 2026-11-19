@@ -25,7 +25,7 @@ export class SwarmGraph {
   /** Each site's box: its height, and the space between two boxes. */
   static BOX = {height: 126, gap: 12, top: 4};
 
-  /** The most requests or notes one tooltip lists. */
+  /** The most requests or problems one tooltip lists. */
   static MAX_ROWS = 2;
 
   /** The longest request or reply a tooltip quotes, in characters. */
@@ -181,9 +181,6 @@ export class SwarmGraph {
       } else if (node.kind === "model" && caller) {
         caller.model = node.title.replace(/^Model: /, "");
         caller.modelCalls += node.calls || 0;
-        if (node.error) {
-          caller.notes.push(`Model call failed: ${node.error}`);
-        }
       } else if ((node.kind === "action" || node.kind === "mcp") && caller) {
         caller[node.kind === "action" ? "actions" : "mcp"].push({name: node.name, args: node.detail || "", status: node.status, why: node.refusal || node.error || ""});
       } else if (node.kind === "partner") {
@@ -211,8 +208,6 @@ export class SwarmGraph {
           edge.why = node.refusal || node.error || edge.why;
         }
         SwarmGraph.walk(node.children, {...ctx, via: {...ctx.via, mode: node.mode, request: node.asked || "", reply: node.reply || ""}}, act);
-      } else if (caller && ["skip", "limit", "consent", "error", "tool"].includes(node.kind)) {
-        caller.notes.push([node.title, node.detail, node.refusal, node.error].filter(Boolean).join(": "));
       }
     }
   }
@@ -252,9 +247,6 @@ export class SwarmGraph {
     record.runs += 1;
     record.status = SwarmGraph.worse(record.status, node.status);
     record.durationMs += node.durationMs || 0;
-    if (node.error) {
-      record.notes.push(`Failed: ${node.error}`);
-    }
     record.asks.push({
       from: ctx.caller,
       text: ctx.caller ? (node.asked || ctx.via.request || "") : AnswerPath.cut(ctx.turn.question),
@@ -277,7 +269,7 @@ export class SwarmGraph {
    */
   static agentRecord(act, key) {
     if (!act.agents.has(key)) {
-      act.agents.set(key, {status: "ok", runs: 0, asks: [], replied: "", model: "", modelCalls: 0, actions: [], mcp: [], called: [], notes: [], durationMs: 0});
+      act.agents.set(key, {status: "ok", runs: 0, asks: [], replied: "", model: "", modelCalls: 0, actions: [], mcp: [], called: [], durationMs: 0});
     }
     return act.agents.get(key);
   }
@@ -504,9 +496,6 @@ export class SwarmGraph {
     }
     if (record.replied) {
       rows.push({label: "Replied", text: SwarmGraph.quote(record.replied)});
-    }
-    for (const note of record.notes.slice(0, SwarmGraph.MAX_ROWS)) {
-      rows.push({label: "Note", text: note, tone: "bad"});
     }
     const facts = [];
     if (record.status === "running") {
