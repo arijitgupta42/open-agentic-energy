@@ -200,18 +200,47 @@ export class OpenUi {
       }
       at += word[0].length;
       if (text[at] === "(") {
-        return {call: word[0], args: list(")", value, depth)};
+        return {call: word[0], args: list(")", argument, depth)};
       }
       if (word[0] === "true" || word[0] === "false") {
         return word[0] === "true";
       }
       return word[0] === "null" ? null : {ref: word[0]};
     };
+    // A component's value may be given by name, as in Stat("Cost", 5, detail="a note").
+    // Models write that often. Once one is named, the rest must be named too.
+    const argument = (depth) => {
+      space();
+      const named = text.slice(at).match(/^([A-Za-z_]\w*)\s*=(?!=)/);
+      if (!named) {
+        return value(depth);
+      }
+      at += named[0].length;
+      return {named: named[1], value: value(depth)};
+    };
+    const checkOrder = (node) => {
+      if (Array.isArray(node)) {
+        node.forEach(checkOrder);
+      } else if (node && node.call !== undefined) {
+        let seen = false;
+        for (const item of node.args) {
+          if (item && item.named !== undefined) {
+            seen = true;
+            checkOrder(item.value);
+          } else if (seen) {
+            fail("a value by position comes after one by name");
+          } else {
+            checkOrder(item);
+          }
+        }
+      }
+    };
     const result = value(0);
     space();
     if (at < text.length) {
       fail("there is text after the value");
     }
+    checkOrder(result);
     return result;
   }
 
@@ -255,13 +284,16 @@ export class OpenUi {
         }
       }
     }
-    if (!statements.has("root")) {
+    // The root is the statement called root, or else the first one: models do not always
+    // call it root.
+    const top = statements.has("root") ? "root" : statements.keys().next().value;
+    if (top === undefined) {
       if (!partial) {
         errors.push("There is no root statement.");
       }
       return {root: null, errors};
     }
-    const root = OpenUi.build(statements, partial);
+    const root = OpenUi.build(statements, partial, top);
     OpenUi.faults(root, errors);
     return {root, errors};
   }
@@ -271,9 +303,10 @@ export class OpenUi {
    *
    * :param statements: Map of name to value.
    * :param partial: True while the text is still arriving.
+   * :param top: The name of the root statement.
    * :return: The root node.
    */
-  static build(statements, partial) {
+  static build(statements, partial, top = "root") {
     const limits = OpenUi.LIMITS;
     let count = 0;
     const fail = (message) => {
@@ -390,16 +423,32 @@ export class OpenUi {
       if (call.args.length > def.params.length) {
         fail(`${call.call} takes at most ${def.params.length} values.`);
       }
+      // Each value in its place: those by position first, then those by name.
+      const given = new Map();
+      call.args.forEach((item, index) => {
+        if (item && item.named !== undefined) {
+          const place = def.params.findIndex(([label]) => label.replace("?", "") === item.named);
+          if (place === -1) {
+            fail(`${call.call} has no value called ${item.named}.`);
+          }
+          if (given.has(place)) {
+            fail(`${call.call} ${item.named} is given twice.`);
+          }
+          given.set(place, item.value);
+        } else {
+          given.set(index, item);
+        }
+      });
       const props = {};
       def.params.forEach(([label, type], index) => {
         const name = label.replace("?", "");
-        if (index >= call.args.length) {
+        if (!given.has(index)) {
           if (!label.endsWith("?")) {
             fail(`${call.call} needs ${name}.`);
           }
           return;
         }
-        props[name] = arg(call.args[index], `${call.call} ${name}`, type, stack, depth);
+        props[name] = arg(given.get(index), `${call.call} ${name}`, type, stack, depth);
       });
       const problem = OpenUi.check(call.call, props);
       if (problem) {
@@ -407,7 +456,7 @@ export class OpenUi {
       }
       return {type: call.call, props};
     };
-    return node({ref: "root"}, [], 0);
+    return node({ref: top}, [], 0);
   }
 
   /**
@@ -537,10 +586,15 @@ export class OpenUi {
    * the fence's label, so this goes by the first statement.
    *
    * :param code: The text of a code block.
-   * :return: True when it starts with "root =".
+   * :return: True when it starts with "root =", or with any name set to one of the
+   *     components, such as "summary = Stack(".
    */
   static looksLike(code) {
-    return /^\s*root\s*=/.test(String(code || ""));
+    const first = String(code || "").match(/^\s*([A-Za-z_]\w*)\s*=\s*([A-Za-z_]\w*)?\s*(\()?/);
+    if (!first) {
+      return false;
+    }
+    return first[1] === "root" || (Boolean(first[3]) && Object.hasOwn(OpenUi.LIBRARY, first[2] || ""));
   }
 
   // ---- Drawing -------------------------------------------------------------------------
