@@ -90,11 +90,15 @@ is the simplest way to keep `dev` on `local`.
 
 ## Branches
 
-- `dev` is the default branch. All work lands here, with the `local` origins. CI runs on it.
-- `production` holds the same code with the `production` origins. To release: merge `dev`
-  into `production`, run `npm run origins -- production`, `npm test` and
+- `dev` is the default branch, with the `local` origins. CI runs on it. Work is done on a
+  branch (`feat/…`, `fix/…`, `docs/…`) made from `dev`, and merged into `dev` with
+  `git merge --no-ff`.
+- `production` holds the same code with the `production` origins. After a change is on
+  `dev`, merge `dev` into `production`, run `npm run origins -- production`, `npm test` and
   `node scripts/check-conformance.mjs --production`, commit, push, then deploy the three
-  Workers with `wrangler`. Never merge `production` back into `dev`.
+  Workers with `wrangler` when a site, runtime, server or deploy file changed. Never merge
+  `production` back into `dev`.
+- CLAUDE.md has the same steps as the working rule.
 
 ## Being found
 
