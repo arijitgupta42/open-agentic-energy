@@ -65,8 +65,8 @@ export class SiteConfig {
   }
 
   /**
-   * Valid arguments for the irreversible action, with spaces around the visitor's
-   * values, which the site tidies.
+   * Valid arguments for the irreversible action: only the scheme, because the applicant
+   * is the signed-in customer.
    *
    * :param state: The page state from the read action.
    * :return: The arguments.
@@ -74,8 +74,6 @@ export class SiteConfig {
   static irreversibleArguments(state) {
     return {
       schemeId: "heat-pump-grant",
-      fullName: "  Ana Silva ",
-      email: " ana.silva@example.com ",
       expectedVersion: state.version,
     };
   }
@@ -93,10 +91,6 @@ export class SiteConfig {
       {...valid, expectedVersion: state.version - 1},
       // EPC band C does not qualify for the insulation voucher.
       {...valid, schemeId: "warm-walls"},
-      {...valid, fullName: "   "},
-      {...valid, email: "ana.silva.example.com"},
-      {...valid, email: "ana.silva@example"},
-      {...valid, email: "ana silva@example.com"},
     ];
   }
 
@@ -203,13 +197,15 @@ export class SiteConfig {
     assert.equal(list.hidden, false);
     assert.equal(list.children[0].textContent, "Fernbrook Heat Pump Grant (£5,000) for Ana Silva. Reference FB-AP-0001.");
 
-    // The page's own form, given the same applicant, stores the same kind of record and
-    // then empties the visitor's details.
+    // The state names the signed-in customer, without the email address, and the page
+    // says whose name applications are in.
+    assert.deepEqual(after.customer, {fullName: "Ana Silva", address: "14 Larkspur Close", postcodeArea: "LS6"});
+    assert.equal(document.getElementById("application-customer").textContent, "Applications are made in the name of Ana Silva, 14 Larkspur Close, LS6. You are signed in to this demo as Ana Silva.");
+
+    // The page's own form, given a scheme, stores the same kind of record.
     const { App } = await import("../js/app.js");
     const form = document.getElementById("application-form");
     document.getElementById("application-scheme").value = "solar-starter";
-    document.getElementById("application-name").value = "  Ana Silva ";
-    document.getElementById("application-email").value = " ana.silva@example.com ";
     assert.equal(form.dispatch("submit"), 1);
     assert.equal(document.getElementById("application-message").textContent, "");
     assert.deepEqual(App.page.applications[1], {
@@ -219,13 +215,9 @@ export class SiteConfig {
       scheme: "Fernbrook Solar Starter",
       amount: "£1,200",
     });
-    assert.equal(document.getElementById("application-name").value, "");
-    assert.equal(document.getElementById("application-email").value, "");
 
     // A second application for the same scheme is refused, and nothing is stored.
     document.getElementById("application-scheme").value = "heat-pump-grant";
-    document.getElementById("application-name").value = "Ana Silva";
-    document.getElementById("application-email").value = "ana.silva@example.com";
     form.dispatch("submit");
     assert.equal(document.getElementById("application-message").textContent, "An application for the Fernbrook Heat Pump Grant has already been started: reference FB-AP-0001.");
     assert.equal(App.page.applications.length, 2);

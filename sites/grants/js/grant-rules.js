@@ -111,39 +111,15 @@ export class GrantRules {
   }
 
   /**
-   * Check an applicant's contact details, without changing anything.
+   * The applicant: the customer signed in to this demo site.
    *
-   * :param args: The application, with fullName and email.
-   * :return: {ok: true, fullName, email} with tidied values, or {ok: false, reason, field}.
+   * :return: {ok: true, fullName, email}.
    */
-  static checkContact(args) {
-    const fullName = String(args.fullName ?? "").trim();
-    if (!fullName) {
-      return {ok: false, reason: "Give the applicant's full name.", field: "fullName"};
-    }
-    const email = String(args.email ?? "").trim();
-    if (!GrantRules.looksLikeEmail(email)) {
-      return {ok: false, reason: "Give an email address such as name@example.com.", field: "email"};
-    }
+  static applicant() {
     return {
       ok: true,
-      fullName: fullName,
-      email: email,
+      fullName: GrantData.CUSTOMER.fullName,
+      email: GrantData.CUSTOMER.email,
     };
-  }
-
-  /**
-   * Say whether text has the shape of an email address.
-   *
-   * :param text: The trimmed text.
-   * :return: True for one "@" with a name before it and a dotted domain after it.
-   */
-  static looksLikeEmail(text) {
-    const parts = text.split("@");
-    if (parts.length !== 2 || !parts[0] || /\s/.test(text)) {
-      return false;
-    }
-    const domain = parts[1].split(".");
-    return domain.length >= 2 && domain.every(Boolean);
   }
 }

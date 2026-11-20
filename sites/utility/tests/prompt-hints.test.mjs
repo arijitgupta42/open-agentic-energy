@@ -87,8 +87,9 @@ class FakeElement {
     (this.listeners[event.type] || []).forEach((listener) => listener(event));
   }
 
-  querySelectorAll() {
-    return this.children.filter((child) => child.className.includes("ns-msg") && child.className.includes("bot"));
+  querySelectorAll(selector) {
+    const kind = selector.includes(".user") ? "user" : "bot";
+    return this.children.filter((child) => child.className.includes("ns-msg") && child.className.split(" ").includes(kind));
   }
 
   insertAdjacentElement() {}
@@ -202,32 +203,53 @@ test("With no line and no question, the fixed follow-ups come in turn, each once
   assert.equal(built.input.placeholder, "Second follow-up");
 });
 
-test("After a question, or a failed turn, there is no suggestion", () => {
+test("After a question with no line of its own, a follow-up is still suggested", () => {
   const asked = build();
   turn(asked, "What is your EPC band?");
-  assert.equal(asked.input.placeholder, PromptHints.DEFAULT_PLACEHOLDER);
-  assert.equal(asked.hints.canAccept(), false);
-  const failed = build();
-  turn(failed, "⚠️ An AI provider key is required.");
-  assert.equal(failed.input.placeholder, PromptHints.DEFAULT_PLACEHOLDER);
+  assert.equal(asked.input.placeholder, "First follow-up");
+  assert.equal(asked.hints.canAccept(), true);
 });
 
-test("An empty or unusable <next> line gives no suggestion, and the line is still removed", () => {
+test("After a failed turn, the visitor's last request is suggested again", () => {
+  const failed = build();
+  failed.msgs.append(new FakeElement("ns-msg user")).append(new FakeText("Which tariff is cheapest?"));
+  turn(failed, "⚠️ The model did not answer.");
+  assert.equal(failed.input.placeholder, "Which tariff is cheapest?");
+  // With no request to repeat, a follow-up stands in.
+  const empty = build();
+  turn(empty, "⚠️ An AI provider key is required.");
+  assert.equal(empty.input.placeholder, "First follow-up");
+});
+
+test("An empty or unusable <next> line gives a follow-up instead, and the line is still removed", () => {
   for (const line of ["<next></next>", "<next>Write to me at a@b.example</next>", `<next>${"x".repeat(300)}</next>`]) {
     const built = build();
     const bubble = turn(built, "Done.", line);
     assert.equal(bubble.textContent, "Done.");
-    assert.equal(built.input.placeholder, PromptHints.DEFAULT_PLACEHOLDER);
+    assert.equal(built.input.placeholder, "First follow-up");
   }
 });
 
-test("A suggestion already taken in this chat is not offered again", () => {
+test("A suggestion already taken is not offered again, and the follow-ups go round once all are used", () => {
   const built = build();
+  const take = () => {
+    built.hints.keydown(tab());
+    built.input.value = "";
+  };
   turn(built, "Done.", "<next>Same again</next>");
-  built.hints.keydown(tab());
-  built.input.value = "";
+  take();
   turn(built, "Done.", "<next>Same again</next>");
-  assert.equal(built.input.placeholder, PromptHints.DEFAULT_PLACEHOLDER);
+  assert.equal(built.input.placeholder, "First follow-up");
+  take();
+  turn(built, "Done.");
+  assert.equal(built.input.placeholder, "Second follow-up");
+  take();
+  // Every follow-up is used: they go round rather than leaving the box empty.
+  for (const expected of ["First follow-up", "Second follow-up", "First follow-up"]) {
+    turn(built, "Done.");
+    assert.equal(built.input.placeholder, expected);
+    take();
+  }
 });
 
 test("New chat goes back to the starter", () => {

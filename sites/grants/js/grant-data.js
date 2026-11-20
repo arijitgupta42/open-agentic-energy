@@ -5,6 +5,26 @@
  * They are not real grants and say nothing about any real scheme. Amounts are whole pence.
  */
 export class GrantData {
+  /**
+   * The customer signed in to this demo site. Fictional: the same household is signed in
+   * on all three demo sites, so nobody is asked for a name, an email or an address.
+   */
+  static CUSTOMER = {
+    fullName: "Ana Silva",
+    email: "ana.silva@example.com",
+    address: "14 Larkspur Close",
+    postcodeArea: "LS6",
+  };
+
+  /**
+   * The answers a form in the chat offers about the home, as dropdowns (js/chat-forms.js):
+   * a partner may need them, and the visitor never types them.
+   */
+  static HOME_CHOICES = {
+    homeTypes: ["Flat", "Terraced house", "Semi-detached house", "Detached house"],
+    floorAreasM2: [40, 50, 60, 70, 80, 95, 110, 130, 150, 180, 220],
+  };
+
   /** Who lives in or owns the home. */
   static TENURES = [
     {id: "owner-occupier", name: "I own the home and live in it"},

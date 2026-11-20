@@ -107,6 +107,9 @@ export class SiteConfig {
     assert.equal(after.currentTariffId, before.currentTariffId);
     assert.equal(after.comparison.id, "green-flex");
     assert.equal(after.comparison.estimatedAnnualCost, "£1,803.07");
+    // The signed-in customer is known: the agent reads the holder from the state, never asks.
+    assert.equal(after.account.holder, "Ana Silva");
+    assert.equal(document.getElementById("account-holder").textContent, "Ana Silva, 14 Larkspur Close, LS6");
     assert.equal(after.comparison.comparedWithCurrent, "£37.74 less per year");
     const panel = document.getElementById("comparison-panel").textContent;
     assert.ok(panel.includes("Green Flex") && panel.includes("£1,803.07") && panel.includes("£37.74 less per year"), panel);
