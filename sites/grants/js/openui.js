@@ -47,8 +47,11 @@ export class OpenUi {
     Callout: {params: [["text", "string"], ["tone?", "enum:info|good|warn"]]},
   };
 
-  /** Limits, so a runaway answer cannot build a huge page. */
-  static LIMITS = {text: 400, items: 120, children: 24, nodes: 150, depth: 8, columns: 12, rows: 200, series: 8};
+  /**
+   * Limits, so a runaway answer cannot build a huge page. Text over the text limit is
+   * cut, not refused; 2,000 characters holds any paragraph a figure needs.
+   */
+  static LIMITS = {text: 2000, items: 120, children: 24, nodes: 150, depth: 8, columns: 12, rows: 200, series: 8};
 
   /**
    * The width, in drawing units, that charts are made at. attach() sets it from the chat,
