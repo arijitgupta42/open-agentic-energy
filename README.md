@@ -139,7 +139,7 @@ knows as a network of agents, and lets another site run that network on request.
 
 ## Compliance with the hackathon rules
 
-**Last checked: 20 November 2026**, on `production` after `fix/openui-optional-values`, against the
+**Last checked: 20 November 2026**, on `production` after `fix/figure-text-limit`, against the
 [official rules](https://cognizant-agenticweb.devpost.com/rules) and
 [updates](https://cognizant-agenticweb.devpost.com/updates) as read that day, and the
 specification as it stood when the submission period opened.

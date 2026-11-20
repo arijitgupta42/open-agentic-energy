@@ -190,7 +190,7 @@ test("An optional value given as null is left out, a number is taken as text, an
     "root = Stack([a, b, c])",
     'a = Stat("Grant", "£5,000", null, "eligible")',
     'b = Stat("Rooms", 3, 2)',
-    `c = Stat("Fit", "£9,200", "", "${"x".repeat(450)}")`,
+    `c = Stat("Fit", "£9,200", "", "${"x".repeat(OpenUi.LIMITS.text + 50)}")`,
   ].join("\n"));
   assert.deepEqual(errors, []);
   const [a, b, c] = root.props.children;
@@ -237,7 +237,10 @@ test("Limits stop an answer that builds too much", () => {
   const deep = ["root = Stack([n0])", ...Array.from({length: 12}, (_, i) => `n${i} = Stack([n${i + 1}])`), 'n12 = Text("end")'];
   assert.match(OpenUi.parse(deep.join("\n")).errors.join(" "), /nested too deeply/);
   // Text over the limit is cut to it, not refused.
-  const long = OpenUi.parse(`root = Text("${"x".repeat(401)}")`);
+  // A paragraph of 1,500 characters is kept whole.
+  assert.equal(OpenUi.LIMITS.text, 2000);
+  assert.equal(OpenUi.parse(`root = Text("${"x".repeat(1500)}")`).root.props.content.length, 1500);
+  const long = OpenUi.parse(`root = Text("${"x".repeat(OpenUi.LIMITS.text + 1)}")`);
   assert.deepEqual(long.errors, []);
   assert.equal(long.root.props.content.length, OpenUi.LIMITS.text);
 });
