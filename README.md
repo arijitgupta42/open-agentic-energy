@@ -13,11 +13,11 @@ the supplier's assistant loads the installer's and the grants body's networks in
 customer's own browser, after the customer agrees, and answers with figures from all
 three sites. The companies, tariffs, prices and grants are fictional.
 
-| Site | Live | Icon in the chat | Network |
+| Logo | Site | Live | Network |
 | --- | --- | --- | --- |
-| Emberwick Energy, the supplier (the site entered) | [emberwick-energy](https://emberwick-energy.open-agentic-energy.workers.dev/) | ⚡ | `emberwick_energy`, 4 agents |
-| Heatwright Home Energy, the installer | [heatwright-installers](https://heatwright-installers.open-agentic-energy.workers.dev/) | 🔧 | `heatwright_installers`, 3 agents |
-| Fernbrook Retrofit Grants, the grants body | [fernbrook-grants](https://fernbrook-grants.open-agentic-energy.workers.dev/) | 🌱 | `fernbrook_grants`, 4 agents |
+| <img src="sites/utility/favicon.svg" width="28" height="28" alt="Emberwick's ember logo"> | Emberwick Energy, the supplier (the site entered) | [emberwick-energy](https://emberwick-energy.open-agentic-energy.workers.dev/) | `emberwick_energy`, 4 agents |
+| <img src="sites/installer/favicon.svg" width="28" height="28" alt="Heatwright's fan logo"> | Heatwright Home Energy, the installer | [heatwright-installers](https://heatwright-installers.open-agentic-energy.workers.dev/) | `heatwright_installers`, 3 agents |
+| <img src="sites/grants/favicon.svg" width="28" height="28" alt="Fernbrook's leaf logo"> | Fernbrook Retrofit Grants, the grants body | [fernbrook-grants](https://fernbrook-grants.open-agentic-energy.workers.dev/) | `fernbrook_grants`, 4 agents |
 
 ## Try it
 
@@ -139,7 +139,7 @@ knows as a network of agents, and lets another site run that network on request.
 
 ## Compliance with the hackathon rules
 
-**Last checked: 20 November 2026**, on `production` after `feat/signed-in-customer`, against the
+**Last checked: 20 November 2026**, on `production` after `docs/readme-logos`, against the
 [official rules](https://cognizant-agenticweb.devpost.com/rules) and
 [updates](https://cognizant-agenticweb.devpost.com/updates) as read that day, and the
 specification as it stood when the submission period opened.
