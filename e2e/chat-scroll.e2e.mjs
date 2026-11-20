@@ -44,10 +44,31 @@ test("21. A long answer stays at its first line, until the visitor scrolls", asy
   expect(held.answerTop).toBeGreaterThanOrEqual(0);
   expect(held.answerTop).toBeLessThan(40);
   expect(held.atBottom).toBe(false);
+  // A message sent while an answer streams (a steering message) is added the way the
+  // runtime adds it: its bubble, then a scroll to the bottom. The chat shows it and is not
+  // pulled back to the answer above it.
+  await browser.evaluate(() => {
+    const msgs = document.querySelector("#agent-app #ns-msgs");
+    const bubble = document.createElement("div");
+    bubble.className = "ns-msg user ns-steering-message";
+    bubble.textContent = "Also tell me the cheapest tariff.";
+    msgs.append(bubble);
+    msgs.scrollTop = msgs.scrollHeight;
+  });
+  await browser.evaluate(() => new Promise((resolve) => setTimeout(resolve, 200)));
+  expect((await measure(browser)).atBottom).toBe(true);
   // The visitor scrolls down to read on: the chat follows them and is not pulled back.
   await browser.locator("#agent-app #ns-msgs").hover();
   await browser.mouse.wheel(0, 5000);
   await expect.poll(async () => (await measure(browser)).atBottom).toBe(true);
   await browser.evaluate(() => new Promise((resolve) => setTimeout(resolve, 200)));
   expect((await measure(browser)).atBottom).toBe(true);
+  // A second long answer is held at its own first line, never at the earlier answer.
+  await screen.getByRole("textbox", "Your request").fill("Show my usage month by month in detail, again.");
+  await screen.getByRole("button", "Send").tap();
+  await expect.poll(() => browser.evaluate(() => [...document.querySelectorAll("#ns-msgs .ns-msg.bot")].filter((bubble) => bubble.textContent.includes("That is the whole year.")).length)).toBe(2);
+  await browser.evaluate(() => new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve))));
+  const second = await measure(browser);
+  expect(second.answerTop).toBeGreaterThanOrEqual(0);
+  expect(second.answerTop).toBeLessThan(40);
 });
