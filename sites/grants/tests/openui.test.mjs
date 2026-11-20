@@ -184,6 +184,25 @@ test("A block that is one component call, with no name, is drawn as the root", (
   assert.equal(OpenUi.looksLike("Stack is a word"), false);
 });
 
+test("An optional value given as null is left out, a number is taken as text, and long text is cut", () => {
+  // As models write it: null to skip the unit, a number for a text, a note that runs on.
+  const {root, errors} = OpenUi.parse([
+    "root = Stack([a, b, c])",
+    'a = Stat("Grant", "£5,000", null, "eligible")',
+    'b = Stat("Rooms", 3, 2)',
+    `c = Stat("Fit", "£9,200", "", "${"x".repeat(450)}")`,
+  ].join("\n"));
+  assert.deepEqual(errors, []);
+  const [a, b, c] = root.props.children;
+  assert.deepEqual(a.props, {label: "Grant", value: "£5,000", detail: "eligible"});
+  assert.equal(b.props.unit, "2");
+  assert.equal(c.props.detail.length, OpenUi.LIMITS.text);
+  assert.ok(c.props.detail.endsWith("…"));
+  // A value that is not text at all is still refused, and the note says what was wrong.
+  assert.match(OpenUi.parse('root = Stat("Fit", "£9,200", ["£"])').errors[0], /Stat unit must be text, not a list\./);
+  assert.match(OpenUi.parse('root = Stat(null, 1)').errors[0], /Stat needs label\./);
+});
+
 test("A wrong part is replaced by a note and the rest still stands", () => {
   const {root, errors} = OpenUi.parse([
     "root = Stack([ok, bad, odd, short])",
@@ -217,7 +236,10 @@ test("Limits stop an answer that builds too much", () => {
   assert.match(OpenUi.parse(lines.join("\n")).errors.join(" "), /at most 24/);
   const deep = ["root = Stack([n0])", ...Array.from({length: 12}, (_, i) => `n${i} = Stack([n${i + 1}])`), 'n12 = Text("end")'];
   assert.match(OpenUi.parse(deep.join("\n")).errors.join(" "), /nested too deeply/);
-  assert.match(OpenUi.parse(`root = Text("${"x".repeat(401)}")`).errors[0], /at most 400 characters/);
+  // Text over the limit is cut to it, not refused.
+  const long = OpenUi.parse(`root = Text("${"x".repeat(401)}")`);
+  assert.deepEqual(long.errors, []);
+  assert.equal(long.root.props.content.length, OpenUi.LIMITS.text);
 });
 
 test("Tables, pies and series are checked as a whole", () => {

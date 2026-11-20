@@ -379,14 +379,21 @@ export class OpenUi {
       }
       const {expr: target, path} = deref(expr, stack);
       if (type === "string") {
-        if (typeof target !== "string" || target.length > limits.text) {
-          fail(`${name} must be text of at most ${limits.text} characters.`);
+        // A number or yes/no is fine as text; text that runs on is cut, not refused.
+        if (Number.isFinite(target) || typeof target === "boolean") {
+          return String(target);
         }
-        return target;
+        if (typeof target !== "string") {
+          fail(`${name} must be text, not ${OpenUi.kind(target)}.`);
+        }
+        return OpenUi.cut(target);
       }
       if (type === "value") {
-        if (!(typeof target === "string" && target.length <= limits.text) && !Number.isFinite(target)) {
-          fail(`${name} must be text or a number.`);
+        if (typeof target === "string") {
+          return OpenUi.cut(target);
+        }
+        if (!Number.isFinite(target)) {
+          fail(`${name} must be text or a number, not ${OpenUi.kind(target)}.`);
         }
         return target;
       }
@@ -448,10 +455,16 @@ export class OpenUi {
       const props = {};
       def.params.forEach(([label, type], index) => {
         const name = label.replace("?", "");
-        if (!given.has(index)) {
+        if (!given.has(index) || (!label.endsWith("?") && given.get(index) === null)) {
           if (!label.endsWith("?")) {
             fail(`${call.call} needs ${name}.`);
           }
+          return;
+        }
+        // null for an optional value means it is left out, as models often write it.
+        const raw = given.get(index);
+        const empty = raw === null || (raw?.ref !== undefined && statements.get(raw.ref) === null);
+        if (label.endsWith("?") && empty) {
           return;
         }
         props[name] = arg(given.get(index), `${call.call} ${name}`, type, stack, depth);
@@ -463,6 +476,33 @@ export class OpenUi {
       return {type: call.call, props};
     };
     return node({ref: top}, [], 0);
+  }
+
+  /**
+   * Cut text to the limit, ending it with "…", so a long note is shortened, not refused.
+   *
+   * :param text: The text.
+   * :return: The text, at most LIMITS.text characters.
+   */
+  static cut(text) {
+    const most = OpenUi.LIMITS.text;
+    return text.length > most ? `${text.slice(0, most - 1)}…` : text;
+  }
+
+  /**
+   * Name the kind of a value that is not text, for a note on what was wrong.
+   *
+   * :param value: The value.
+   * :return: Such as "a list" or "nothing".
+   */
+  static kind(value) {
+    if (value === null || value === undefined) {
+      return "nothing";
+    }
+    if (Array.isArray(value)) {
+      return "a list";
+    }
+    return value.call !== undefined ? `a ${value.call} component` : "a value of another kind";
   }
 
   /**
