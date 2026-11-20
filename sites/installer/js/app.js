@@ -96,6 +96,8 @@ export class InstallerPage {
       notes: [...InstallData.NOTES],
       estimate: this.estimate === null ? null : {...this.estimate},
       latestSurveyRequest: this.latestSurveyRequest === null ? null : InstallerPage.withoutEmail(this.latestSurveyRequest),
+      // The visitor is signed in: the surveyor visits them. The email address stays out.
+      customer: {fullName: InstallData.CUSTOMER.fullName, address: InstallData.CUSTOMER.address, postcodeArea: InstallData.CUSTOMER.postcodeArea},
       partners: partners,
       version: this.version,
     };
@@ -165,8 +167,8 @@ export class InstallerPage {
    * Check a survey request without changing anything. The request itself and the
    * assistant's confirmation dialog both call this first.
    *
-   * :param args: The request, with fullName, email, postcodeArea, window and
-   *   expectedVersion.
+   * :param args: The request, with window and expectedVersion. The surveyor visits the
+   *   signed-in customer.
    * :return: {ok: true, ...} with what the visitor agrees to, or {ok: false, reason, field}.
    */
   checkSurvey(args) {
@@ -177,7 +179,7 @@ export class InstallerPage {
         field: "estimate",
       };
     }
-    const contact = InstallRules.checkContact(args);
+    const contact = InstallRules.checkVisit(args);
     if (!contact.ok) {
       return contact;
     }
@@ -199,8 +201,7 @@ export class InstallerPage {
   /**
    * Send the survey request. This cannot be undone on the page.
    *
-   * :param args: The request, with fullName, email, postcodeArea, window and
-   *   expectedVersion.
+   * :param args: The request, with window and expectedVersion.
    * :return: The receipt with the new state, or {ok: false, reason, field}.
    */
   requestSurvey(args) {
@@ -254,25 +255,18 @@ export class InstallerPage {
   }
 
   /**
-   * Handle the page's own survey form. On success it empties the visitor's details.
+   * Handle the page's own survey form: the visit time for the signed-in customer.
    *
    * :param event: The submit event.
    */
   onSurveySubmit(event) {
     event.preventDefault();
     const result = this.requestSurvey({
-      fullName: this.doc.getElementById("survey-name").value,
-      email: this.doc.getElementById("survey-email").value,
-      postcodeArea: this.doc.getElementById("survey-postcode").value,
       window: this.doc.getElementById("survey-window").value,
       expectedVersion: this.version,
     });
     if (result.ok === false) {
       this.doc.getElementById("survey-message").textContent = result.reason;
-      return;
-    }
-    for (const id of ["survey-name", "survey-email", "survey-postcode"]) {
-      this.doc.getElementById(id).value = "";
     }
   }
 
@@ -356,6 +350,10 @@ export class InstallerPage {
    * :param state: The page state.
    */
   renderSurvey(state) {
+    const customer = this.doc.getElementById("survey-customer");
+    if (customer) {
+      customer.textContent = `The surveyor visits ${state.customer.fullName}, ${state.customer.address}, ${state.customer.postcodeArea}. You are signed in to this demo as ${state.customer.fullName}.`;
+    }
     const result = this.doc.getElementById("survey-result");
     if (state.latestSurveyRequest === null) {
       result.textContent = "";

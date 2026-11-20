@@ -64,17 +64,14 @@ export class SiteConfig {
   }
 
   /**
-   * Valid arguments for the irreversible action, with spaces around the visitor's
-   * values and a lower-case postcode, which the site tidies.
+   * Valid arguments for the irreversible action: only the visit time, because the
+   * surveyor visits the signed-in customer.
    *
    * :param state: The page state from the read action.
    * :return: The arguments.
    */
   static irreversibleArguments(state) {
     return {
-      fullName: "  Ana Silva ",
-      email: " ana.silva@example.com ",
-      postcodeArea: " ls6 ",
       window: "saturday-morning",
       expectedVersion: state.version,
     };
@@ -91,12 +88,6 @@ export class SiteConfig {
     return [
       {...valid, expectedVersion: state.version + 1},
       {...valid, expectedVersion: state.version - 1},
-      {...valid, fullName: "   "},
-      {...valid, email: "ana.silva.example.com"},
-      {...valid, email: "ana.silva@example"},
-      {...valid, email: "ana silva@example.com"},
-      {...valid, postcodeArea: "123"},
-      {...valid, postcodeArea: "LS"},
     ];
   }
 
@@ -138,7 +129,8 @@ export class SiteConfig {
    * :param args: The call's arguments.
    */
   static checkDialogDetails(details, args) {
-    assert.equal(args.fullName, "  Ana Silva ");
+    // The call names no one: the dialog shows the signed-in customer.
+    assert.equal(args.fullName, undefined);
     assert.deepEqual(details, {
       "Name": "Ana Silva",
       "Email": "ana.silva@example.com",
@@ -182,25 +174,20 @@ export class SiteConfig {
     assert.ok(text.includes("HW-SV-0001") && text.includes("Ana Silva in LS6, saturday morning"), text);
     assert.ok(!text.includes("@"), text);
 
-    // The page's own form, given the same input, stores the same record and then
-    // empties the visitor's details.
+    // The state names the signed-in customer, without the email address, and the page
+    // says who the surveyor visits.
+    assert.deepEqual(after.customer, {fullName: "Ana Silva", address: "14 Larkspur Close", postcodeArea: "LS6"});
+    assert.equal(document.getElementById("survey-customer").textContent, "The surveyor visits Ana Silva, 14 Larkspur Close, LS6. You are signed in to this demo as Ana Silva.");
+
+    // The page's own form, given the same visit time, stores the same record.
     const { App } = await import("../js/app.js");
-    document.getElementById("survey-name").value = "  Ana Silva ";
-    document.getElementById("survey-email").value = " ana.silva@example.com ";
-    document.getElementById("survey-postcode").value = " ls6 ";
     document.getElementById("survey-window").value = "saturday-morning";
     assert.equal(document.getElementById("survey-form").dispatch("submit"), 1);
     assert.equal(document.getElementById("survey-message").textContent, "");
     assert.deepEqual(App.page.latestSurveyRequest, {...stored, reference: "HW-SV-0002"});
-    for (const id of ["survey-name", "survey-email", "survey-postcode"]) {
-      assert.equal(document.getElementById(id).value, "");
-    }
 
     // Without an estimate, the page refuses a request and says why.
     assert.equal(document.getElementById("estimate-clear").dispatch("click"), 1);
-    document.getElementById("survey-name").value = "Ana Silva";
-    document.getElementById("survey-email").value = "ana.silva@example.com";
-    document.getElementById("survey-postcode").value = "LS6";
     document.getElementById("survey-form").dispatch("submit");
     assert.equal(document.getElementById("survey-message").textContent, "Make an estimate first, so the surveyor knows what to look at.");
     assert.equal(App.page.latestSurveyRequest.reference, "HW-SV-0002");

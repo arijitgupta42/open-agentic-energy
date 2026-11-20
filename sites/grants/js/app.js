@@ -138,6 +138,8 @@ export class GrantsPage {
       delete copy.email;
       applications.push(copy);
     }
+    // The visitor is signed in: applications are in their name. The email address stays out.
+    const customer = {fullName: GrantData.CUSTOMER.fullName, address: GrantData.CUSTOMER.address, postcodeArea: GrantData.CUSTOMER.postcodeArea};
     return {
       demoNote: "Fictional demo data. These are not real grants and say nothing about any real scheme.",
       questions: {
@@ -151,6 +153,7 @@ export class GrantsPage {
       answers: this.answers === null ? null : {...this.answers},
       results: this.results(),
       applications: applications,
+      customer: customer,
       version: this.version,
     };
   }
@@ -195,7 +198,8 @@ export class GrantsPage {
    * Check an application without changing anything. The application itself and the
    * assistant's confirmation dialog both call this first.
    *
-   * :param args: The application, with schemeId, fullName, email and expectedVersion.
+   * :param args: The application, with schemeId and expectedVersion. The applicant is the
+   *   signed-in customer.
    * :return: {ok: true, ...} with what the visitor agrees to, or {ok: false, reason, field}.
    */
   checkApplication(args) {
@@ -231,10 +235,7 @@ export class GrantsPage {
         field: "schemeId",
       };
     }
-    const contact = GrantRules.checkContact(args);
-    if (!contact.ok) {
-      return contact;
-    }
+    const contact = GrantRules.applicant();
     if (args.expectedVersion !== this.version) {
       return {
         ok: false,
@@ -254,7 +255,7 @@ export class GrantsPage {
   /**
    * Start an application. This cannot be undone on the page.
    *
-   * :param args: The application, with schemeId, fullName, email and expectedVersion.
+   * :param args: The application, with schemeId and expectedVersion.
    * :return: The receipt with the new state, or {ok: false, reason, field}.
    */
   startApplication(args) {
@@ -307,7 +308,7 @@ export class GrantsPage {
   }
 
   /**
-   * Handle the page's own application form. On success it empties the visitor's details.
+   * Handle the page's own application form: a scheme, for the signed-in customer.
    *
    * :param event: The submit event.
    */
@@ -315,16 +316,11 @@ export class GrantsPage {
     event.preventDefault();
     const result = this.startApplication({
       schemeId: this.doc.getElementById("application-scheme").value,
-      fullName: this.doc.getElementById("application-name").value,
-      email: this.doc.getElementById("application-email").value,
       expectedVersion: this.version,
     });
     if (result.ok === false) {
       this.doc.getElementById("application-message").textContent = result.reason;
-      return;
     }
-    this.doc.getElementById("application-name").value = "";
-    this.doc.getElementById("application-email").value = "";
   }
 
   /**
@@ -427,6 +423,10 @@ export class GrantsPage {
    * :param state: The page state.
    */
   renderApplications(state) {
+    const applicant = this.doc.getElementById("application-customer");
+    if (applicant) {
+      applicant.textContent = `Applications are made in the name of ${state.customer.fullName}, ${state.customer.address}, ${state.customer.postcodeArea}. You are signed in to this demo as ${state.customer.fullName}.`;
+    }
     const list = this.doc.getElementById("application-list");
     const items = [];
     for (const application of state.applications) {

@@ -5,9 +5,15 @@
  * Rates are kept as whole numbers of tenths of a penny, so no sum uses fractions.
  */
 export class AccountData {
-  /** The demo account the page shows. */
+  /**
+   * The demo account the page shows, of the customer signed in to this demo site.
+   * Fictional: the same household is signed in on all three demo sites, so nobody is
+   * asked for a name or an address.
+   */
   static ACCOUNT = {
     reference: "EW-DEMO-1042",
+    holder: "Ana Silva",
+    address: "14 Larkspur Close, LS6",
     household: "Demo household, 3-bed semi-detached",
     fuel: "Electricity and gas",
     hasHeatPump: false,
@@ -21,6 +27,15 @@ export class AccountData {
   static HEAT_PUMP_ESTIMATE = {
     boilerEfficiencyPercent: 90,
     heatPumpEfficiencyTenths: 30,
+  };
+
+  /**
+   * The answers a form in the chat offers about the home, as dropdowns (js/chat-forms.js):
+   * a partner may need them, and the visitor never types them.
+   */
+  static HOME_CHOICES = {
+    homeTypes: ["Flat", "Terraced house", "Semi-detached house", "Detached house"],
+    floorAreasM2: [40, 50, 60, 70, 80, 95, 110, 130, 150, 180, 220],
   };
 
   /** The tariff the demo account starts on. */

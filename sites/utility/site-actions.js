@@ -32,7 +32,7 @@ class SiteActions {
   static readStateAction() {
     return {
       name: "get_account_state",
-      description: "Read this page: the demo account, 12 months of usage, every tariff with its rates, exit fee and estimated yearly cost at this usage, the comparison panel, the latest switch, the partner sites' links, and the page version.",
+      description: "Read this page: the demo account, 12 months of usage, every tariff with its rates, exit fee and estimated yearly cost at this usage, the comparison panel, the latest switch, the partner sites' links, the signed-in account holder, and the page version. The visitor is signed in: their name and address are here, so never ask for them. When you ask for answers with a form, make every field a dropdown: give each property an enum of the allowed values listed here or a partner gave (for a number, a few likely values).",
       effect: "read",
       inputSchema: {
         type: "object",

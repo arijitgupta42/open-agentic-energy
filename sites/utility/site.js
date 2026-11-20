@@ -9,6 +9,8 @@ import { ChatSessions } from "./js/chat-sessions.js";
 import { DevLog } from "./js/dev-log.js";
 import { SwarmGraph } from "./js/swarm-graph.js";
 import { PromptHints } from "./js/prompt-hints.js";
+import { ChatForms } from "./js/chat-forms.js";
+import { AccountData } from "./js/account-data.js";
 import { LiveChat } from "./js/live-chat.js";
 import { OpenUi } from "./js/openui.js";
 import { LlmProtocol } from "./js/llm-protocol.js";
@@ -34,6 +36,16 @@ export class AssistantMount {
    * the first message, and fixed follow-ups for answers that bring none of their own. None holds a
    * name, an email address or a reference.
    */
+  /**
+   * The dropdowns a form in the chat may offer, by the topic of its label
+   * (js/chat-forms.js). Nothing here asks for a personal detail: the account holds those.
+   */
+  static FORM_CHOICES = [
+    {match: /tariff/i, values: AccountData.TARIFFS.map((tariff) => tariff.name)},
+    {match: /floor area|square met|m²|m2|size of (your )?home/i, values: AccountData.HOME_CHOICES.floorAreasM2.map((area) => `${area} m²`)},
+    {match: /home type|type of (home|house|property)|property type|kind of home/i, values: AccountData.HOME_CHOICES.homeTypes},
+  ];
+
   static HINTS = {
     starter: "What would a heat pump cost to fit and run in my 95 m² semi-detached house, and is there a grant?",
     followUps: [
@@ -93,6 +105,11 @@ export class AssistantMount {
         AssistantMount.hints = PromptHints.attach(document, AssistantMount.HINTS);
       } catch (error) {
         console.error("Suggestions are off", error);
+      }
+      try {
+        ChatForms.attach(document, AssistantMount.FORM_CHOICES);
+      } catch (error) {
+        console.error("Chat forms are not checked", error);
       }
       // The logo of each site replaces the plain character its brand text starts with.
       try {

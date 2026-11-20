@@ -62,10 +62,7 @@
         <form id="application-form">
           <label for="application-scheme">Scheme</label>
           <select id="application-scheme" name="schemeId"></select>
-          <label for="application-name">Applicant's full name</label>
-          <input id="application-name" name="fullName" maxlength="80" autocomplete="name">
-          <label for="application-email">Email</label>
-          <input id="application-email" name="email" maxlength="120" autocomplete="email">
+          <p id="application-customer" class="signed-in"></p>
           <button type="submit">Start the application</button>
           <p id="application-message" class="error" role="alert"></p>
         </form>

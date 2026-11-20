@@ -59,7 +59,7 @@ VOICE: Plain words. Answer first, briefly. No filler, hype, praise or closing of
             # Every site, the same: the suggested next message (js/prompt-hints.js). The page
             # takes this last line out of the chat bubble and puts it in the chat box.
             "next_rules": """
-NEXT: Last line: <next>what the visitor could say next</next>. Omit it after a question or with no website_* tools.
+NEXT: Last line: <next>what the visitor could say next</next>, after a question their likely answer. Omit it with no website_* tools.
 """,
 
             "grounding_rules": """
