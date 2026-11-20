@@ -35,11 +35,11 @@ browser, after the customer agrees, and answers with figures from all three site
 companies, tariffs, prices and grants are fictional.
 
 - [Emberwick Energy](https://emberwick-energy.open-agentic-energy.workers.dev/), the
-  supplier and the site entered: 4 agents, shown as ⚡ in the chat.
+  supplier and the site entered: 4 agents, with an ember for its logo.
 - [Heatwright Home Energy](https://heatwright-installers.open-agentic-energy.workers.dev/),
-  the installer: 3 agents, shown as 🔧.
+  the installer: 3 agents, with a fan for its logo.
 - [Fernbrook Retrofit Grants](https://fernbrook-grants.open-agentic-energy.workers.dev/),
-  the grants body: 4 agents, shown as 🌱.
+  the grants body: 4 agents, with a leaf for its logo.
 
 ### Try it
 
