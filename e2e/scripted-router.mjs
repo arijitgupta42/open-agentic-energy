@@ -245,6 +245,16 @@ const AGENTS = [
         const receipt = parse(results.website_switch_tariff);
         return {text: `Switch ${receipt.status}: ${find(receipt, "reference") || "no reference"}.`};
       }
+      if (/in detail/i.test(input)) {
+        // A long answer, taller than the chat: every month as its own heading and lines,
+        // from the account state this turn read.
+        if (step === 0) {
+          return {calls: [{name: "website_get_account_state", args: {}}]};
+        }
+        const months = find(parse(results.website_get_account_state), "usage").months;
+        const sections = months.map((m) => `### ${m.month}\n- Electricity: ${m.electricityKwh} kWh\n- Gas: ${m.gasKwh} kWh`);
+        return withNext(request, `Here is your usage, month by month.\n\n${sections.join("\n\n")}\n\nThat is the whole year.`);
+      }
       if (/by month/i.test(input)) {
         // A usage answer with its figures as an openui block (js/openui.js), written
         // from the account state this turn read, as the real front agent is told to.

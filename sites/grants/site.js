@@ -10,6 +10,7 @@ import { DevLog } from "./js/dev-log.js";
 import { SwarmGraph } from "./js/swarm-graph.js";
 import { PromptHints } from "./js/prompt-hints.js";
 import { ChatForms } from "./js/chat-forms.js";
+import { ChatScroll } from "./js/chat-scroll.js";
 import { GrantData } from "./js/grant-data.js";
 import { LiveChat } from "./js/live-chat.js";
 import { OpenUi } from "./js/openui.js";
@@ -115,6 +116,11 @@ export class AssistantMount {
         ChatForms.attach(document, AssistantMount.FORM_CHOICES);
       } catch (error) {
         console.error("Chat forms are not checked", error);
+      }
+      try {
+        ChatScroll.attach(document);
+      } catch (error) {
+        console.error("The chat does not hold long answers at their start", error);
       }
       // The logo of each site replaces the plain character its brand text starts with.
       try {
