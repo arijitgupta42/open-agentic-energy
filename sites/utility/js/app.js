@@ -344,6 +344,7 @@ export class AccountPage {
         currentName = `${tariff.name} · about ${tariff.estimatedAnnualCost} a year at your usage`;
       }
     }
+    this.doc.getElementById("account-holder").textContent = `${state.account.holder}, ${state.account.address}`;
     this.doc.getElementById("account-reference").textContent = state.account.reference;
     this.doc.getElementById("account-household").textContent = state.account.household;
     this.doc.getElementById("account-heat-pump").textContent = state.account.hasHeatPump ? "Yes" : "None on record";

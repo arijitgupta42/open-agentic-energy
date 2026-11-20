@@ -33,7 +33,7 @@ class SiteActions {
   static readStateAction() {
     return {
       name: "get_grants_state",
-      description: "Read this page: every scheme with its amount, summary and conditions, the eligibility questions with their allowed answers, the visitor's answers, the result for each scheme, the applications started here, the installer partner's link, and the page version.",
+      description: "Read this page: every scheme with its amount, summary and conditions, the eligibility questions with their allowed answers, the visitor's answers, the result for each scheme, the applications started here, the installer partner's link, the signed-in customer, and the page version. The visitor is signed in: their name and address are here, so never ask for them. When you ask for answers with a form, make every field a dropdown: give each property an enum of the allowed values listed here (for a number, a few likely values).",
       effect: "read",
       inputSchema: {
         type: "object",
@@ -112,27 +112,17 @@ class SiteActions {
   static startApplicationAction() {
     return {
       name: "start_application",
-      description: "Start an application for one scheme with the answers on the page. The browser asks the visitor to confirm first. The site refuses when there are no answers, when the answers do not qualify, when that scheme already has an application, when a detail is missing or malformed, and a stale expectedVersion. Returns the receipt with its reference.",
+      description: "Start an application for one scheme with the answers on the page, in the name of the signed-in customer: their name and email are known, so ask only which scheme. The browser asks the visitor to confirm first. The site refuses when there are no answers, when the answers do not qualify, when that scheme already has an application, when a detail is missing or malformed, and a stale expectedVersion. Returns the receipt with its reference.",
       effect: "irreversible",
       inputSchema: {
         type: "object",
         additionalProperties: false,
-        required: ["schemeId", "fullName", "email", "expectedVersion"],
+        required: ["schemeId", "expectedVersion"],
         properties: {
           schemeId: {
             type: "string",
             enum: App.page.ids(GrantData.SCHEMES),
             description: "Scheme id from website_get_grants_state that the visitor chose.",
-          },
-          fullName: {
-            type: "string",
-            maxLength: 80,
-            description: "The applicant's full name, from the visitor.",
-          },
-          email: {
-            type: "string",
-            maxLength: 120,
-            description: "The email address the visitor gave.",
           },
           expectedVersion: {
             type: "integer",

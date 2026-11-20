@@ -58,14 +58,9 @@
 
       <section id="survey" aria-labelledby="survey-heading">
         <h2 id="survey-heading">Request a free home survey</h2>
-        <p>Make an estimate first, then tell us who to ask for and when to visit.</p>
+        <p>Make an estimate first, then tell us when we can visit.</p>
         <form id="survey-form">
-          <label for="survey-name">Your name</label>
-          <input id="survey-name" name="fullName" maxlength="80" autocomplete="name">
-          <label for="survey-email">Email</label>
-          <input id="survey-email" name="email" maxlength="120" autocomplete="email">
-          <label for="survey-postcode">First part of your postcode</label>
-          <input id="survey-postcode" name="postcodeArea" maxlength="8" autocomplete="off">
+          <p id="survey-customer" class="signed-in"></p>
           <label for="survey-window">When can we visit?</label>
           <select id="survey-window" name="window"></select>
           <button type="submit">Request the survey</button>

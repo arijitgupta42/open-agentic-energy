@@ -9,6 +9,8 @@ import { ChatSessions } from "./js/chat-sessions.js";
 import { DevLog } from "./js/dev-log.js";
 import { SwarmGraph } from "./js/swarm-graph.js";
 import { PromptHints } from "./js/prompt-hints.js";
+import { ChatForms } from "./js/chat-forms.js";
+import { GrantData } from "./js/grant-data.js";
 import { LiveChat } from "./js/live-chat.js";
 import { OpenUi } from "./js/openui.js";
 import { LlmProtocol } from "./js/llm-protocol.js";
@@ -34,6 +36,20 @@ export class AssistantMount {
    * the first message, and fixed follow-ups for answers that bring none of their own. None holds a
    * name, an email address or a reference.
    */
+  /**
+   * The dropdowns a form in the chat may offer, by the topic of its label
+   * (js/chat-forms.js). Nothing here asks for a personal detail: the account holds those.
+   */
+  static FORM_CHOICES = [
+    {match: /own|rent|tenure|landlord/i, values: GrantData.TENURES.map((tenure) => tenure.name)},
+    {match: /epc|energy performance/i, values: GrantData.EPC_BANDS.map((band) => band.name)},
+    {match: /income/i, values: GrantData.INCOME_BANDS.map((band) => band.name)},
+    {match: /scheme|grant/i, values: GrantData.SCHEMES.map((scheme) => scheme.name)},
+    {match: /heat/i, values: GrantData.HEATING.map((heating) => heating.name)},
+    {match: /floor area|square met|m²|m2|size of (your )?home/i, values: GrantData.HOME_CHOICES.floorAreasM2.map((area) => `${area} m²`)},
+    {match: /home type|type of (home|house|property)|property type|kind of home/i, values: GrantData.HOME_CHOICES.homeTypes},
+  ];
+
   static HINTS = {
     starter: "Which grants could I get for a heat pump, and what would it cost to fit in a 95 m² house?",
     followUps: [
@@ -94,6 +110,11 @@ export class AssistantMount {
         AssistantMount.hints = PromptHints.attach(document, AssistantMount.HINTS);
       } catch (error) {
         console.error("Suggestions are off", error);
+      }
+      try {
+        ChatForms.attach(document, AssistantMount.FORM_CHOICES);
+      } catch (error) {
+        console.error("Chat forms are not checked", error);
       }
       // The logo of each site replaces the plain character its brand text starts with.
       try {

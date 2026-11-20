@@ -87,51 +87,26 @@ export class InstallRules {
   }
 
   /**
-   * Check the visitor's details for a survey request, without changing anything.
+   * Check a survey visit, without changing anything. The surveyor visits the signed-in
+   * customer, so only the time is chosen.
    *
-   * :param args: The request, with fullName, email, postcodeArea and window.
-   * :return: {ok: true, fullName, email, postcodeArea, window} with tidied values, or
-   *   {ok: false, reason, field}.
+   * :param args: The request, with window.
+   * :return: {ok: true, fullName, email, postcodeArea, window} with the customer's
+   *   details, or {ok: false, reason, field}.
    */
-  static checkContact(args) {
-    const fullName = String(args.fullName ?? "").trim();
-    if (!fullName) {
-      return {ok: false, reason: "Give the name of the person the surveyor should ask for.", field: "fullName"};
-    }
-    const email = String(args.email ?? "").trim();
-    if (!InstallRules.looksLikeEmail(email)) {
-      return {ok: false, reason: "Give an email address such as name@example.com.", field: "email"};
-    }
-    const postcodeArea = String(args.postcodeArea ?? "").trim().toUpperCase();
-    if (!/^[A-Z]{1,2}[0-9][A-Z0-9]?$/.test(postcodeArea)) {
-      return {ok: false, reason: "Give the first part of the postcode only, such as LS6 or SW1A.", field: "postcodeArea"};
-    }
+  static checkVisit(args) {
     const window = InstallRules.find(InstallData.SURVEY_WINDOWS, args.window);
     if (!window) {
       return {ok: false, reason: "Choose when the surveyor can visit.", field: "window"};
     }
+    const customer = InstallData.CUSTOMER;
     return {
       ok: true,
-      fullName: fullName,
-      email: email,
-      postcodeArea: postcodeArea,
+      fullName: customer.fullName,
+      email: customer.email,
+      postcodeArea: customer.postcodeArea,
       window: window.name,
     };
-  }
-
-  /**
-   * Say whether text has the shape of an email address.
-   *
-   * :param text: The trimmed text.
-   * :return: True for one "@" with a name before it and a dotted domain after it.
-   */
-  static looksLikeEmail(text) {
-    const parts = text.split("@");
-    if (parts.length !== 2 || !parts[0] || /\s/.test(text)) {
-      return false;
-    }
-    const domain = parts[1].split(".");
-    return domain.length >= 2 && domain.every(Boolean);
   }
 
   /**

@@ -34,6 +34,8 @@ button { font: inherit; padding: 9px 16px; border: 0; border-radius: 6px; backgr
 button:hover, button:focus-visible { filter: brightness(1.15); }
 .error { color: #b42318; font-weight: 600; margin: 0; min-height: 1.2em; }
 .result { background: var(--tint); border-radius: 8px; padding: 12px 14px; }
+/* Who a request is made for: the signed-in demo customer. */
+.signed-in { margin: 0; color: var(--muted); }
 .bars { display: flex; align-items: flex-end; gap: 6px; height: 160px; margin-top: 12px; }
 .bars > div { flex: 1; height: 100%; display: flex; flex-direction: column; justify-content: flex-end; align-items: center; font-size: 0.75em; color: var(--muted); }
 .bars .bar { width: 100%; background: var(--brand-solid); border-radius: 4px 4px 0 0; min-height: 2px; }

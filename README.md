@@ -57,6 +57,10 @@ composition cycle, an over-budget request and a denied origin.
 Every page works on its own, with no assistant and no key. The assistant uses the same
 functions as the page's buttons, so the page and the assistant follow one set of rules.
 
+On all three sites the visitor is the same signed-in fictional customer, Ana Silva, so
+nothing asks for a name, an email or an address: a survey or an application is made in
+the account's name. The assistant's forms in the chat offer dropdowns only.
+
 | Site | On the page | Ask the assistant |
 | --- | --- | --- |
 | Emberwick | See 12 months of usage, compare tariffs, switch tariff | "Which tariff would be cheapest for me?", "Which months did I use the most gas?", "What would a heat pump cost to run?", "Switch me to Fixed 12 Month" |
@@ -135,7 +139,7 @@ knows as a network of agents, and lets another site run that network on request.
 
 ## Compliance with the hackathon rules
 
-**Last checked: 19 November 2026**, on `production` after `fix/consent-declined-and-width`, against the
+**Last checked: 20 November 2026**, on `production` after `feat/signed-in-customer`, against the
 [official rules](https://cognizant-agenticweb.devpost.com/rules) and
 [updates](https://cognizant-agenticweb.devpost.com/updates) as read that day, and the
 specification as it stood when the submission period opened.
@@ -152,7 +156,7 @@ How it was checked:
 - `npm run conformance:live -- --env production`: 72 checks on the hosted sites (CORS,
   manifests, networks, bridge, each page's Content-Security-Policy), all passing.
 - `check_partner.mjs` on all five cross-site calls from their real callers, all passing.
-- `npm test` (307 tests) and `npm run test:e2e` (19 browser workflows), all passing. Four
+- `npm test` (315 tests) and `npm run test:e2e` (20 browser workflows), all passing. Four
   of the workflows also fail on any Content-Security-Policy violation, and check that a
   policy is in force.
 - The browser checks with a live key, recorded on issues #4 to #8, all closed.
@@ -165,7 +169,7 @@ How it was checked:
 | --- | --- | --- |
 | A working open agentic website built with standard open web technologies | Met | Plain HTML, CSS and JavaScript modules, no dependencies, no bundler |
 | Conforms to the specification as at the start of the submission period | Met | Our copy in `docs/hackathon/` is identical to upstream commit `fd872b9` (MVP Profile 0.2), the version in force on 11 November 2026. Upstream's Profile 0.3 (19 November) only fixes links and typos. See the next table |
-| Publicly accessible, runs consistently in a current browser | Met | Hosted over HTTPS on Cloudflare Workers; 19 browser workflows pass in Chromium |
+| Publicly accessible, runs consistently in a current browser | Met | Hosted over HTTPS on Cloudflare Workers; 20 browser workflows pass in Chromium |
 | The URL holds a public, conforming `.json` describing the network | Met | `agent-manifest.json` and `emberwick_energy.network.json`, served with CORS |
 | The URL holds a runtime file that runs the network in the browser | Met | `runtime/`, an unchanged copy of the reference runtime (`sync-runtime --check`) |
 | The URL holds an interface to the network | Met | "Ask Emberwick Energy" on the page |
@@ -245,10 +249,10 @@ rules and updates pages again and compare the specification with upstream.
 
 ## Tests
 
-`npm test` runs 307 tests with no LLM. They load the real runtime and page code against a
+`npm test` runs 315 tests with no LLM. They load the real runtime and page code against a
 scripted model, and check the MCP servers against amounts worked out by hand.
 
-`npm run test:e2e` runs 19 user workflows in Chromium with
+`npm run test:e2e` runs 20 user workflows in Chromium with
 [e2e](https://github.com/e2e-inc/e2e). A scripted router inside the browser stands in for
 the model, so the real runtime, networks, consent cards, partner sites and MCP servers
 all run, with no key:
@@ -283,6 +287,8 @@ all run, with no key:
     badges, the developer log, dialogs) is readable on all three sites in both themes:
     each piece of text is measured against what is behind it (WCAG 4.5:1). Every consent
     card is one width on every site, and a declined one reads in red.
+20. A form the assistant draws in the chat is dropdowns only, with no field for a
+    personal detail: the visitor is a signed-in demo customer, so the account holds them.
 
 ## Known limits
 
@@ -307,8 +313,8 @@ Only the browser workflow tests need `npm install` (e2e, a development dependenc
 
 ```shell
 npm run build      # write the published network files
-npm test           # 307 tests: real runtime and page code, scripted model, no LLM, plus the MCP servers
-npm run test:e2e   # 19 user workflows in a real browser, on a scripted model (docs/development.md)
+npm test           # 315 tests: real runtime and page code, scripted model, no LLM, plus the MCP servers
+npm run test:e2e   # 20 user workflows in a real browser, on a scripted model (docs/development.md)
 npm run check      # generated files, runtime copies and conformance checks
 npm run serve      # serve the three sites, each with its /mcp
 ```

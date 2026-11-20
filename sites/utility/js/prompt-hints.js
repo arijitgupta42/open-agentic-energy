@@ -8,9 +8,10 @@
 // (the `next_rules` text in each .hocon). This page takes that line out of the chat
 // bubble and puts it in the chat box, in the same moment the answer appears. It is one
 // model call, so it costs nothing extra and the suggestion follows from the answer the
-// model has just written. When the answer has no such line and does not end in a
-// question, a fixed follow-up from the site's own list is used instead. After a
-// question, there is no suggestion, because the visitor has something to answer.
+// model has just written; after a question, it is the visitor's likely answer. When the
+// answer has no usable line, a fixed follow-up from the site's own list is used instead,
+// going round the list once every one has been used, and after a failed turn the
+// visitor's last request is offered again. So there is always a suggestion.
 //
 // A suggestion only fills the chat box. It never sends anything: the visitor reads it and
 // presses Send, as with voice input (js/voice-input.js).
@@ -178,12 +179,12 @@ export class PromptHints {
   finish() {
     const bubbles = [...this.msgs.querySelectorAll(".ns-msg.bot:not(.ns-live)")];
     const answer = (bubbles.at(-1)?.textContent || "").trim();
-    if (this.pending !== undefined) {
-      // The agent wrote one (or an empty one, when it asked a question).
-      this.suggestion = this.pending && !this.used.has(this.pending) ? this.pending : "";
-    } else if (!answer || answer.endsWith("?") || answer.startsWith("⚠️")) {
-      // The agent asked something, or the turn failed: nothing sensible to suggest.
-      this.suggestion = "";
+    if (this.pending && !this.used.has(this.pending)) {
+      // The agent wrote one: after an answer, what to ask next; after a question, a reply.
+      this.suggestion = this.pending;
+    } else if (!answer || answer.startsWith("⚠️")) {
+      // The turn failed: offer the visitor's request again.
+      this.suggestion = this.lastRequest() || this.fallback();
     } else {
       this.suggestion = this.fallback();
     }
@@ -192,12 +193,30 @@ export class PromptHints {
   }
 
   /**
-   * The next fixed suggestion not yet offered in this chat.
+   * The visitor's last request in the chat, to send again after a failed turn.
    *
-   * :return: The suggestion, or "" when the list is used up.
+   * :return: Its text, or "" when there is none or it is too long to suggest.
+   */
+  lastRequest() {
+    const asked = [...this.msgs.querySelectorAll(".ns-msg.user:not(.ns-steering-message)")];
+    return PromptHints.clean(asked.at(-1)?.textContent || "") || "";
+  }
+
+  /**
+   * The next fixed suggestion: one not yet offered in this chat, or, once every one has
+   * been, the list again in turn.
+   *
+   * :return: The suggestion, or "" only when the site has no follow-ups.
    */
   fallback() {
-    return this.config.followUps.find((text) => !this.used.has(text)) || "";
+    const list = this.config.followUps;
+    const fresh = list.find((text) => !this.used.has(text));
+    if (fresh) {
+      return fresh;
+    }
+    // Every follow-up has been used: go round the list rather than leave the box empty.
+    this.round = ((this.round ?? -1) + 1) % list.length;
+    return list[this.round] || "";
   }
 
   /**

@@ -19,6 +19,12 @@ export class InstallData {
     {id: "detached", name: "Detached house", wattsPerM2: 80},
   ];
 
+  /**
+   * The floor areas a form in the chat offers as a dropdown (js/chat-forms.js), in square
+   * metres, within MIN_AREA_M2 and MAX_AREA_M2.
+   */
+  static FLOOR_AREA_CHOICES = [40, 50, 60, 70, 80, 95, 110, 130, 150, 180, 220];
+
   /** Products, smallest first within each measure. outputWatts is for heat pumps only. */
   static PRODUCTS = [
     {id: "ashp-5", measure: "heat-pump", name: "5 kW air-source heat pump", outputWatts: 5000, fromPence: 780000, toPence: 940000},
@@ -35,6 +41,17 @@ export class InstallData {
   static MIN_AREA_M2 = 20;
 
   static MAX_AREA_M2 = 400;
+
+  /**
+   * The customer signed in to this demo site. Fictional: the same household is signed in
+   * on all three demo sites, so nobody is asked for a name, an email or an address.
+   */
+  static CUSTOMER = {
+    fullName: "Ana Silva",
+    email: "ana.silva@example.com",
+    address: "14 Larkspur Close",
+    postcodeArea: "LS6",
+  };
 
   /** When a surveyor can visit. */
   static SURVEY_WINDOWS = [

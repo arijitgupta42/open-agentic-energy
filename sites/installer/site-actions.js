@@ -33,7 +33,7 @@ class SiteActions {
   static readStateAction() {
     return {
       name: "get_installer_state",
-      description: "Read this page: what the site fits with indicative price ranges, the home types and survey windows it accepts, its notes, the visitor's current estimate, the latest survey request, the grants partner's link, and the page version.",
+      description: "Read this page: what the site fits with indicative price ranges, the home types and survey windows it accepts, its notes, the visitor's current estimate, the latest survey request, the grants partner's link, the signed-in customer, and the page version. The visitor is signed in: their name and address are here, so never ask for them. When you ask for answers with a form, make every field a dropdown: give each property an enum of the allowed values listed here (for a number, a few likely values).",
       effect: "read",
       inputSchema: {
         type: "object",
@@ -108,28 +108,13 @@ class SiteActions {
   static requestSurveyAction() {
     return {
       name: "request_survey",
-      description: "Send a request for a free home survey for the estimate on the page. The browser asks the visitor to confirm first. The site refuses when there is no estimate, when a detail is missing or malformed, and a stale expectedVersion. Returns the receipt with its reference.",
+      description: "Send a request for a free home survey for the estimate on the page, for the signed-in customer: their name and address are known, so ask only when the surveyor can visit. The browser asks the visitor to confirm first. The site refuses when there is no estimate, and a stale expectedVersion. Returns the receipt with its reference.",
       effect: "irreversible",
       inputSchema: {
         type: "object",
         additionalProperties: false,
-        required: ["fullName", "email", "postcodeArea", "window", "expectedVersion"],
+        required: ["window", "expectedVersion"],
         properties: {
-          fullName: {
-            type: "string",
-            maxLength: 80,
-            description: "The name the visitor gave.",
-          },
-          email: {
-            type: "string",
-            maxLength: 120,
-            description: "The email address the visitor gave.",
-          },
-          postcodeArea: {
-            type: "string",
-            maxLength: 8,
-            description: "The first part of the visitor's postcode only, such as LS6.",
-          },
           window: {
             type: "string",
             enum: App.page.ids(InstallData.SURVEY_WINDOWS),
