@@ -7,7 +7,9 @@
 // first line never goes above the top: the chat follows a new answer down until its
 // start reaches the top, then stays there. A short answer that fits is not touched.
 //
-// It only ever scrolls up, never down, and it stops as soon as the visitor scrolls or
+// It only ever holds an answer that appeared after the visitor's latest message, so a
+// message sent while an answer streams (or any new message) is never pulled back up
+// from. It only scrolls up, never down, and it stops as soon as the visitor scrolls or
 // presses a key in the chat themselves, until their next message. It reads no text and
 // changes nothing but the chat's scroll position. It is the same on all three sites.
 
@@ -46,15 +48,15 @@ export class ChatScroll {
     this.msgs = msgs;
     this.view = view;
     this.moved = false;
+    // The answer to hold: the first one added after the visitor's latest message.
+    this.anchor = null;
     const settle = () => view.requestAnimationFrame(() => this.hold());
-    // A new message from the visitor starts a turn: hold the chat again from its answer.
-    new view.MutationObserver(() => {
-      if (bar.getAttribute("data-turn-active") === "true") {
-        this.moved = false;
+    new view.MutationObserver((records) => {
+      for (const record of records) {
+        record.addedNodes.forEach((node) => this.added(node));
       }
       settle();
-    }).observe(bar, {attributes: true, attributeFilter: ["data-turn-active"]});
-    new view.MutationObserver(settle).observe(msgs, {childList: true, subtree: true, characterData: true});
+    }).observe(msgs, {childList: true, subtree: true, characterData: true});
     msgs.addEventListener("scroll", () => this.hold());
     for (const type of ["wheel", "touchstart", "pointerdown"]) {
       msgs.addEventListener(type, () => {
@@ -66,22 +68,44 @@ export class ChatScroll {
         this.moved = true;
       }
     });
+    // The messages themselves say when a new turn starts, so the input bar is not watched.
+    void bar;
+    for (const node of msgs.children) {
+      this.added(node);
+    }
   }
 
   /**
-   * The newest answer: the first reply from the assistant after the visitor's last
-   * message, not the list of working steps or a consent card.
+   * Note an element added to the chat. A message from the visitor, also one sent while an
+   * answer streams, lets go of the answer above it: what comes after it is new. The first
+   * answer added after it is the one to hold. The final answer replaces the streamed one,
+   * so an answer that has left the chat is replaced by the next one added.
    *
-   * :return: The element, or null before the first answer.
+   * :param node: The added node.
+   */
+  added(node) {
+    if (node.nodeType !== 1 || node.parentElement !== this.msgs) {
+      return;
+    }
+    if (node.matches(".ns-msg.user")) {
+      this.anchor = null;
+      this.moved = false;
+      return;
+    }
+    if (node.matches(".ns-msg.bot:not(.ns-consent):not(.ns-auto-approved), .ns-widget")
+      && (!this.anchor || !this.anchor.isConnected)) {
+      this.anchor = node;
+    }
+  }
+
+  /**
+   * The answer to hold: the first one added after the visitor's latest message, while it
+   * is still in the chat.
+   *
+   * :return: The element, or null.
    */
   answer() {
-    const asked = [...this.msgs.querySelectorAll(".ns-msg.user:not(.ns-steering-message)")].at(-1);
-    for (let node = asked?.nextElementSibling; node; node = node.nextElementSibling) {
-      if (node.matches(".ns-msg.bot:not(.ns-consent):not(.ns-auto-approved), .ns-widget")) {
-        return node;
-      }
-    }
-    return null;
+    return this.anchor?.isConnected ? this.anchor : null;
   }
 
   /**
