@@ -1,0 +1,147 @@
+/* Design variant C of the Emberwick Energy page: software kind, light and calm. Loaded after design.css, so it
+   replaces that file's ember character on this page only. The dealt look: palette cool-grey-cobalt, pairing
+   Schibsted Grotesk (self-hosted, assets/fonts), round corners, hero "collage" (the account and usage in one
+   app frame on a lit ground), moment cursor-spotlight. No photographs, no effects, nothing tied to scrolling. */
+:root {
+  --font-display: "Schibsted Grotesk", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-body: "Schibsted Grotesk", system-ui, -apple-system, "Segoe UI Variable Text", "Segoe UI", Roboto, sans-serif;
+  --display-weight: 500;
+  --display-tracking: -0.035em;
+  --radius: 22px;
+  --radius-sm: 14px;
+  --paper: #eef0f3; --surface: #ffffff; --surface-2: #f4f5f8; --line: #d5d9e0;
+  --ink: #0b0c0e; --muted: #434a57; --tint: #e5e8fb;
+  --brand: #1f2de6; --brand-ink: #1f2de6; --brand-solid: #1f2de6; --ember: #1f2de6;
+  --shadow-2: 0 28px 56px -34px rgba(20, 30, 120, 0.45);
+  --ground-a: color-mix(in oklab, var(--brand-solid) 16%, var(--paper));
+  --ground-b: color-mix(in oklab, var(--brand-solid) 5%, var(--paper));
+}
+:root[data-theme="dark"] {
+  --paper: #0d1015; --surface: #171b22; --surface-2: #1e232c; --line: #2b323d;
+  --ink: #eef0f3; --muted: #9aa3b0; --tint: #16213a;
+  --brand: #3b4ff0; --brand-ink: #86a8ff; --brand-solid: #3a4df0; --ember: #6f96ff;
+  --shadow-2: 0 30px 60px -34px #000;
+  --ground-a: color-mix(in oklab, var(--brand-solid) 30%, var(--paper));
+  --ground-b: color-mix(in oklab, var(--brand-solid) 9%, var(--paper));
+}
+body { font-family: var(--font-body); background: var(--paper); }
+main { max-width: 1320px; padding: 0 28px 64px; }
+main > section { margin-top: 112px; }
+main > section.intro { margin-top: 0; }
+h2 { font-size: clamp(1.7rem, 2.6vw, 2.2rem); letter-spacing: -0.03em; }
+main section > h2::after { display: none; }
+
+/* Header: a round mark, quiet links, no rule. */
+header { padding: 20px 28px; border-bottom: 0; max-width: 1320px; margin: 0 auto; }
+header::after { display: none; }
+.brand { font-family: var(--font-display); font-weight: 600; font-size: 1.3rem; letter-spacing: -0.03em; }
+.brand::before { width: 26px; height: 26px; box-shadow: none; background: radial-gradient(circle at 50% 50%, var(--paper) 0 22%, transparent 24%), var(--brand-solid); }
+.brand span { font-style: normal; font-weight: 500; color: var(--muted); }
+header nav a { padding: 8px 14px; border-radius: 999px; color: var(--muted); font-weight: 500; background: none; transition: background-color 0.18s, color 0.18s; }
+header nav a:hover, header nav a:focus-visible { background: var(--surface-2); color: var(--ink); background-size: 0; }
+header nav { gap: 2px; }
+.theme-switch { border-radius: 999px; font-weight: 500; }
+
+/* The first screen: the words on the left, the account in one app frame on the right. */
+.intro.hero { display: block; }
+.hero__text { max-width: 36rem; }
+.eyebrow { margin: 40px 0 16px; font-size: 0.9rem; font-weight: 600; color: var(--brand-ink); }
+.eyebrow::before { box-shadow: none; width: 7px; height: 7px; }
+h1 { font-size: clamp(2.3rem, 4.1vw, 3.5rem); line-height: 1.04; font-weight: 500; letter-spacing: -0.04em; margin: 0 0 20px; }
+.hero__lead { margin: 0 0 28px; font-size: 1.15rem; line-height: 1.55; color: var(--muted); max-width: 34rem; }
+.intro p.hero__lead { color: var(--muted); }
+.btn-row { display: flex; flex-wrap: wrap; gap: 12px; margin: 0 0 24px; }
+.btn { display: inline-flex; align-items: center; justify-content: center; min-height: 48px; padding: 0 26px; border-radius: 999px; border: 1px solid transparent; font-weight: 600; font-size: 1rem; text-decoration: none; cursor: pointer; transition: transform 0.16s var(--ease), background-color 0.16s, box-shadow 0.16s, border-color 0.16s; }
+.btn--primary { background: var(--brand-solid); color: #fff; }
+.btn--primary:hover, .btn--primary:focus-visible { background: color-mix(in srgb, var(--brand-solid) 86%, #fff); transform: translateY(-1px); box-shadow: 0 12px 24px -14px var(--brand-solid); }
+.btn--secondary { background: var(--surface); color: var(--ink); border-color: var(--line); }
+.btn--secondary:hover, .btn--secondary:focus-visible { border-color: var(--ink); transform: translateY(-1px); }
+.btn:active { transform: translateY(1px); box-shadow: none; }
+.hero .note { padding: 0; border: 0; background: none; font-size: 0.88rem; color: var(--muted); max-width: 32rem; border-radius: 0; }
+
+.hero__art { position: relative; margin-top: 40px; padding: clamp(16px, 3vw, 44px); border-radius: calc(var(--radius) + 10px); background: radial-gradient(70% 60% at 85% 0%, var(--ground-a), transparent 70%), var(--ground-b); --mo-light: color-mix(in oklab, var(--surface) 60%, transparent); }
+.appframe { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow-2); overflow: hidden; }
+.appframe__bar { display: flex; align-items: center; gap: 14px; padding: 12px 18px; border-bottom: 1px solid var(--line); background: var(--surface-2); font-size: 0.82rem; font-weight: 500; color: var(--muted); }
+.appframe__dots { display: inline-flex; gap: 6px; }
+.appframe__dots i { width: 10px; height: 10px; border-radius: 50%; background: var(--line); }
+.appframe__body { display: grid; gap: 0; }
+.appframe .summary { display: grid; grid-template-columns: minmax(96px, 0.34fr) minmax(0, 1fr); gap: 0 16px; margin: 0; padding: 8px 22px; border: 0; border-radius: 0; box-shadow: none; background: none; }
+.appframe .summary dt, .appframe .summary dd { margin: 0; padding: 12px 0; border-bottom: 1px solid var(--line); }
+.appframe .summary dt { font-size: 0.85rem; color: var(--muted); font-weight: 500; }
+.appframe .summary dd { font-family: var(--font-body); font-size: 0.98rem; line-height: 1.4; font-weight: 500; font-variant-numeric: tabular-nums; }
+.appframe .summary dd:last-of-type { border-bottom: 0; }
+.appframe .summary dd:last-of-type, .appframe .summary dt:nth-last-of-type(1) { border-bottom: 0; }
+.appframe .usage { padding: 18px 22px 22px; border-top: 1px solid var(--line); }
+.appframe .usage h2 { margin: 0 0 6px; font-size: 1rem; letter-spacing: -0.01em; }
+.appframe .usage > p { margin: 0 0 4px; font-size: 0.9rem; color: var(--muted); max-width: none; }
+.appframe .bars { height: 150px; margin-top: 12px; padding: 12px 6px 4px; border: 0; background: none; gap: 8px; border-radius: 0; }
+.appframe .bars .bar { width: 100%; border-radius: 8px 8px 3px 3px; background: linear-gradient(to top, var(--brand-solid), color-mix(in srgb, var(--brand-solid) 55%, var(--surface))); transition: filter 0.2s; }
+.appframe .bars > div { font-size: 0.74rem; padding-top: 6px; }
+@media (min-width: 960px) {
+  .intro.hero { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 6.4fr); column-gap: 56px; align-items: center; min-height: calc(100svh - 80px); }
+  .hero__art { margin-top: 0; }
+  .eyebrow { margin-top: 0; }
+}
+
+/* Entrance: the words settle in one after another, once. */
+@media (prefers-reduced-motion: no-preference) {
+  .intro > .hero__text { animation: none; }
+  .hero__text > * { animation: settle 0.7s var(--ease) both; }
+  .hero__text > :nth-child(2) { animation-delay: 0.07s; }
+  .hero__text > :nth-child(3) { animation-delay: 0.14s; }
+  .hero__text > :nth-child(4) { animation-delay: 0.21s; }
+  .hero__text > :nth-child(5) { animation-delay: 0.28s; }
+}
+
+/* Tariffs, forms and the rest: round, light, one blue. */
+.card { border-radius: var(--radius); padding: 24px; box-shadow: none; border-color: var(--line); }
+.card:hover { transform: translateY(-2px); border-color: color-mix(in srgb, var(--brand-solid) 50%, var(--line)); }
+.card.current { background: color-mix(in srgb, var(--brand-solid) 7%, var(--surface)); box-shadow: 0 0 0 1px var(--brand-solid); }
+.card .strong { font-family: var(--font-display); color: var(--ink); border-bottom-style: solid; }
+.card .rule { color: var(--brand-ink); }
+.bars:not(.appframe .bars) { border-radius: var(--radius); background-image: none; }
+.note { border: 0; border-radius: var(--radius-sm); background: var(--tint); }
+.result { border: 0; border-radius: var(--radius-sm); background: var(--tint); }
+section:not(.assistant) > form { border-radius: var(--radius); }
+section:not(.assistant) :is(input, select) { border-radius: var(--radius-sm); }
+section:not(.assistant) button:not([role="tab"]) { transition: transform 0.16s var(--ease), background-color 0.16s, box-shadow 0.16s; }
+section:not(.assistant) button:not([role="tab"]):hover { transform: translateY(-1px); }
+section:not(.assistant) button:not([role="tab"]):active { transform: translateY(1px); }
+#partner-list li { border-bottom-style: solid; }
+#partner-list a { text-decoration-color: transparent; text-underline-offset: 4px; transition: text-decoration-color 0.2s; }
+#partner-list a:hover, #partner-list a:focus-visible { text-decoration: underline; text-decoration-color: currentColor; }
+footer { max-width: 1320px; margin: 0 auto; padding: 40px 28px 56px; text-align: left; border-top: 0; }
+footer a { text-underline-offset: 3px; text-decoration-color: color-mix(in srgb, currentColor 40%, transparent); transition: text-decoration-color 0.2s; }
+footer a:hover, footer a:focus-visible { text-decoration-color: currentColor; }
+.assistant-note { border-left-color: var(--line); }
+#agent-app .ns-chat { border-radius: var(--radius); }
+@media (min-width: 761px) { #agent-app .ns-chat { border-radius: var(--radius); } }
+
+@media (prefers-reduced-motion: reduce) {
+  .btn, .card, header nav a, section button, #partner-list a { transition: none; }
+  .btn:hover, .card:hover, section button:hover { transform: none; }
+}
+@media (max-width: 760px) {
+  main { padding: 0 16px 28px; }
+  header { padding: 12px 16px; }
+  .hero__art { padding: 12px; border-radius: var(--radius); }
+  .appframe .summary { grid-template-columns: 1fr; padding: 4px 16px; }
+  .appframe .summary dt { padding: 10px 0 0; border-bottom: 0; }
+  .appframe .summary dd { padding: 2px 0 10px; }
+  .appframe .usage { padding: 14px 16px 18px; }
+  .btn { flex: 1 1 100%; }
+}
+
+/* The runtime sets its own primary from the manifest; the page's blue wins in both themes (white text on it passes 4.5:1). */
+#agent-app { --ns-font: var(--font-body); --ns-primary: var(--brand-solid) !important; --ns-accent: var(--brand-solid) !important; }
+.theme-switch[aria-checked="true"] .theme-knob { background: var(--brand-solid); }
+
+/* Round two: equal edges, a skip link, one rhythm between the first screen and the next. */
+.eyebrow::before { display: none; }
+.assistant-note { padding-left: 0; border-left: 0; }
+.intro.hero + section { margin-top: 0; }
+#agent-app .ns-send, #agent-app #ns-send { border-radius: 999px; }
+.skip-link { position: absolute; left: 16px; top: -64px; z-index: 10; padding: 10px 18px; border-radius: 999px; background: var(--brand-solid); color: #fff; font-weight: 600; text-decoration: none; transition: top 0.15s; }
+.skip-link:focus { top: 12px; }
+#partner-list { max-width: none; }
+#agent-app .ns-llmbadge { white-space: nowrap; }

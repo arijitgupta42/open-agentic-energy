@@ -33,16 +33,19 @@ test("11. A usage answer is drawn as stat tiles and a chart, with its numbers in
 
 test("14. Every site is dark until the visitor flips the switch, and keeps the choice", async ({ app, screen, browser }) => {
   for (const url of ["/", "http://localhost:8081/", "http://localhost:8082/"]) {
+    // Design variant C: the Emberwick page opens in the light theme (js/light-first.js); the others open dark.
+    const first = url === "/" ? "light" : "dark";
+    const other = first === "light" ? "dark" : "light";
     await app.open(url);
-    await expect(browser.locator('html[data-theme="dark"]')).toHaveCount(1);
+    await expect(browser.locator(`html[data-theme="${first}"]`)).toHaveCount(1);
     const toggle = screen.getByRole("switch", "Dark mode");
     await expect(toggle).toBeVisible();
     await toggle.tap();
-    await expect(browser.locator('html[data-theme="light"]')).toHaveCount(1);
+    await expect(browser.locator(`html[data-theme="${other}"]`)).toHaveCount(1);
     // The choice is kept for the next visit to the same site.
     await app.open(url);
-    await expect(browser.locator('html[data-theme="light"]')).toHaveCount(1);
+    await expect(browser.locator(`html[data-theme="${other}"]`)).toHaveCount(1);
     await screen.getByRole("switch", "Dark mode").tap();
-    await expect(browser.locator('html[data-theme="dark"]')).toHaveCount(1);
+    await expect(browser.locator(`html[data-theme="${first}"]`)).toHaveCount(1);
   }
 });

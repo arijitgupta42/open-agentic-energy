@@ -3,18 +3,25 @@
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content">
+    <meta name="page-type" content="software">
+    <meta name="site-kind" content="software">
     <meta name="description" content="Emberwick Energy demo account: see your usage, compare tariffs and switch. A fictional site for the Open Agentic Web Challenge.">
     <title>Emberwick Energy · Your account</title>
     <link rel="icon" href="favicon.svg" type="image/svg+xml">
     <link rel="stylesheet" href="styles.css">
     <link rel="stylesheet" href="design.css">
+    <link rel="stylesheet" href="assets/fonts/fonts.css">
+    <link rel="stylesheet" href="variant.css">
     <link rel="stylesheet" href="mobile.css" media="(max-width: 760px)">
     <script type="module" src="js/theme.js"></script>
+    <script type="module" src="js/light-first.js"></script>
     <script type="module" src="js/mobile.js"></script>
     <script type="module" src="js/app.js"></script>
     <script type="module" src="site.js"></script>
+    <script type="module" src="assets/moments/moments.js"></script>
   </head>
   <body>
+    <a class="skip-link" href="#welcome">Skip to the page</a>
     <header>
       <a class="brand" href="index.html">Emberwick <span>Energy</span></a>
       <nav aria-label="Main navigation">
@@ -26,29 +33,42 @@
       </nav>
     </header>
     <main data-m-label="Account">
-      <section class="intro" aria-labelledby="welcome">
-        <p class="eyebrow">Your account</p>
-        <h1 id="welcome">See what your energy costs, and whether another tariff would cost less.</h1>
-        <p id="demo-note" class="note">Demo site: Emberwick Energy, this household, its usage and every tariff are fictional.
-          A switch is kept in this page until you refresh it. Nothing is charged.</p>
-        <dl class="summary">
-          <dt>Account holder</dt>
-          <dd id="account-holder"></dd>
-          <dt>Account</dt>
-          <dd id="account-reference"></dd>
-          <dt>Property</dt>
-          <dd id="account-household"></dd>
-          <dt>Heat pump</dt>
-          <dd id="account-heat-pump"></dd>
-          <dt>Current tariff</dt>
-          <dd id="current-tariff-name"></dd>
-        </dl>
-      </section>
-
-      <section id="usage" aria-labelledby="usage-heading">
-        <h2 id="usage-heading">Your usage</h2>
-        <p id="usage-summary"></p>
-        <div id="usage-chart" class="bars" aria-hidden="true"></div>
+      <section class="intro hero" data-enter aria-labelledby="welcome">
+        <div class="hero__text">
+          <p class="eyebrow">Your account</p>
+          <h1 id="welcome">Your energy account, and every tariff priced for your home.</h1>
+          <p class="hero__lead">See your electricity and gas use month by month, check what each of the four tariffs would cost you over a year, and switch in a click. The assistant can do all of it in a chat.</p>
+          <p class="btn-row">
+            <a class="btn btn--primary" href="#assistant">Ask the assistant</a>
+            <a class="btn btn--secondary" href="#tariffs">Compare tariffs</a>
+          </p>
+          <p id="demo-note" class="note">Demo site: Emberwick Energy, this household, its usage and every tariff are fictional.
+            A switch is kept in this page until you refresh it. Nothing is charged.</p>
+        </div>
+        <div class="hero__art" data-moment="cursor-spotlight" data-moment-opts='{"rest": [0.78, 0.18], "radius": 520}'>
+          <div class="appframe" role="group" aria-label="Your account and usage">
+            <div class="appframe__bar" aria-hidden="true"><span class="appframe__dots"><i></i><i></i><i></i></span><span>Emberwick Energy · Your account</span></div>
+            <div class="appframe__body">
+              <dl class="summary">
+                <dt>Account holder</dt>
+                <dd id="account-holder"></dd>
+                <dt>Account</dt>
+                <dd id="account-reference"></dd>
+                <dt>Property</dt>
+                <dd id="account-household"></dd>
+                <dt>Heat pump</dt>
+                <dd id="account-heat-pump"></dd>
+                <dt>Current tariff</dt>
+                <dd id="current-tariff-name"></dd>
+              </dl>
+              <div id="usage" class="usage" role="group" aria-labelledby="usage-heading">
+                <h2 id="usage-heading">Your usage by month</h2>
+                <p id="usage-summary"></p>
+                <div id="usage-chart" class="bars" aria-hidden="true"></div>
+              </div>
+            </div>
+          </div>
+        </div>
       </section>
 
       <section id="tariffs" aria-labelledby="tariffs-heading">
