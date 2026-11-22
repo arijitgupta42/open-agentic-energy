@@ -258,8 +258,9 @@ body[data-view] header nav a { background: var(--surface-2); color: var(--ink); 
   html #agent-app .ns-inputwrap textarea { min-height: 82px; }
 }
 
-/* Phone: the question box shows its whole example, and the partner menu sits inside the chat above the tab bar. */
+/* Phone: the question box shows its example on one line, cut with an ellipsis, and the partner menu sits inside the chat above the tab bar. */
 @media (max-width: 760px) {
   html body[data-view] .partner-approval { min-height: 52px; box-sizing: border-box; padding-top: 6px; padding-bottom: 6px; }
-  html body[data-view] #agent-app textarea { min-height: 62px; }
+  html body[data-view] #agent-app textarea { min-height: 48px; }
+  html body[data-view] #agent-app textarea::placeholder { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 }
