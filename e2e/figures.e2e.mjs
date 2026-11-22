@@ -33,8 +33,8 @@ test("11. A usage answer is drawn as stat tiles and a chart, with its numbers in
 
 test("14. Every site is dark until the visitor flips the switch, and keeps the choice", async ({ app, screen, browser }) => {
   for (const url of ["/", "http://localhost:8081/", "http://localhost:8082/"]) {
-    // Design variant C: the Emberwick and Heatwright pages open in the light theme (js/light-first.js); the others open dark.
-    const first = url === "/" || url === "http://localhost:8081/" ? "light" : "dark";
+    // Design variant C: the Emberwick page opens in the light theme (js/light-first.js); the others open dark.
+    const first = url === "/" ? "light" : "dark";
     const other = first === "light" ? "dark" : "light";
     await app.open(url);
     await expect(browser.locator(`html[data-theme="${first}"]`)).toHaveCount(1);

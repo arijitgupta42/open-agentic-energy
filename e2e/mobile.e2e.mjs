@@ -61,7 +61,7 @@ test("15. On a phone every site opens on the chat, with the page, swarm and sett
     await expect(browser.locator("#assistant .assistant-note").first()).toBeVisible();
     // The site's switch is on every screen, and the page is in its first theme (design variant C: Emberwick opens light).
     await expect(browser.locator(".theme-switch")).toBeVisible();
-    await expect(browser.locator(`html[data-theme="${url === "/" || url === "http://localhost:8081/" ? "light" : "dark"}"]`)).toHaveCount(1);
+    await expect(browser.locator(`html[data-theme="${url === "/" ? "light" : "dark"}"]`)).toHaveCount(1);
   }
 });
 

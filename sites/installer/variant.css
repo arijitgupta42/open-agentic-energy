@@ -107,7 +107,8 @@ footer a:hover, footer a:focus-visible { text-decoration-color: currentColor; }
 #agent-app .ns-send, #agent-app #ns-send { border-radius: 999px; }
 #agent-app .ns-llmbadge { white-space: nowrap; }
 #agent-app { --ns-font: var(--font-body); }
-.intro.hero + section { margin-top: 0 !important; }
+.intro.hero + section { margin-top: 72px; }
+@media (min-width: 960px) { .intro.hero + section { margin-top: 0 !important; } }
 
 @media (prefers-reduced-motion: reduce) {
   .btn, .card, header nav a, section button, #partner-list a { transition: none; }
@@ -162,3 +163,30 @@ section:not(.assistant) button:not([role="tab"]) { min-height: 48px; padding: 0 
 header { max-width: 1264px; width: calc(100% - 56px); }
 #agent-app .ns-chat > .prompt-hint { color: var(--ink); opacity: 0.9; }
 @media (max-width: 760px) { header { max-width: none; width: auto; } }
+
+/* Anything that stays on the screen while the page moves is opaque, from the theme's own tokens, and sits above the
+   page and the app frame (the header on a phone, the tab bar, the chat sheet). Anchored sections stop below it. */
+html { scroll-padding-top: 96px; }
+body[data-view] header { background: var(--brand); box-shadow: 0 1px 0 var(--line), 0 8px 18px -12px rgba(0, 0, 0, 0.55); z-index: 60; }
+body[data-view] header nav a { background: color-mix(in srgb, var(--brand) 70%, #fff); }
+body[data-view] .m-tabs { background: var(--surface); z-index: 61; }
+body[data-view] header + main { scroll-margin-top: 112px; }
+@media (max-width: 760px) { html { scroll-padding-top: 118px; } }
+
+/* The audit: the estimate result as wide as its form, "Clear estimate" a secondary action, prices that read as
+   figures and stack under their name when the frame is narrow, and the theme switch that fits a small phone. */
+section:not(.assistant) > .result { max-width: none; }
+section:not(.assistant) > form { padding-bottom: 18px; }
+#estimate-clear, #estimate-clear:not([role="tab"]) { background: var(--surface); color: var(--ink); border: 1px solid var(--line); }
+section:not(.assistant) #estimate-clear:hover, section:not(.assistant) #estimate-clear:focus-visible { background: var(--surface); border-color: var(--ink); filter: none; }
+.appframe .card .strong { font-variant-numeric: normal; white-space: nowrap; }
+@media (max-width: 640px) {
+  .appframe .card { flex-direction: column; align-items: flex-start; gap: 2px; }
+  .appframe .card .strong { text-align: left; white-space: normal; }
+}
+.theme-switch { white-space: nowrap; }
+@media (max-width: 430px) {
+  body[data-view]:not([data-view="page"]) header .theme-switch > span:last-child { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+  body[data-view]:not([data-view="page"]) header .theme-switch { padding-right: 6px; }
+  body[data-view] header .brand { font-size: 1em; }
+}
