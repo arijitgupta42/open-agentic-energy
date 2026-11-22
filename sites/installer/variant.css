@@ -90,7 +90,7 @@ h1 { max-width: none; font-size: clamp(2.3rem, 4.1vw, 3.5rem); line-height: 1.04
 .card .strong { font-family: var(--font-display); }
 .note { border: 0; border-radius: var(--radius-sm); background: var(--tint); }
 .result { border: 0; border-radius: var(--radius-sm); background: var(--tint); }
-section:not(.assistant) > form { max-width: 580px; border: 1px solid var(--line); border-radius: var(--radius); padding: 26px 26px 22px; }
+section:not(.assistant) > form { max-width: none; border: 1px solid var(--line); border-radius: var(--radius); padding: 26px 26px 22px; }
 section:not(.assistant) label { font-weight: 600; }
 section:not(.assistant) :is(input, select) { border: 1px solid var(--line); border-radius: var(--radius-sm); background: var(--surface); }
 section:not(.assistant) button:not([role="tab"]) { border-radius: 999px; padding: 12px 26px; font-family: var(--font-body); font-weight: 600; transition: transform 0.16s var(--ease), background-color 0.16s, box-shadow 0.16s; }
@@ -189,4 +189,23 @@ section:not(.assistant) #estimate-clear:hover, section:not(.assistant) #estimate
   body[data-view]:not([data-view="page"]) header .theme-switch > span:last-child { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
   body[data-view]:not([data-view="page"]) header .theme-switch { padding-right: 6px; }
   body[data-view] header .brand { font-size: 1em; }
+}
+
+/* UI/UX audit: on a phone every control is at least 44px tall, the section chips included, and links in running text
+   have room around them. Page CSS only; the runtime's own markup is untouched. */
+@media (max-width: 760px) {
+  body[data-view] header .brand { display: inline-flex; align-items: center; min-height: 44px; }
+  body[data-view="page"] header nav a { display: inline-flex; align-items: center; min-height: 44px; }
+  .m-chats, #ns-devtoggle, #voice-button, #ns-apply, #ns-save-profile, #ns-delete-profile,
+  #agent-app summary { min-height: 44px; }
+  #voice-button { min-width: 44px; }
+  #agent-app summary { display: flex; align-items: center; }
+  #partner-list a { display: flex; align-items: center; min-height: 44px; }
+  .appframe__more .link, footer a { display: inline-flex; align-items: center; min-height: 44px; }
+  #agent-app a[href] { display: inline-flex; align-items: center; min-height: 44px; }
+  html { scroll-padding-top: 134px; }
+}
+@media (max-width: 760px) {
+  html body[data-view="ask"] .m-toolbar .m-chats, html body[data-view] #agent-app .ns-devtoggle,
+  html body[data-view] #agent-app .ns-devtoggle { min-height: 44px; }
 }
