@@ -201,3 +201,39 @@ section:not(.assistant) button:disabled { opacity: 0.55; cursor: not-allowed; tr
 .appframe .summary dd { overflow-wrap: anywhere; }
 @media (max-width: 760px) { .appframe .summary { grid-template-columns: minmax(0, 1fr); } }
 @media (min-width: 960px) { .intro.hero { grid-template-columns: minmax(0, 5fr) minmax(0, 6.4fr); } }
+
+/* ---- UX audit (ui-ux-pro-max): thumb-sized targets, even tab bar. ---- */
+html body .btn, html body #tariff-list button, html body #switch-form button, html body .ns-send { min-height: 44px; }
+footer a { display: inline-block; padding: 12px 4px; }
+@media (max-width: 760px) {
+  body[data-view] .m-tabs .m-tab { width: 100%; justify-self: stretch; }
+  html body[data-view] header .brand { min-height: 44px; display: inline-flex; align-items: center; }
+  html body[data-view] header nav a { min-height: 44px; display: inline-flex; align-items: center; }
+  html body[data-view="ask"] .m-toolbar .m-chats { min-height: 44px; }
+  html body .ns-devtoggle, html body .voice-button, html body .ns-send, html body #ns-apply,
+  html body #ns-save-profile, html body #ns-delete-profile, html body #agent-app select,
+  html body #agent-app summary { min-height: 44px !important; }
+  html body .voice-button { min-width: 44px; }
+  html body .prompt-hint { display: none; }
+  #partner-list a { display: block; padding: 8px 0; min-height: 44px; }
+  .ns-key-help a { display: inline-block; padding: 13px 0; }
+}
+/* The chat row sits in the same column as the rest of the page. design.css lets it spill past a 1040px column;
+   in this 1320px column that put the chats list 60px from the screen edge. */
+@media (min-width: 761px) {
+  html body .assistant-panels { margin-inline: 0; }
+  html body #agent-app > [data-ns-slot="settings"] { margin-inline: var(--row-left) var(--row-right); }
+  html body #agent-app > [data-ns-slot="agents"] { margin-inline: 0; }
+}
+@media (max-width: 760px) {
+  html body[data-view="settings"]:not([data-view="page"]) #assistant { padding: 12px 16px 24px; }
+}
+/* Form fields and secondary buttons need a 3:1 edge (WCAG 1.4.11); card edges stay quiet. */
+:root { --field-line: #8a7a6c; }
+html body :is(section, #agent-app) :is(input:not([type="checkbox"]):not([type="radio"]), select, textarea),
+html body .lab-tabs button:not([aria-selected="true"]), html body .btn--secondary { border-color: var(--field-line); }
+/* Settings screen on a phone: tighter notes so the form starts inside the first screen. */
+@media (max-width: 760px) {
+  html body[data-view="settings"]:not([data-view="page"]) #assistant { padding: 12px 14px 24px; }
+  html body[data-view="settings"] #assistant > p:not(#assistant-status) { font-size: 0.88em; line-height: 1.45; margin: 0 0 0.6em; }
+}

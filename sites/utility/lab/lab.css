@@ -12,3 +12,11 @@
 .lab-result .stop { font-weight: 600; }
 .lab-result code { overflow-wrap: anywhere; }
 :root[data-theme="dark"] { --notice-bg: #2a2410; }
+
+/* Same look as the account page: variant.css gives the tokens; these keep the controls a thumb tall. */
+.notice { border-radius: var(--radius-sm); border-color: color-mix(in oklab, #f59e0b 70%, var(--line)); }
+.lab-tabs button { min-height: 44px; border-radius: 999px; padding: 0 18px; }
+.lab-case { border-radius: var(--radius); background: var(--surface); }
+.lab-result { border-radius: var(--radius-sm); }
+header .brand, header nav a, .theme-switch { min-height: 44px; display: inline-flex; align-items: center; }
+footer a { display: inline-block; padding: 12px 4px; }
