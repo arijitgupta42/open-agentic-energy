@@ -139,7 +139,7 @@ knows as a network of agents, and lets another site run that network on request.
 
 ## Compliance with the hackathon rules
 
-**Last checked: 22 November 2026**, on `production` after `fix/scroll-hidden-status` (chat scroll), `fix/phone-question-box` (phone question box), `fix/phone-settings-scroll` (phone Settings scroll, tab bar), following the C-style redesign of all three sites, against the
+**Last checked: 22 November 2026**, on `production` after `fix/chat-hold-last-message` (chat scroll), `fix/scroll-hidden-status`, `fix/phone-question-box` (phone question box), `fix/phone-settings-scroll` (phone Settings scroll, tab bar), following the C-style redesign of all three sites, against the
 [official rules](https://cognizant-agenticweb.devpost.com/rules) and
 [updates](https://cognizant-agenticweb.devpost.com/updates) as read that day, and the
 specification as it stood when the submission period opened.
@@ -289,8 +289,7 @@ all run, with no key:
     card is one width on every site, and a declined one reads in red.
 20. A form the assistant draws in the chat is dropdowns only, with no field for a
     personal detail: the visitor is a signed-in demo customer, so the account holds them.
-21. A long answer stays at its first line instead of scrolling to its end, until the
-    visitor scrolls; a message sent while an answer streams stays in view.
+21. While a long answer is written, the chat stays on the visitor's latest message instead    of scrolling to the answer's end, until the visitor scrolls; a message sent while an    answer streams is held the same way.
 
 ## Known limits
 
