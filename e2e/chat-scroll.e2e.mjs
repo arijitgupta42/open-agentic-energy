@@ -57,6 +57,18 @@ test("21. A long answer stays at its first line, until the visitor scrolls", asy
   });
   await browser.evaluate(() => new Promise((resolve) => setTimeout(resolve, 200)));
   expect((await measure(browser)).atBottom).toBe(true);
+  // The runtime adds a "Working…" status line after a message and the sites hide it. It is
+  // never the answer to hold: the chat must stay on the message, not jump to its top.
+  await browser.evaluate(() => {
+    const msgs = document.querySelector("#agent-app #ns-msgs");
+    const status = document.createElement("div");
+    status.className = "ns-msg bot ns-turn-status";
+    status.textContent = "Working…";
+    msgs.append(status);
+    msgs.scrollTop = msgs.scrollHeight;
+  });
+  await browser.evaluate(() => new Promise((resolve) => setTimeout(resolve, 300)));
+  expect((await measure(browser)).atBottom).toBe(true);
   // The visitor scrolls down to read on: the chat follows them and is not pulled back.
   await browser.locator("#agent-app #ns-msgs").hover();
   await browser.mouse.wheel(0, 5000);
