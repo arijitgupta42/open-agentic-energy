@@ -1,23 +1,24 @@
-// Keeps the start of a long answer in view.
+// Keeps the visitor's latest message in view while it is answered.
 //
 // The runtime scrolls the chat to the bottom whenever it adds something (the answer, a
 // form, a status line), and the live answer view (js/live-chat.js) follows the newest
 // line while the answer is written. For an answer taller than the chat, that leaves the
-// visitor at its end, scrolling back up every time. This holds the chat so the answer's
-// first line never goes above the top: the chat follows a new answer down until its
-// start reaches the top, then stays there. A short answer that fits is not touched.
+// visitor at its end, with their own question out of sight. This holds the chat so the
+// visitor's latest message stays at the top: the chat follows the answer down until that
+// message reaches the top, then stays there while the answer is written. A short answer
+// that fits is not touched.
 //
-// It only ever holds an answer that appeared after the visitor's latest message, so a
-// message sent while an answer streams (or any new message) is never pulled back up
-// from. It only scrolls up, never down, and it stops as soon as the visitor scrolls or
-// presses a key in the chat themselves, until their next message. It reads no text and
-// changes nothing but the chat's scroll position. It is the same on all three sites.
+// The message to hold is always the visitor's latest one, also one sent while an answer
+// streams, so a new message is never pulled back from. It only scrolls up, never down,
+// and it stops as soon as the visitor scrolls or presses a key in the chat themselves,
+// until their next message. It reads no text and changes nothing but the chat's scroll
+// position. It is the same on all three sites.
 
 /**
- * Holds the chat at the start of the newest answer.
+ * Holds the chat at the visitor's latest message.
  */
 export class ChatScroll {
-  /** Space left above the answer's first line, in pixels. */
+  /** Space left above the message, in pixels. */
   static GAP = 8;
 
   /** Keys that scroll a list, so pressing one means the visitor is moving it. */
@@ -48,7 +49,7 @@ export class ChatScroll {
     this.msgs = msgs;
     this.view = view;
     this.moved = false;
-    // The answer to hold: the first one added after the visitor's latest message.
+    // The message to hold: the visitor's latest.
     this.anchor = null;
     const settle = () => view.requestAnimationFrame(() => this.hold());
     new view.MutationObserver((records) => {
@@ -77,9 +78,8 @@ export class ChatScroll {
 
   /**
    * Note an element added to the chat. A message from the visitor, also one sent while an
-   * answer streams, lets go of the answer above it: what comes after it is new. The first
-   * answer added after it is the one to hold. The final answer replaces the streamed one,
-   * so an answer that has left the chat is replaced by the next one added.
+   * answer streams, becomes the message to hold, and the chat is the visitor's again until
+   * they scroll.
    *
    * :param node: The added node.
    */
@@ -88,41 +88,33 @@ export class ChatScroll {
       return;
     }
     if (node.matches(".ns-msg.user")) {
-      this.anchor = null;
-      this.moved = false;
-      return;
-    }
-    // The turn status line ("Working…") is a bot message too, but the sites hide it, and a
-    // hidden element has no place in the chat to hold: it is never the answer.
-    if (node.matches(".ns-msg.bot:not(.ns-consent):not(.ns-auto-approved):not(.ns-turn-status), .ns-widget")
-      && (!this.anchor || !this.anchor.isConnected || (this.anchor.matches(".ns-live") && !node.matches(".ns-live")))) {
       this.anchor = node;
+      this.moved = false;
     }
   }
 
   /**
-   * The answer to hold: the first one added after the visitor's latest message, while it
-   * is still in the chat.
+   * The message to hold: the visitor's latest, while it is in the chat and drawn. A hidden
+   * element has no position, so holding it would scroll the chat to its top.
    *
    * :return: The element, or null.
    */
-  answer() {
+  message() {
     const anchor = this.anchor;
-    // Not drawn (display: none) means no position: holding it would scroll the chat to its top.
     return anchor?.isConnected && anchor.getClientRects().length ? anchor : null;
   }
 
   /**
-   * Scroll up, if needed, so the newest answer's first line is at the top of the chat.
+   * Scroll up, if needed, so the visitor's latest message is at the top of the chat.
    *
    * :return: True when it moved the chat.
    */
   hold() {
-    const answer = this.moved ? null : this.answer();
-    if (!answer) {
+    const message = this.moved ? null : this.message();
+    if (!message) {
       return false;
     }
-    const top = answer.getBoundingClientRect().top - this.msgs.getBoundingClientRect().top + this.msgs.scrollTop - ChatScroll.GAP;
+    const top = message.getBoundingClientRect().top - this.msgs.getBoundingClientRect().top + this.msgs.scrollTop - ChatScroll.GAP;
     if (this.msgs.scrollTop <= top + 1) {
       return false;
     }
