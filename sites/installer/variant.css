@@ -1,0 +1,164 @@
+/* Heatwright Home Energy in the style of the Emberwick page (design variant C): software kind, light first and calm.
+   Loaded after design.css, so it replaces that file's spec-sheet character on this page only. The colours stay
+   Heatwright's own (design.css: the greens, light and dark); the logo is unchanged. The dealt look: pairing
+   Schibsted Grotesk (self-hosted, assets/fonts), round corners, pill buttons, the fitted-systems price list in one app
+   frame on a lit ground, moment cursor-spotlight. No photographs, no effects, nothing tied to scrolling. */
+:root {
+  --font-display: "Schibsted Grotesk", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-body: "Schibsted Grotesk", system-ui, -apple-system, "Segoe UI Variable Text", "Segoe UI", Roboto, sans-serif;
+  --display-weight: 500;
+  --display-tracking: -0.035em;
+  --radius: 22px;
+  --radius-sm: 14px;
+  --shadow-2: 0 28px 56px -34px rgba(8, 40, 24, 0.5);
+  --ground-a: color-mix(in oklab, var(--brand-ink) 22%, var(--paper));
+  --ground-b: color-mix(in oklab, var(--brand-ink) 6%, var(--paper));
+}
+:root[data-theme="dark"] {
+  --shadow-2: 0 30px 60px -34px #000;
+  --ground-a: color-mix(in oklab, var(--brand-solid) 40%, var(--paper));
+  --ground-b: color-mix(in oklab, var(--brand-solid) 10%, var(--paper));
+}
+body { font-family: var(--font-body); background: var(--paper); }
+main { max-width: 1320px; padding: 0 28px 64px; }
+main > section { margin-top: 112px; }
+main > section.intro { margin-top: 0; }
+h2 { display: block; font-size: clamp(1.7rem, 2.6vw, 2.2rem); line-height: 1.1; letter-spacing: -0.03em; font-weight: 500; }
+h2::before, main section > h2::after { display: none; }
+h3 { font-weight: 600; letter-spacing: -0.02em; }
+
+/* Header: the logo lockup unchanged, on its own green pill; quiet links, no rule. */
+header { max-width: 1320px; width: calc(100% - 32px); margin: 16px auto 0; padding: 10px 12px 10px 22px; border-bottom: 0; border-radius: 999px; }
+header nav a { padding: 8px 14px; border-bottom: 0; border-radius: 999px; font-weight: 500; transition: background-color 0.18s; }
+header nav a:hover, header nav a:focus-visible { background: rgba(255, 255, 255, 0.16); }
+header nav { gap: 2px; }
+.theme-switch { font-weight: 500; }
+.brand::before { box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.55); }
+
+/* The first screen: the words on the left, the price list in one app frame on the right. */
+body { background: var(--paper); }
+.intro { padding-bottom: 0; overflow-x: visible; }
+.intro::after { display: none; }
+.intro.hero { display: block; }
+.hero__text { max-width: 36rem; }
+.eyebrow { display: block; margin: 40px 0 16px; padding: 0; border: 0; background: none; font-size: 0.9rem; font-weight: 600; letter-spacing: 0; color: var(--brand-ink); }
+h1 { max-width: none; font-size: clamp(2.3rem, 4.1vw, 3.5rem); line-height: 1.04; font-weight: 500; letter-spacing: -0.04em; margin: 0 0 20px; }
+.hero__lead { margin: 0 0 28px; font-size: 1.15rem; line-height: 1.55; max-width: 34rem; }
+.intro p.hero__lead { color: var(--muted); }
+.btn-row { display: flex; flex-wrap: wrap; gap: 12px; margin: 0 0 24px; max-width: none; }
+.btn { display: inline-flex; align-items: center; justify-content: center; min-height: 48px; padding: 0 26px; border-radius: 999px; border: 1px solid transparent; font-weight: 600; font-size: 1rem; text-decoration: none; cursor: pointer; transition: transform 0.16s var(--ease), background-color 0.16s, box-shadow 0.16s, border-color 0.16s; }
+.btn--primary { background: var(--btn-bg); color: var(--btn-fg); }
+.btn--primary:hover, .btn--primary:focus-visible { background: color-mix(in srgb, var(--btn-bg) 84%, var(--ink)); transform: translateY(-1px); box-shadow: 0 12px 24px -14px var(--btn-bg); }
+.btn--secondary { background: var(--surface); color: var(--ink); border-color: var(--line); }
+.btn--secondary:hover, .btn--secondary:focus-visible { border-color: var(--ink); transform: translateY(-1px); }
+.btn:active { transform: translateY(1px); box-shadow: none; }
+.hero .note { padding: 0; border: 0; background: none; font-size: 0.88rem; color: var(--muted); max-width: 32rem; border-radius: 0; }
+
+.hero__art { position: relative; margin-top: 40px; padding: clamp(16px, 3vw, 44px); border-radius: calc(var(--radius) + 10px); background: radial-gradient(70% 60% at 85% 0%, var(--ground-a), transparent 70%), var(--ground-b); --mo-light: color-mix(in oklab, var(--surface) 60%, transparent); }
+.appframe { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow-2); overflow: hidden; }
+.appframe__bar { display: flex; align-items: center; gap: 14px; padding: 12px 18px; border-bottom: 1px solid var(--line); background: var(--surface-2); font-size: 0.82rem; font-weight: 500; color: var(--muted); }
+.appframe__dots { display: inline-flex; gap: 6px; }
+.appframe__dots i { width: 10px; height: 10px; border-radius: 50%; background: var(--line); }
+.appframe__body { padding: 18px 22px 22px; }
+.appframe__body h2 { margin: 0 0 8px; font-size: 1rem; letter-spacing: -0.01em; font-weight: 600; }
+.appframe .card-list { display: grid; grid-template-columns: 1fr; gap: 0; }
+.appframe .card { display: flex; flex-direction: row; align-items: baseline; justify-content: space-between; gap: 16px; padding: 14px 0; border: 0; border-bottom: 1px solid var(--line); border-radius: 0; background: none; box-shadow: none; transform: none; }
+.appframe .card.current { background: none; box-shadow: none; border-bottom-color: var(--brand-ink); }
+.appframe .card h3 { margin: 0; font-size: 1rem; font-weight: 500; line-height: 1.3; }
+.appframe .card .strong { margin: 0; padding: 0; border: 0; text-align: right; font-size: 0.98rem; font-weight: 600; color: var(--brand-ink); font-variant-numeric: tabular-nums; }
+.appframe #product-notes { margin: 12px 0 0; padding-left: 20px; font-size: 0.88rem; color: var(--muted); }
+@media (min-width: 960px) {
+  .intro.hero { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 6.4fr); column-gap: 56px; align-items: center; min-height: calc(100svh - 96px); }
+  .hero__art { margin-top: 0; }
+  .eyebrow { margin-top: 0; }
+}
+
+/* Entrance: the words settle in one after another, once. */
+@media (prefers-reduced-motion: no-preference) {
+  .intro > * { animation: none; }
+  .hero__text > * { animation: settle 0.7s var(--ease) both; }
+  .hero__text > :nth-child(2) { animation-delay: 0.07s; }
+  .hero__text > :nth-child(3) { animation-delay: 0.14s; }
+  .hero__text > :nth-child(4) { animation-delay: 0.21s; }
+  .hero__text > :nth-child(5) { animation-delay: 0.28s; }
+}
+
+/* Cards, forms and the rest: round and light, in Heatwright's greens. */
+.card { padding: 24px; border-radius: var(--radius); box-shadow: none; }
+.card::before, .card::after { display: none; }
+.card:hover { transform: translateY(-2px); border-color: color-mix(in srgb, var(--brand-ink) 50%, var(--line)); }
+.card .strong { font-family: var(--font-display); }
+.note { border: 0; border-radius: var(--radius-sm); background: var(--tint); }
+.result { border: 0; border-radius: var(--radius-sm); background: var(--tint); }
+section:not(.assistant) > form { max-width: 580px; border: 1px solid var(--line); border-radius: var(--radius); padding: 26px 26px 22px; }
+section:not(.assistant) label { font-weight: 600; }
+section:not(.assistant) :is(input, select) { border: 1px solid var(--line); border-radius: var(--radius-sm); background: var(--surface); }
+section:not(.assistant) button:not([role="tab"]) { border-radius: 999px; padding: 12px 26px; font-family: var(--font-body); font-weight: 600; transition: transform 0.16s var(--ease), background-color 0.16s, box-shadow 0.16s; }
+section:not(.assistant) button:not([role="tab"]):hover { transform: translateY(-1px); }
+section:not(.assistant) button:not([role="tab"]):active { transform: translateY(1px); }
+#partner-list { max-width: none; }
+#partner-list a { font-family: var(--font-body); font-weight: 600; text-decoration-color: transparent; text-underline-offset: 4px; transition: text-decoration-color 0.2s; }
+#partner-list a:hover, #partner-list a:focus-visible { text-decoration: underline; text-decoration-color: currentColor; }
+footer { max-width: 1320px; margin: 0 auto; padding: 40px 28px 56px; text-align: left; border-top: 0; }
+footer a { text-underline-offset: 3px; text-decoration-color: color-mix(in srgb, currentColor 40%, transparent); transition: text-decoration-color 0.2s; }
+footer a:hover, footer a:focus-visible { text-decoration-color: currentColor; }
+.assistant-note { padding-left: 0; border-left: 0; }
+#agent-app .ns-chat { border-radius: var(--radius); }
+#agent-app .ns-send, #agent-app #ns-send { border-radius: 999px; }
+#agent-app .ns-llmbadge { white-space: nowrap; }
+#agent-app { --ns-font: var(--font-body); }
+.intro.hero + section { margin-top: 0 !important; }
+
+@media (prefers-reduced-motion: reduce) {
+  .btn, .card, header nav a, section button, #partner-list a { transition: none; }
+  .btn:hover, .card:hover, section button:hover { transform: none; }
+}
+@media (max-width: 760px) {
+  main { padding: 0 16px 28px; }
+  header { width: auto; margin: 0; border-radius: 0; padding: 4px 14px; }
+  .hero__art { padding: 12px; border-radius: var(--radius); }
+  .appframe__body { padding: 14px 16px 18px; }
+  .btn { flex: 1 1 100%; }
+}
+
+/* A skip link, like the Emberwick page's. */
+.skip-link { position: absolute; left: 16px; top: -64px; z-index: 40; padding: 10px 18px; border-radius: 999px; background: var(--btn-bg); color: var(--btn-fg); font-weight: 600; text-decoration: none; transition: top 0.15s; }
+.skip-link:focus { top: 12px; }
+
+/* The page is now as wide as the chat row (1320px), so the chat, its list, the swarm, the settings and the developer
+   log sit on the page's own edges instead of reaching out past them as they did on a 1040px page. */
+.assistant-panels { margin-inline: 0; }
+@media (min-width: 761px) {
+  #agent-app > [data-ns-slot="settings"] { margin-inline: var(--row-left) var(--row-right); }
+  #agent-app > [data-ns-slot="agents"] { margin-inline: 0; }
+}
+.appframe .card { padding-block: 18px; }
+
+/* Round one of the checker: the first screen is one screen, each page section is one screen with its words on the
+   left and its form on the right, body text is in the ink, and the focus ring on the green header is white. */
+:root { --hdr: 76px; }
+.intro.hero { min-height: calc(100svh - var(--hdr)); }
+.appframe__more { margin: 14px 0 0; }
+.appframe__more a { font-weight: 600; text-underline-offset: 4px; }
+.intro.hero .hero__text p.hero__lead, #survey-customer, #partner-list span { color: var(--ink); }
+header :focus-visible { outline-color: #fff; }
+section:not(.assistant) button:not([role="tab"]) { min-height: 48px; padding: 0 26px; }
+#agent-app .ns-send, #agent-app #ns-send { min-height: 48px; }
+@media (min-width: 960px) {
+  main > #estimate, main > #survey, main > #grants { margin-top: 112px; align-content: center; display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 6.4fr); column-gap: 56px; align-items: start; }
+  main > #estimate > h2, main > #survey > h2, main > #grants > h2 { grid-column: 1; grid-row: 1; margin: 0; }
+  main > #survey > p, main > #grants > p { grid-column: 1; grid-row: 2; margin: 12px 0 0; }
+  main > #estimate > form, main > #survey > form { grid-column: 2; grid-row: 1 / span 6; max-width: none; margin: 0; }
+  main > #estimate > .result, main > #survey > .result { grid-column: 2; grid-row: 7; margin: 16px 0 0; }
+  main > #estimate > #estimate-clear { grid-column: 2; grid-row: 8; margin: 12px 0 0; }
+  main > #grants > #partner-list { grid-column: 2; grid-row: 1 / span 6; margin: 0; }
+}
+@media (max-width: 959px) { main > section:not(.intro):not(.assistant) { margin-top: 64px; } }
+
+/* Round two: padding where each section meets the next, and the chat's suggestion line readable in the light theme
+   (the site's button rule made it white). */
+@media (min-width: 960px) { main > #estimate, main > #survey, main > #grants { padding-block: 32px; margin-top: 96px; } }
+.prompt-hint { color: var(--muted); }
+header { max-width: 1264px; width: calc(100% - 56px); }
+#agent-app .ns-chat > .prompt-hint { color: var(--ink); opacity: 0.9; }
+@media (max-width: 760px) { header { max-width: none; width: auto; } }
