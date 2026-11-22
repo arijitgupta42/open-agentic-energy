@@ -3,18 +3,26 @@
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content">
+    <meta name="theme-color" content="#0d3a25">
+    <meta name="page-type" content="software">
+    <meta name="site-kind" content="software">
     <meta name="description" content="Heatwright Home Energy demo: estimate a heat pump or solar panels for your home and request a survey. A fictional site for the Open Agentic Web Challenge.">
     <title>Heatwright Home Energy · Heat pumps and solar</title>
     <link rel="icon" href="favicon.svg" type="image/svg+xml">
     <link rel="stylesheet" href="styles.css">
     <link rel="stylesheet" href="design.css">
+    <link rel="stylesheet" href="assets/fonts/fonts.css">
+    <link rel="stylesheet" href="variant.css">
     <link rel="stylesheet" href="mobile.css" media="(max-width: 760px)">
     <script type="module" src="js/theme.js"></script>
+    <script type="module" src="js/theme-color.js"></script>
     <script type="module" src="js/mobile.js"></script>
     <script type="module" src="js/app.js"></script>
     <script type="module" src="site.js"></script>
+    <script type="module" src="assets/moments/moments.js"></script>
   </head>
   <body>
+    <a class="skip-link" href="#welcome">Skip to the page</a>
     <header>
       <a class="brand" href="index.html">Heatwright <span>Home Energy</span></a>
       <nav aria-label="Main navigation">
@@ -26,18 +34,30 @@
       </nav>
     </header>
     <main data-m-label="Estimate">
-      <section class="intro" aria-labelledby="welcome">
-        <p class="eyebrow">Heat pumps and solar panels</p>
-        <h1 id="welcome">A price for a heat pump or solar panels on your home, before anyone visits.</h1>
-        <p id="demo-note" class="note">Demo site: Heatwright Home Energy, its products and its prices are fictional.
-          A survey request is kept in this page until you refresh it. Nobody will visit.</p>
-      </section>
-
-      <section id="products" aria-labelledby="products-heading">
-        <h2 id="products-heading">What we fit</h2>
-        <div id="product-list" class="card-list"></div>
-        <ul id="product-notes"></ul>
-        <noscript><p>Please turn on JavaScript to get an estimate and request a survey.</p></noscript>
+      <section class="intro hero" data-enter aria-labelledby="welcome">
+        <div class="hero__text">
+          <p class="eyebrow">Heat pumps and solar panels</p>
+          <h1 id="welcome">A price for a heat pump or solar panels on your home, before anyone visits.</h1>
+          <p class="hero__lead">Pick a heat pump or solar panels, tell us your type of home and its floor area, and see a fitted price range at once. Then ask for a free survey. The assistant can do all of it in a chat.</p>
+          <p class="btn-row">
+            <a class="btn btn--primary" href="#survey">Request a survey</a>
+            <a class="btn btn--secondary" href="#estimate">Get a heat pump estimate</a>
+          </p>
+          <p id="demo-note" class="note">Demo site: Heatwright Home Energy, its products and its prices are fictional.
+            A survey request is kept in this page until you refresh it. Nobody will visit.</p>
+        </div>
+        <div class="hero__art" data-moment="cursor-spotlight" data-moment-opts='{"rest": [0.78, 0.18], "radius": 520}'>
+          <div class="appframe" role="group" aria-label="What we fit, with prices">
+            <div class="appframe__bar" aria-hidden="true"><span class="appframe__dots"><i></i><i></i><i></i></span><span>Heatwright Home Energy · What we fit</span></div>
+            <div id="products" class="appframe__body" role="group" aria-labelledby="products-heading">
+              <h2 id="products-heading">What we fit</h2>
+              <div id="product-list" class="card-list"></div>
+              <ul id="product-notes"></ul>
+              <noscript><p>Please turn on JavaScript to get an estimate and request a survey.</p></noscript>
+              <p class="appframe__more"><a class="link" href="#estimate">Work out a price for your home</a></p>
+            </div>
+          </div>
+        </div>
       </section>
 
       <section id="estimate" aria-labelledby="estimate-heading">
