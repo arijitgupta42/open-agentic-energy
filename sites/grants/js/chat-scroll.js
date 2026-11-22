@@ -92,8 +92,10 @@ export class ChatScroll {
       this.moved = false;
       return;
     }
-    if (node.matches(".ns-msg.bot:not(.ns-consent):not(.ns-auto-approved), .ns-widget")
-      && (!this.anchor || !this.anchor.isConnected)) {
+    // The turn status line ("Working…") is a bot message too, but the sites hide it, and a
+    // hidden element has no place in the chat to hold: it is never the answer.
+    if (node.matches(".ns-msg.bot:not(.ns-consent):not(.ns-auto-approved):not(.ns-turn-status), .ns-widget")
+      && (!this.anchor || !this.anchor.isConnected || (this.anchor.matches(".ns-live") && !node.matches(".ns-live")))) {
       this.anchor = node;
     }
   }
@@ -105,7 +107,9 @@ export class ChatScroll {
    * :return: The element, or null.
    */
   answer() {
-    return this.anchor?.isConnected ? this.anchor : null;
+    const anchor = this.anchor;
+    // Not drawn (display: none) means no position: holding it would scroll the chat to its top.
+    return anchor?.isConnected && anchor.getClientRects().length ? anchor : null;
   }
 
   /**
