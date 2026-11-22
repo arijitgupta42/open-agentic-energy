@@ -139,7 +139,7 @@ knows as a network of agents, and lets another site run that network on request.
 
 ## Compliance with the hackathon rules
 
-**Last checked: 22 November 2026**, on `production` after the C-style redesign of all three sites (`claude/ember-var-c-697372`, `claude/c-style-installer-1e904d`, `claude/c-style-grants-c1897a`), against the
+**Last checked: 22 November 2026**, on `production` after `fix/phone-settings-scroll` (phone Settings scroll, tab bar, question box), following the C-style redesign of all three sites, against the
 [official rules](https://cognizant-agenticweb.devpost.com/rules) and
 [updates](https://cognizant-agenticweb.devpost.com/updates) as read that day, and the
 specification as it stood when the submission period opened.
