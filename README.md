@@ -139,7 +139,7 @@ knows as a network of agents, and lets another site run that network on request.
 
 ## Compliance with the hackathon rules
 
-**Last checked: 22 November 2026**, on `production` after `fix/chat-hold-last-message` (chat scroll), `fix/scroll-hidden-status`, `fix/phone-question-box` (phone question box), `fix/phone-settings-scroll` (phone Settings scroll, tab bar), following the C-style redesign of all three sites, against the
+**Last checked: 22 November 2026**, on `production` after `feat/fluted-glass-ground` (a fluted-glass page ground and heavier text on all three sites, no box behind the hero panel; no row affected), `fix/chat-hold-last-message` (chat scroll), `fix/scroll-hidden-status`, `fix/phone-question-box` (phone question box), `fix/phone-settings-scroll` (phone Settings scroll, tab bar), following the C-style redesign of all three sites, against the
 [official rules](https://cognizant-agenticweb.devpost.com/rules) and
 [updates](https://cognizant-agenticweb.devpost.com/updates) as read that day, and the
 specification as it stood when the submission period opened.
@@ -156,7 +156,7 @@ How it was checked:
 - `npm run conformance:live -- --env production`: 72 checks on the hosted sites (CORS,
   manifests, networks, bridge, each page's Content-Security-Policy), all passing.
 - `check_partner.mjs` on all five cross-site calls from their real callers, all passing.
-- `npm test` (319 tests) and `npm run test:e2e` (21 browser workflows), all passing. Four
+- `npm test` (323 tests) and `npm run test:e2e` (21 browser workflows), all passing. Four
   of the workflows also fail on any Content-Security-Policy violation, and check that a
   policy is in force.
 - The browser checks with a live key, recorded on issues #4 to #8, all closed.
