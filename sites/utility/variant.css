@@ -144,3 +144,60 @@ footer a:hover, footer a:focus-visible { text-decoration-color: currentColor; }
 .skip-link:focus { top: 12px; }
 #partner-list { max-width: none; }
 #agent-app .ns-llmbadge { white-space: nowrap; }
+
+/* The phone's sticky top bar and everything sticky: a solid, opaque ground from the theme, above all content
+   (the app frame, cards, the chat), with a rule under it. mobile.css loads after this file, so the selectors are one step stronger. */
+html { scroll-padding-top: 112px; }
+html body[data-view] header { background: var(--paper); background-image: none; border-bottom: 1px solid var(--line); box-shadow: 0 6px 16px -12px rgba(0, 0, 0, 0.45); z-index: 45; isolation: isolate; backdrop-filter: none; }
+html body[data-view="page"] header nav { background: var(--paper); }
+html body[data-view="page"] header nav a { background: var(--surface-2); border: 1px solid var(--line); color: var(--ink); }
+html body[data-view] .m-tabs { background: var(--paper); }
+#agent-app .ns-log .ns-toolbar, #agent-app .dev-log-filters { background: var(--surface); }
+
+/* Audit fixes: tariff cards in two or four columns (never three plus an orphan), a tidier header on a tablet, the swarm under the chat until there is room beside it. */
+.card-list { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+@media (max-width: 1179px) { .card-list { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 640px) { .card-list { grid-template-columns: minmax(0, 1fr); } }
+.card > button { white-space: normal; text-align: center; }
+@media (min-width: 761px) and (max-width: 960px) {
+  header { gap: 8px 14px; }
+  header nav a { padding: 8px 9px; }
+  .theme-switch { margin-left: auto; }
+}
+@media (min-width: 761px) and (max-width: 1000px) {
+  #agent-app .assistant-panels, #agent-app .assistant-panels:has(> .chat-side:not([hidden])), #agent-app .assistant-panels:has(> .chat-side:not([hidden])):has(> .swarm-map[hidden]) { grid-template-columns: minmax(0, 1fr); }
+  .assistant-panels { margin-inline: 0; }
+  #agent-app, #agent-app:has(.swarm-map:not([hidden])), #agent-app:has(.chat-side:not([hidden])), #agent-app:has(.chat-side:not([hidden])):has(.swarm-map[hidden]) { --row-left: 0px; --row-right: 0px; }
+  #agent-app > [data-ns-slot="settings"], #agent-app > [data-ns-slot="agents"] { margin-inline: 0; }
+  .swarm-map { max-width: 560px; width: 100%; justify-self: center; }
+}
+
+/* The confirmation dialog, on the theme's own surfaces, with a dimmed page behind it. */
+dialog.assistant-review { background: var(--surface); color: var(--ink); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow-2); font-family: var(--font-body); }
+dialog.assistant-review::backdrop { background: rgba(10, 6, 3, 0.6); }
+dialog.assistant-review h2 { font-family: var(--font-display); font-weight: 600; letter-spacing: -0.02em; }
+dialog.assistant-review summary { cursor: pointer; color: var(--brand-ink); }
+dialog.assistant-review pre { padding: 12px; border-radius: var(--radius-sm); background: var(--surface-2); font-size: 0.85em; }
+dialog.assistant-review button { min-height: 44px; padding: 0 22px; border-radius: 999px; border: 1px solid transparent; background: var(--brand-solid); color: #fff; font: 600 1rem var(--font-body); cursor: pointer; transition: transform 0.16s var(--ease), background-color 0.16s; }
+dialog.assistant-review button:hover { background: color-mix(in srgb, var(--brand-solid) 86%, #fff); transform: translateY(-1px); }
+dialog.assistant-review button:active { transform: translateY(1px); }
+dialog.assistant-review button.assistant-decline { background: transparent; color: var(--ink); border-color: var(--line); }
+dialog.assistant-review button.assistant-decline:hover { border-color: var(--ink); background: transparent; }
+dialog.assistant-review button:focus-visible { outline: 2px solid var(--brand-ink); outline-offset: 2px; }
+.error:empty { display: none; }
+section:not(.assistant) button:disabled { opacity: 0.55; cursor: not-allowed; transform: none; }
+
+/* A small phone: the theme switch keeps its name for screen readers but shows only its track, so the top bar stays two rows tall. */
+@media (max-width: 380px) {
+  html body[data-view] .theme-switch > span:last-child { position: absolute; width: 1px; height: 1px; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+  html body[data-view] .theme-switch { gap: 0; padding: 0 8px; }
+  .appframe .bars { gap: 3px; padding-inline: 0; }
+  .appframe .bars > div { font-size: 0.62rem; letter-spacing: -0.02em; }
+}
+.intro.hero { grid-template-columns: minmax(0, 1fr); }
+.hero__text, .hero__art, .appframe, .appframe__body, .appframe .usage { min-width: 0; }
+.appframe__body { grid-template-columns: minmax(0, 1fr); }
+.appframe .summary { grid-template-columns: minmax(96px, 0.34fr) minmax(0, 1fr); }
+.appframe .summary dd { overflow-wrap: anywhere; }
+@media (max-width: 760px) { .appframe .summary { grid-template-columns: minmax(0, 1fr); } }
+@media (min-width: 960px) { .intro.hero { grid-template-columns: minmax(0, 5fr) minmax(0, 6.4fr); } }
