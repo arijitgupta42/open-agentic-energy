@@ -209,3 +209,14 @@ section:not(.assistant) #estimate-clear:hover, section:not(.assistant) #estimate
   html body[data-view="ask"] .m-toolbar .m-chats, html body[data-view] #agent-app .ns-devtoggle,
   html body[data-view] #agent-app .ns-devtoggle { min-height: 44px; }
 }
+
+/* The four tabs fill their quarter of the bar, as on the other two sites. */
+@media (max-width: 760px) {
+  body[data-view] .m-tabs .m-tab { width: 100%; height: 100%; justify-self: stretch; min-height: 44px; }
+}
+
+/* Phone: the question box shows its whole example, and the partner menu sits inside the chat above the tab bar. */
+@media (max-width: 760px) {
+  html body[data-view] .partner-approval { min-height: 52px; box-sizing: border-box; padding-top: 6px; padding-bottom: 6px; }
+  html body[data-view] #agent-app textarea { min-height: 62px; }
+}
