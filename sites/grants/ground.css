@@ -55,5 +55,10 @@ html[data-theme="dark"] body::after {
   box-shadow: inset 0 0 140px rgba(0, 0, 0, 0.25);
 }
 
+/* Prose that sits straight on the glass (the hero text, the paragraphs and lists under a heading, the assistant's notes) gets a soft halo in the
+   page colour, so a reed never cuts through a stroke, and the small notes sit close to the ink instead of the quiet grey. */
+:is(.hero__text > *, main > section > :is(h2, p, ul, ol), .assistant-note, .voice-status) { text-shadow: 0 0 5px var(--paper), 0 0 14px var(--paper), 0 0 28px var(--paper); }
+.assistant-note, .voice-status { color: color-mix(in srgb, var(--ink) 90%, var(--paper)); font-weight: 560; }
+
 /* No box behind the hero panel: the spotlight layer that used to light and dot it is hidden, so the panel sits straight on the glass. */
 .hero__art.mo-cs > .mo-cs__light { display: none; }
