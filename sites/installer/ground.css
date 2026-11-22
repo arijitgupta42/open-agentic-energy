@@ -7,14 +7,17 @@
 :root { --ground-accent: var(--brand-ink); --display-weight: 600; }
 
 html { background: var(--paper); }
-body { background: transparent; position: relative; font-weight: 470; }
+body { background: transparent; position: relative; font-weight: 520; }
 html::before, body::after { content: ""; position: fixed; inset: 0; z-index: -1; pointer-events: none; }
 
 /* Text a little heavier than the page had it, so it holds against a textured ground (the font is variable, 400 to 700). */
 :is(h1, h2, h3) { font-weight: 620; }
 :is(.eyebrow, .brand, .btn, .skip-link) { font-weight: 650; }
 header nav a, .theme-switch, .appframe__bar, .appframe .summary :is(dt, dd), label, th, strong, b { font-weight: 580; }
-.brand span, .assistant-note { font-weight: 470; }
+.brand span { font-weight: 470; }
+/* The small, quiet text is the thinnest on the page, so it gets the most help: a little heavier and a step closer to the ink, so the reeds do not cut through its strokes. */
+:root, :root[data-theme="dark"] { --muted: color-mix(in srgb, var(--ink) 80%, var(--paper)); }
+.hero__lead, .note, .assistant-note, .appframe .summary dt, header nav a { font-weight: 550; }
 
 /* The panels stand on the ground: a lit top edge, a close shadow and a long soft one. */
 .card, .appframe, .swarm-map, .chat-list {
