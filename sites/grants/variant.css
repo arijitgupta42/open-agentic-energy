@@ -64,7 +64,7 @@ h1 { font-size: clamp(2.3rem, 4.1vw, 3.5rem); line-height: 1.04; font-weight: 50
 .btn:active { transform: translateY(1px); box-shadow: none; }
 .hero .note { padding: 0; border: 0; background: none; font-size: 0.88rem; color: var(--muted); max-width: 32rem; border-radius: 0; }
 
-.hero__art { position: relative; margin-top: 40px; padding: clamp(16px, 3vw, 44px); border-radius: calc(var(--radius) + 10px); background: radial-gradient(70% 60% at 85% 0%, var(--ground-a), transparent 70%), var(--ground-b); --mo-light: color-mix(in oklab, var(--surface) 60%, transparent); }
+.hero__art { position: relative; margin-top: 40px; padding: clamp(16px, 3vw, 44px); border-radius: calc(var(--radius) + 10px); background: none; --mo-light: color-mix(in oklab, var(--surface) 60%, transparent); }
 .appframe { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow-2); overflow: hidden; }
 .appframe__bar { display: flex; align-items: center; gap: 14px; padding: 12px 18px; border-bottom: 1px solid var(--line); background: var(--surface-2); font-size: 0.82rem; font-weight: 500; color: var(--muted); }
 .appframe__dots { display: inline-flex; gap: 6px; }
