@@ -226,3 +226,34 @@ body[data-view] header nav a { background: var(--surface-2); color: var(--ink); 
   body[data-view] .theme-switch { position: relative; padding: 0 8px; }
   body[data-view] header .brand { font-size: 0.8rem; }
 }
+
+/* ---- UI/UX audit fixes ---- */
+/* The suggestion line is a button: give it the muted ink, not the button default (it vanished on the light page). */
+#agent-app .prompt-hint { color: var(--muted); opacity: 1; }
+#agent-app .prompt-hint:hover, #agent-app .prompt-hint:focus-visible { color: var(--ink); }
+@media (max-width: 760px) {
+  /* The four tabs fill their quarter of the bar, so the whole quarter is the target. */
+  body[data-view] .m-tabs .m-tab { width: 100%; height: 100%; justify-self: stretch; min-height: 44px; }
+  /* Thumb-sized controls in the chat: the chat list, the developer button, the tool list, the voice button,
+     the suggestion line and the partner menu are each at least 44px. */
+  html body[data-view] .m-toolbar .m-chats { min-height: 44px; }
+  html body[data-view] #agent-app .ns-devtoggle { min-height: 44px; }
+  #agent-app summary { display: flex; align-items: center; min-height: 44px; }
+  html #agent-app .voice-button { width: 44px; height: 44px; bottom: 0; }
+  #agent-app .ns-inputbar { margin-bottom: 44px; }
+  #agent-app .ns-chat > .prompt-hint { min-height: 44px; line-height: 44px; }
+  #agent-app .ns-chat > .partner-approval { height: 52px; }
+  #agent-app .ns-chat:has(> .partner-approval:not([hidden])) > .prompt-hint,
+  #agent-app .ns-chat:has(> .partner-approval:not([hidden])) > .voice-status { bottom: 52px; }
+  html #agent-app .partner-approval select { min-height: 44px; }
+  body[data-view] header .brand { min-height: 44px; display: inline-flex; align-items: center; }
+  body[data-view="page"] header nav a { min-height: 44px; display: inline-flex; align-items: center; }
+  /* The chat's title may take two lines so the badge and the developer button never squeeze it to "Fern…". */
+  html body[data-view] #agent-app .ns-header { flex-wrap: wrap; row-gap: 4px; }
+  html body[data-view] #agent-app .ns-title { flex: 1 1 100%; white-space: normal; overflow: visible; }
+  /* The chat box is tall enough to show its whole suggestion line. */
+  html #agent-app .ns-inputwrap textarea { min-height: 60px; padding-top: 8px; padding-bottom: 8px; line-height: 1.35; }
+}
+@media (max-width: 380px) {
+  html #agent-app .ns-inputwrap textarea { min-height: 82px; }
+}
