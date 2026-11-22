@@ -21,9 +21,9 @@ This product includes software developed by others:
    Derived from the templates in tools/agentify-website/templates/, with this project's
    values filled in. Licensed under the Apache License, Version 2.0.
 
-4. sites/utility/assets/fonts/: Schibsted Grotesk (Latin subset, variable weight), from the
+4. sites/utility/assets/fonts/ and sites/installer/assets/fonts/: Schibsted Grotesk (Latin subset, variable weight), from the
    @fontsource-variable/schibsted-grotesk package. Copyright The Schibsted-Grotesk Project
    Authors. Licensed under the SIL Open Font License 1.1 (assets/fonts/LICENSE-schibsted-grotesk.txt).
 
-5. sites/utility/assets/moments/: the moments loader and the cursor-spotlight moment from the
+5. sites/utility/assets/moments/ and sites/installer/assets/moments/: the moments loader and the cursor-spotlight moment from the
    taste-skill design kit 2.5.1, copied as plain local files.
