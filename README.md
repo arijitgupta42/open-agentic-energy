@@ -139,7 +139,7 @@ knows as a network of agents, and lets another site run that network on request.
 
 ## Compliance with the hackathon rules
 
-**Last checked: 20 November 2026**, on `production` after `fix/scroll-after-second-message`, against the
+**Last checked: 22 November 2026**, on `production` after the C-style redesign of all three sites (`claude/ember-var-c-697372`, `claude/c-style-installer-1e904d`, `claude/c-style-grants-c1897a`), against the
 [official rules](https://cognizant-agenticweb.devpost.com/rules) and
 [updates](https://cognizant-agenticweb.devpost.com/updates) as read that day, and the
 specification as it stood when the submission period opened.
@@ -179,7 +179,7 @@ How it was checked:
 | Third-party code and APIs used under their terms | Met | The reference runtime is Apache 2.0, credited in `NOTICE`. No page loads a third-party script. A model provider is reached only with the visitor's own key, under the visitor's own terms |
 | Original work, open source, builds on what it uses | Met | Apache 2.0, public at github.com/arijitgupta42/open-agentic-energy. Our own: three sites, 11 agents, three MCP servers, the swarm graph, the answer-path reader, the Anthropic protocol adapter, the Safety checks page |
 | Free to test, without restriction, until judging ends | Met, with a note | The sites are free and every page works without the assistant. Chatting needs a model key the tester supplies (the specification allows BYOK); the Safety checks page needs no key. The description must say so plainly |
-| Fictional, with no third-party marks in the product | Met | Every page says it is a fictional demo; the logos are drawn in SVG here; the companies, tariffs and grants are invented |
+| Fictional, with no third-party marks in the product | Met | Every page says it is a fictional demo; the logos are drawn in SVG here; the companies, tariffs and grants are invented. The redesign adds one self-hosted font, Schibsted Grotesk (SIL OFL, listed in `NOTICE`); no page loads a font or script from another origin |
 | All materials in English | Met | |
 | No financial or preferential support from the sponsor | The entrant's own declaration | Not something the code can show |
 | Text description and screenshots | Drafted | `docs/devpost/description.md` (issue #11) |
